@@ -17,5 +17,5 @@ type SwapCountReq struct {
 }
 
 type SwapCountResp struct {
-	*domain.TokenVolumeCount `json:"swap_pair_count"`
+	*domain.SwapPairCount `json:"swap_pair_count"`
 }

@@ -8,19 +8,19 @@ import (
 	"git.cplus.link/crema/backend/common/pkg/domain"
 )
 
-func CreateTokenVolumeCount(ctx context.Context, tokenVolumeCount *domain.TokenVolumeCount) error {
+func CreateSwapPairCount(ctx context.Context, tokenVolumeCount *domain.SwapPairCount) error {
 	if err := wDB(ctx).Create(tokenVolumeCount).Error; err != nil {
 		return errors.Wrap(err)
 	}
 	return nil
 }
 
-func QueryTokenVolumeCount(ctx context.Context, filter ...Filter) (*domain.TokenVolumeCount, error) {
+func QuerySwapPairCount(ctx context.Context, filter ...Filter) (*domain.SwapPairCount, error) {
 	var (
 		db   = rDB(ctx)
-		info *domain.TokenVolumeCount
+		info *domain.SwapPairCount
 	)
-	if err := db.Model(&domain.TokenVolumeCount{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
+	if err := db.Model(&domain.SwapPairCount{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 

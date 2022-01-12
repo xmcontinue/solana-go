@@ -112,7 +112,7 @@ func (tvl *TVL) Start() error {
 	transactionsByte, _ := json.Marshal(tvl.transactionCache)
 	signaturesByte, _ := json.Marshal(tvl.signatureList)
 
-	tokenVolumeCount := &domain.TokenVolumeCount{
+	swapPairCount := &domain.SwapPairCount{
 		TokenAVolume:      tvl.tokenAVolume,
 		TokenBVolume:      tvl.tokenBVolume,
 		TokenABalance:     tvl.tokenABalance,
@@ -124,7 +124,7 @@ func (tvl *TVL) Start() error {
 		Signature:         string(signaturesByte),
 	}
 
-	err = model.CreateTokenVolumeCount(context.Background(), tokenVolumeCount)
+	err = model.CreateSwapPairCount(context.Background(), swapPairCount)
 	if err != nil {
 		return errors.Wrap(err)
 	}
