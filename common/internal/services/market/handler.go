@@ -12,7 +12,6 @@ import (
 	model "git.cplus.link/crema/backend/common/internal/model/market"
 	"git.cplus.link/crema/backend/common/internal/worker/market"
 
-	"git.cplus.link/crema/backend/common/chain/sol"
 	"git.cplus.link/crema/backend/common/pkg/iface"
 )
 
@@ -47,19 +46,13 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 			return
 		}
 
-		// sol 初始化
-		if err := sol.Init(conf); err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
 		// 验证器初始化
 		defaultValidator = validator.New()
 		defaultValidator.SetTagName("binding")
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := watcher.Init(conf); err != nil {
+		if err := market.Init(conf); err != nil {
 			panic(err)
 		}
 

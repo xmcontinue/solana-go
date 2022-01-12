@@ -1,11 +1,10 @@
-package watcher
+package market
 
 import (
 	"context"
 
 	model "git.cplus.link/crema/backend/common/internal/model/market"
 
-	"git.cplus.link/crema/backend/common/chain/sol"
 	"git.cplus.link/crema/backend/common/pkg/domain"
 )
 
@@ -18,7 +17,7 @@ func SwapCountCacheJob() error {
 
 	swapPairCountMap := make(map[string]*domain.SwapPairCount)
 
-	for _, v := range sol.Addresses() {
+	for _, v := range addresses {
 
 		count, err := model.QuerySwapPairCount(context.Background(), model.NewFilter("token_swap_address = ?", v.TokenSwapAddress))
 
