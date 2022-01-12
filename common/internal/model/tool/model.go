@@ -36,12 +36,12 @@ func initDB() error {
 		rConf dbpool.DBConfig
 		wConf dbpool.DBConfig
 	)
-	if err := configer.UnmarshalKey("dbs.console.read", &rConf); err != nil {
+	if err := configer.UnmarshalKey("dbs.read", &rConf); err != nil {
 		return errors.Wrap(err)
 	}
 	dbRPool = dbpool.NewPGPool(&rConf).Assert()
 
-	if err := configer.UnmarshalKey("dbs.console.write", &wConf); err != nil {
+	if err := configer.UnmarshalKey("dbs.write", &wConf); err != nil {
 		return errors.Wrap(err)
 	}
 	dbWPool = dbpool.NewPGPool(&wConf).Assert()

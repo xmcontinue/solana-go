@@ -1,6 +1,6 @@
 # base config
 # ==================================================================
-debug: false
+debug: true
 log_level: info
 
 
@@ -9,24 +9,6 @@ log_level: info
 # 数据库
 # ------------------------------------------------------------------
 dbs:
-  Operation:
-    host: 127.0.0.1
-    port: 5432
-    dbname: crema
-    username: postgres
-    password: cplus123456
-    maxidleconns: 4
-    maxopenconns: 8
-    isdebug: true
-  Manage:
-    host: 127.0.0.1
-    port: 5432
-    dbname: crema
-    username: postgres
-    password: cplus123456
-    maxidleconns: 4
-    maxopenconns: 8
-    isdebug: true
   write:
     host: 127.0.0.1
     port: 5432
@@ -45,25 +27,6 @@ dbs:
     maxidleconns: 4
     maxopenconns: 8
     isdebug: true
-  console:
-    write:
-      host: 127.0.0.1
-      port: 5432
-      dbname: crema
-      username: postgres
-      password: cplus123456
-      maxidleconns: 4
-      maxopenconns: 8
-      isdebug: true
-    read:
-      host: 127.0.0.1
-      port: 5432
-      dbname: crema
-      username: postgres
-      password: cplus123456
-      maxidleconns: 4
-      maxopenconns: 8
-      isdebug: true
 
 # 客户端
 gateway:

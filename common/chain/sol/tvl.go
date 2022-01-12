@@ -17,7 +17,6 @@ import (
 
 	model "git.cplus.link/crema/backend/common/internal/model/tool"
 	"git.cplus.link/crema/backend/common/pkg/domain"
-	"git.cplus.link/crema/backend/common/pkg/iface"
 )
 
 const DAY_SECONDS float64 = 86400
@@ -41,16 +40,15 @@ type Address struct {
 }
 
 type PublicKey struct {
-	tokenAPoolAddress solana.PublicKey
-	tokenBPoolAddress solana.PublicKey
-	tokenSwapAddress  solana.PublicKey
+	TokenAPoolAddress solana.PublicKey
+	TokenBPoolAddress solana.PublicKey
+	TokenSwapAddress  solana.PublicKey
 }
 
 var (
-	once                sync.Once
-	addresses           []Address
-	publicKeys          []PublicKey
-	tokenVolumeCountMap sync.Map
+	once       sync.Once
+	addresses  []Address
+	publicKeys []PublicKey
 )
 
 func Init(config *config.Config) error {
@@ -119,9 +117,9 @@ func (tvl *TVL) Start() error {
 		TokenBVolume:      tvl.tokenBVolume,
 		TokenABalance:     tvl.tokenABalance,
 		TokenBBalance:     tvl.tokenBBalance,
-		TokenAPoolAddress: tvl.tokenAPoolAddress.String(),
-		TokenBPoolAddress: tvl.tokenBPoolAddress.String(),
-		TokenSwapAddress:  tvl.tokenSwapAddress.String(),
+		TokenAPoolAddress: tvl.TokenAPoolAddress.String(),
+		TokenBPoolAddress: tvl.TokenBPoolAddress.String(),
+		TokenSwapAddress:  tvl.TokenSwapAddress.String(),
 		LastTransaction:   string(transactionsByte),
 		Signature:         string(signaturesByte),
 	}
@@ -130,9 +128,6 @@ func (tvl *TVL) Start() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
-	// 写入内存中
-	tokenVolumeCountMap.Store(tokenVolumeCount.TokenSwapAddress, tokenVolumeCount)
 
 	return nil
 }
@@ -170,7 +165,7 @@ func (tvl *TVL) pullLastSignature() {
 		}
 		out, err := tvl.client.GetSignaturesForAddressWithOpts(
 			context.TODO(),
-			tvl.tokenSwapAddress,
+			tvl.TokenSwapAddress,
 			opts,
 		)
 		if err != nil {
@@ -236,7 +231,7 @@ func (tvl *TVL) removeOldSignature() {
 
 func (tvl *TVL) calculate() {
 	for _, meta := range tvl.transactionCache {
-		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.tokenAPoolAddress, tvl.tokenBPoolAddress)
+		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenAPoolAddress, tvl.TokenBPoolAddress)
 		tvl.tokenAVolume = tvl.tokenAVolume + uint64(tokenAVolumeTmp)
 		tvl.tokenBVolume = tvl.tokenBVolume + uint64(tokenBVolumeTmp)
 	}
@@ -286,7 +281,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 func (tvl *TVL) getTvl() error {
 	resp, err := tvl.client.GetAccountInfo(
 		context.TODO(),
-		tvl.tokenAPoolAddress,
+		tvl.TokenAPoolAddress,
 	)
 	if err != nil {
 		return errors.Wrap(err)
@@ -301,7 +296,7 @@ func (tvl *TVL) getTvl() error {
 	tvl.tokenABalance = tokenA.Amount
 	resp, err = tvl.client.GetAccountInfo(
 		context.TODO(),
-		tvl.tokenBPoolAddress,
+		tvl.TokenBPoolAddress,
 	)
 	if err != nil {
 		return errors.Wrap(err)
@@ -322,26 +317,6 @@ func PublicKeys() []PublicKey {
 	return publicKeys
 }
 
-func GetCount(args *iface.SwapCountReq) []*domain.TokenVolumeCount {
-	list := make([]*domain.TokenVolumeCount, 0)
-
-	tokenVolumeCountMap.Range(func(_, v interface{}) bool {
-		val := v.(*domain.TokenVolumeCount)
-		if args.TokenAPoolAddress != "" && args.TokenAPoolAddress != val.TokenAPoolAddress {
-			return true
-		}
-
-		if args.TokenBPoolAddress != "" && args.TokenBPoolAddress != val.TokenBPoolAddress {
-			return true
-		}
-
-		if args.TokenSwapAddress != "" && args.TokenSwapAddress != val.TokenSwapAddress {
-			return true
-		}
-
-		list = append(list, val)
-		return true
-	})
-
-	return list
+func Addresses() []Address {
+	return addresses
 }

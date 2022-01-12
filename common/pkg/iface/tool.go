@@ -13,11 +13,9 @@ type ToolService interface {
 }
 
 type SwapCountReq struct {
-	TokenAPoolAddress string `json:"token_a_pool_address"`
-	TokenBPoolAddress string `json:"token_b_pool_address"`
-	TokenSwapAddress  string `json:"token_swap_address"`
+	TokenSwapAddress string `json:"token_swap_address"      binding:"required"`
 }
 
 type SwapCountResp struct {
-	List []*domain.TokenVolumeCount `json:"list"`
+	*domain.TokenVolumeCount `json:"swap_pair_count"`
 }

@@ -1,15 +1,12 @@
 package app
 
 import (
-	"context"
 	"fmt"
 
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/http"
 	"github.com/gin-gonic/gin"
-
-	"git.cplus.link/crema/backend/integrate/cmd/gateway/auth"
 )
 
 // Module 模块
@@ -20,7 +17,6 @@ type Module interface {
 
 var (
 	configer *config.Config
-	jAuth    auth.Authenticator
 	modules  []Module
 )
 
@@ -35,12 +31,6 @@ func Start(c *config.Config) error {
 		return errors.Wrap(err)
 	}
 	configer = c
-
-	// 普通认证
-	jAuth, err = auth.NewJWTAuth(context.Background(), configer)
-	if err != nil {
-		return errors.Wrap(err)
-	}
 
 	engine := http.NewEngine()
 

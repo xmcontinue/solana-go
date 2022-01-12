@@ -14,3 +14,15 @@ func CreateTokenVolumeCount(ctx context.Context, tokenVolumeCount *domain.TokenV
 	}
 	return nil
 }
+
+func QueryTokenVolumeCount(ctx context.Context, filter ...Filter) (*domain.TokenVolumeCount, error) {
+	var (
+		db   = rDB(ctx)
+		info *domain.TokenVolumeCount
+	)
+	if err := db.Model(&domain.TokenVolumeCount{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return info, nil
+}

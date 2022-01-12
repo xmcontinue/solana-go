@@ -11,7 +11,7 @@ import (
 
 	"git.cplus.link/crema/backend/common/chain/sol"
 	model "git.cplus.link/crema/backend/common/internal/model/tool"
-	"git.cplus.link/crema/backend/common/internal/worker/tool"
+	wacher "git.cplus.link/crema/backend/common/internal/worker/tool"
 	"git.cplus.link/crema/backend/common/pkg/iface"
 )
 
@@ -58,10 +58,10 @@ func NewToolService(conf *config.Config) (iface.ToolService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := tool.Init(conf); err != nil {
-			rErr = errors.Wrap(err)
-			return
+		if err := wacher.Init(conf); err != nil {
+			panic(err)
 		}
+
 	})
 	return instance, rErr
 }
