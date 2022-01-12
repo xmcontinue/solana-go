@@ -13,7 +13,7 @@ type MarketService interface {
 }
 
 type SwapCountReq struct {
-	TokenSwapAddress string `json:"token_swap_address"      binding:"required"`
+	TokenSwapAddress string `form:"token_swap_address"      binding:"required"`
 }
 
 type SwapCountResp struct {
