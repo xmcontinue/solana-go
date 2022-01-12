@@ -1,6 +1,6 @@
 # base config
 # ==================================================================
-debug: true
+debug: false
 log_level: info
 
 
@@ -31,7 +31,7 @@ dbs:
 # 客户端
 gateway:
   modules:
-    tool: true
+    market: true
 # ==================================================================
 # 服务配置
 # ==================================================================
@@ -51,7 +51,7 @@ services:
       - 127.0.0.1:8096
     listenaddress: ":8096"
 
-  CremaToolService:
+  CremaMarketService:
     discovery: p2p
     addresses:
       - 127.0.0.1:8081

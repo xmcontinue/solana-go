@@ -7,9 +7,11 @@ import (
 
 	"git.cplus.link/go/akit/config"
 
+	model "git.cplus.link/crema/backend/common/internal/model/market"
+
+	"git.cplus.link/crema/backend/common/internal/worker/watcher"
+
 	"git.cplus.link/crema/backend/common/chain/sol"
-	model "git.cplus.link/crema/backend/common/internal/model/tool"
-	"git.cplus.link/crema/backend/common/internal/worker/wacher"
 )
 
 func main() {
@@ -26,7 +28,7 @@ func main() {
 	}
 
 	// cron初始化
-	if err := wacher.Init(configer); err != nil {
+	if err := watcher.Init(configer); err != nil {
 		panic(err)
 	}
 

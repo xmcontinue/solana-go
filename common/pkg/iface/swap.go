@@ -6,9 +6,9 @@ import (
 	"git.cplus.link/crema/backend/common/pkg/domain"
 )
 
-const ToolServiceName = "CremaToolService"
+const MarketServiceName = "CremaMarketService"
 
-type ToolService interface {
+type MarketService interface {
 	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
 }
 

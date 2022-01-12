@@ -9,18 +9,19 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
 
+	model "git.cplus.link/crema/backend/common/internal/model/market"
+	"git.cplus.link/crema/backend/common/internal/worker/market"
+
 	"git.cplus.link/crema/backend/common/chain/sol"
-	model "git.cplus.link/crema/backend/common/internal/model/tool"
-	wacher "git.cplus.link/crema/backend/common/internal/worker/tool"
 	"git.cplus.link/crema/backend/common/pkg/iface"
 )
 
-type ToolService struct {
+type MarketService struct {
 	conf *config.Config
 }
 
 var (
-	instance         *ToolService
+	instance         *MarketService
 	once             sync.Once
 	defaultValidator *validator.Validate
 )
@@ -33,10 +34,10 @@ const (
 	DefaultLimit = 10
 )
 
-func NewToolService(conf *config.Config) (iface.ToolService, error) {
+func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 	var rErr error
 	once.Do(func() {
-		instance = &ToolService{
+		instance = &MarketService{
 			conf: conf,
 		}
 
@@ -58,7 +59,7 @@ func NewToolService(conf *config.Config) (iface.ToolService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := wacher.Init(conf); err != nil {
+		if err := watcher.Init(conf); err != nil {
 			panic(err)
 		}
 

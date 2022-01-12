@@ -5,20 +5,20 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"github.com/gin-gonic/gin"
 
-	handler "git.cplus.link/crema/backend/integrate/cmd/gateway/modules/tool"
+	handler "git.cplus.link/crema/backend/integrate/cmd/gateway/modules/market"
 )
 
-type cremaTool struct{}
+type cremaMarket struct{}
 
-func (m *cremaTool) Name() string {
-	return "tool"
+func (m *cremaMarket) Name() string {
+	return "market"
 }
 
 func init() {
-	registerModule(&cremaTool{})
+	registerModule(&cremaMarket{})
 }
 
-func (m *cremaTool) Start(c *config.Config, engine *gin.Engine) error {
+func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	if err := handler.Init(c); err != nil {
 		return errors.Wrap(err)
 	}

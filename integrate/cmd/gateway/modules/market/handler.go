@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	once      sync.Once
-	cremaTool *client.CremaToolClient
+	once        sync.Once
+	cremaMarket *client.CremaMarketClient
 )
 
 // Init handler初始化
@@ -26,7 +26,7 @@ func Init(c *config.Config) error {
 	var rErr error
 	once.Do(func() {
 		var err error
-		cremaTool, err = newCremaToolClient(c)
+		cremaMarket, err = newCremaMarketClient(c)
 		if err != nil {
 			rErr = errors.Wrap(err)
 		}
@@ -35,20 +35,20 @@ func Init(c *config.Config) error {
 	return errors.Wrap(rErr)
 }
 
-func newCremaToolClient(c *config.Config) (*client.CremaToolClient, error) {
-	conf, err := c.Service(iface.ToolServiceName)
+func newCremaMarketClient(c *config.Config) (*client.CremaMarketClient, error) {
+	conf, err := c.Service(iface.MarketServiceName)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	cli, err := client.NewCremaToolClient(context.Background(), conf)
+	cli, err := client.NewCremaMarketClient(context.Background(), conf)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	return cli.(*client.CremaToolClient), nil
+	return cli.(*client.CremaMarketClient), nil
 }
 
-func toolClient() *rpcx.Client {
-	return cremaTool.Client
+func marketClient() *rpcx.Client {
+	return cremaMarket.Client
 }
 
 type rpcxClient func() *rpcx.Client

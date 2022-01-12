@@ -1,11 +1,9 @@
-package wacher
+package watcher
 
 import (
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
-
-	"git.cplus.link/crema/backend/common/chain/sol"
 )
 
 var (
@@ -22,14 +20,9 @@ func Init(conf *config.Config) error {
 
 	cron = cronConf.Build()
 
-	// 每组key创建一个定时任务
-	keys := sol.PublicKeys()
-	for _, v := range keys {
-		tvl := sol.NewTVL(v)
-		_, err = cron.AddFunc("0 */10 * * * *", tvl.Start)
-		if err != nil {
-			panic(err)
-		}
+	_, err = cron.AddFunc("*/10 * * * * *", SwapCountCacheJob)
+	if err != nil {
+		panic(err)
 	}
 
 	cron.Start()

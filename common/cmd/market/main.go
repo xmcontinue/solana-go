@@ -5,7 +5,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/transport/rpcx"
 
-	handler "git.cplus.link/crema/backend/common/internal/services/tool"
+	handler "git.cplus.link/crema/backend/common/internal/services/market"
 
 	"git.cplus.link/crema/backend/common/pkg/iface"
 )
@@ -13,12 +13,12 @@ import (
 func main() {
 	configer := config.NewConfiger()
 
-	serviceConf, err := configer.Service(iface.ToolServiceName)
+	serviceConf, err := configer.Service(iface.MarketServiceName)
 	if err != nil {
 		panic(err)
 	}
 
-	service, err := handler.NewToolService(configer)
+	service, err := handler.NewMarketService(configer)
 	if err != nil {
 		panic(err)
 	}

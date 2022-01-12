@@ -1,10 +1,11 @@
-package wacher
+package watcher
 
 import (
 	"context"
 
+	model "git.cplus.link/crema/backend/common/internal/model/market"
+
 	"git.cplus.link/crema/backend/common/chain/sol"
-	model "git.cplus.link/crema/backend/common/internal/model/tool"
 	"git.cplus.link/crema/backend/common/pkg/domain"
 )
 

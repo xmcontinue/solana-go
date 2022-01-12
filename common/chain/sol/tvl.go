@@ -15,7 +15,8 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
-	model "git.cplus.link/crema/backend/common/internal/model/tool"
+	model "git.cplus.link/crema/backend/common/internal/model/market"
+
 	"git.cplus.link/crema/backend/common/pkg/domain"
 )
 
