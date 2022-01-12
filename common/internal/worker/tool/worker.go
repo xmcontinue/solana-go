@@ -8,8 +8,10 @@ import (
 	"git.cplus.link/crema/backend/common/chain/sol"
 )
 
-var cronConf *xcron.Config
-var cron *xcron.Cron
+var (
+	cronConf *xcron.Config
+	cron     *xcron.Cron
+)
 
 // Init 定时任务
 func Init(conf *config.Config) error {
@@ -24,7 +26,7 @@ func Init(conf *config.Config) error {
 	keys := sol.PublicKeys()
 	for _, v := range keys {
 		tvl := sol.NewTVL(v)
-		_, err = cron.AddFunc("* */10 * * * *", tvl.Start)
+		_, err = cron.AddFunc("0 */10 * * * *", tvl.Start)
 		if err != nil {
 			panic(err)
 		}
