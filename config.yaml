@@ -1,0 +1,125 @@
+# base config
+# ==================================================================
+debug: false
+log_level: info
+
+
+# 数据库配置
+# ==================================================================
+# 数据库
+# ------------------------------------------------------------------
+dbs:
+  Operation:
+    host: 127.0.0.1
+    port: 5432
+    dbname: crema
+    username: postgres
+    password: cplus123456
+    maxidleconns: 4
+    maxopenconns: 8
+    isdebug: true
+  Manage:
+    host: 127.0.0.1
+    port: 5432
+    dbname: crema
+    username: postgres
+    password: cplus123456
+    maxidleconns: 4
+    maxopenconns: 8
+    isdebug: true
+  write:
+    host: 127.0.0.1
+    port: 5432
+    dbname: crema
+    username: postgres
+    password: cplus123456
+    maxidleconns: 4
+    maxopenconns: 8
+    isdebug: true
+  read:
+    host: 127.0.0.1
+    port: 5432
+    dbname: crema
+    username: postgres
+    password: cplus123456
+    maxidleconns: 4
+    maxopenconns: 8
+    isdebug: true
+  console:
+    write:
+      host: 127.0.0.1
+      port: 5432
+      dbname: crema
+      username: postgres
+      password: cplus123456
+      maxidleconns: 4
+      maxopenconns: 8
+      isdebug: true
+    read:
+      host: 127.0.0.1
+      port: 5432
+      dbname: crema
+      username: postgres
+      password: cplus123456
+      maxidleconns: 4
+      maxopenconns: 8
+      isdebug: true
+
+# 客户端
+gateway:
+  modules:
+    tool: true
+# ==================================================================
+# 服务配置
+# ==================================================================
+# namespace k8s集群namespace
+# -----------------------------
+namespace: crema
+# 服务注册与发现
+# ------------------------------------------------------------------
+discovery: p2p
+
+# 本地调试时需要，k8s部署时不需要此配置
+# -----------------------------
+services:
+  Gateway:
+    discovery: p2p
+    addresses:
+      - 127.0.0.1:8096
+    listenaddress: ":8096"
+
+  CremaToolService:
+    discovery: p2p
+    addresses:
+      - 127.0.0.1:8081
+    listenaddress: ":8081"
+
+#################################################################################################
+#------------------------------------------------------------------------------------------------
+cron:
+  withSeconds: true
+  # IfStillRunning时 delay> 0 延迟, < 0 跳过
+  concurrentDelay: -1
+  immediatelyRun: true
+  # 分布式任务的开关
+  distributedTask: false
+  # 抢锁等待时间
+  waitLockTime: 10s
+  # etcd配置相关
+  ttl: 2
+  endpoints:
+    - 127.0.0.1:2379
+  waitlocktime: 0s
+
+#################################################################################################
+#------------------------------------------------------------------------------------------------
+tvl_address:
+  - tokenAPoolAddress: "AM4gFSZdPbqGPqCTzNxPaMVAMco1vti6uk72ADS6zhRX"
+    tokenBPoolAddress: "AmByd9pjim9xsbSDeERuCmtixAViMj1m3tfHUGGAnRuY"
+    tokenSwapAddress: "38ZpXbmvga78CFPR2YJbS3vDNHYsV67K1angDNLje3gA"
+  - tokenAPoolAddress: "AM4gFSZdPbqGPqCTzNxPaMVAMco1vti6uk72ADS6zhRX"
+    tokenBPoolAddress: "AmByd9pjim9xsbSDeERuCmtixAViMj1m3tfHUGGAnRuY"
+    tokenSwapAddress: "38ZpXbmvga78CFPR2YJbS3vDNHYsV67K1angDNLje3gB"
+  - tokenAPoolAddress: "AM4gFSZdPbqGPqCTzNxPaMVAMco1vti6uk72ADS6zhRX"
+    tokenBPoolAddress: "AmByd9pjim9xsbSDeERuCmtixAViMj1m3tfHUGGAnRuY"
+    tokenSwapAddress: "38ZpXbmvga78CFPR2YJbS3vDNHYsV67K1angDNLje3gC"
