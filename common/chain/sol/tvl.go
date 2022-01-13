@@ -50,12 +50,18 @@ var (
 	once       sync.Once
 	addresses  []Address
 	publicKeys []PublicKey
+	chainNet   string
 )
 
 func Init(config *config.Config) error {
 	var rErr error
 	once.Do(func() {
 		err := config.UnmarshalKey("tvl_address", &addresses)
+		if err != nil {
+			rErr = errors.Wrap(err)
+			return
+		}
+		err = config.UnmarshalKey("chain_net", &chainNet)
 		if err != nil {
 			rErr = errors.Wrap(err)
 			return
@@ -75,12 +81,17 @@ func Init(config *config.Config) error {
 func NewTVL(publicKey PublicKey) *TVL {
 
 	// TODO 若重启时是否由数据库中读取last transaction至 tvl中
+	net := rpc.MainNetBeta_RPC
+	if chainNet == "dev" {
+		net = rpc.DevNet_RPC
+	}
+
 	return &TVL{
 		transactionCache: make(map[string]*rpc.TransactionWithMeta),
 		signatureList:    make([]*rpc.TransactionSignature, 0),
 		tokenAVolume:     0,
 		tokenBVolume:     0,
-		client:           rpc.New(rpc.DevNet_RPC),
+		client:           rpc.New(net),
 		PublicKey:        publicKey,
 	}
 }
