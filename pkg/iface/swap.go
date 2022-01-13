@@ -10,7 +10,7 @@ const MarketServiceName = "CremaMarketService"
 
 type MarketService interface {
 	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
-	GetConfig(context.Context, *GetConfigReq, *GetConfigResp) error
+	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 }
 
 type SwapCountReq struct {

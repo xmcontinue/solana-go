@@ -12,13 +12,13 @@ import (
 )
 
 // GetConfig ...
-func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.GetConfigResp) error {
+func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.JsonString) error {
 	defer rpcx.Recover(ctx)
 
-	reply.Data = market.GetConfig(args.Name)
+	*reply = market.GetConfig(args.Name)
 
-	if reply.Data == nil {
-		reply.Data = []byte("{}")
+	if reply == nil {
+		*reply = []byte("{}")
 		return errors.Wrap(errors.RecordNotFound)
 	}
 
