@@ -7,62 +7,62 @@ stages:
   variables:
     COMMIT: $CI_COMMIT_SHORT_SHA
 
-      #kankio1
-    .use-kankio:
-      image:
-        name: gcr.io/kaniko-project/executor:debug
-        entrypoint: [""]
+#kankio1
+.use-kankio:
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
 
-          # 编译
-        compile:
-          extends:
-            - .global-vars
-        stage: compile
-        only:
-          - branches
-        - tags
-        script:
-          - >
-            if [[ ! -d "/data/ci/backend/crema/$CI_COMMIT_REF_NAME/.git" || $(expr match "$CI_COMMIT_REF_NAME"  'v[0-9].*.[0-9].*.[0-9].*$') != 0 ]];then
-            rm -fr /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-            git clone --depth 1 -b $CI_COMMIT_REF_NAME git@git.cplus.link:crema/backend.git /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-            else
-            cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-            git checkout .
-            git pull
-            fi
-        - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-        - go version
-        - bash build.sh compile $CI_COMMIT_REF_NAME
-        tags:
-          - backend-global
+# 编译
+compile:
+  extends:
+    - .global-vars
+  stage: compile
+  only:
+    - branches
+    - tags
+  script:
+    - >
+      if [[ ! -d "/data/ci/backend/crema/$CI_COMMIT_REF_NAME/.git" || $(expr match "$CI_COMMIT_REF_NAME"  'v[0-9].*.[0-9].*.[0-9].*$') != 0 ]];then
+          rm -fr /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+          git clone --depth 1 -b $CI_COMMIT_REF_NAME git@git.cplus.link:crema/backend.git /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+      else
+          cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+          git checkout .
+          git pull
+      fi
+    - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+    - go version
+    - bash build.sh compile $CI_COMMIT_REF_NAME
+  tags:
+    - backend-global
 
-            # build 镜像
-        build:
-          extends:
-            - .global-vars
-          - .use-kankio
-        stage: build
-        only:
-          - tags
-          - dev
-        script:
-          - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-          - sh build.sh build $CI_COMMIT_REF_NAME
-        tags:
-          - backend-global
+# build 镜像
+build:
+  extends:
+    - .global-vars
+    - .use-kankio
+  stage: build
+  only:
+    - tags
+    - dev
+  script:
+    - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+    - sh build.sh build $CI_COMMIT_REF_NAME
+  tags:
+    - backend-global
 
-            # 自动部署
-            # 提测版本以及开发版本会自动部署，提测版本规则为vb.m.env, b大版本，m为小版本，env保留，0固定为生产环境，>0为提测版本
-        deploy:
-          extends:
-            - .global-vars
-        stage: deploy
-        only:
-          - /v[0-9].*.[0-9].*.[1-9].*$/ # qa版本
-          - dev                       # 开发版本
-        script:
-          - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
-          - bash build.sh deploy $CI_COMMIT_REF_NAME
-        tags:
-          - backend-global
+# 自动部署
+# 提测版本以及开发版本会自动部署，提测版本规则为vb.m.env, b大版本，m为小版本，env保留，0固定为生产环境，>0为提测版本
+deploy:
+  extends:
+    - .global-vars
+  stage: deploy
+  only:
+    - /v[0-9].*.[0-9].*.[1-9].*$/ # qa版本
+    - dev                       # 开发版本
+  script:
+    - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME
+    - bash build.sh deploy $CI_COMMIT_REF_NAME
+  tags:
+    - backend-global
