@@ -1,3 +1,0 @@
-# Backend
-
-The crema backend
