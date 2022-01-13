@@ -22,7 +22,7 @@ type SwapCountResp struct {
 }
 
 type GetConfigReq struct {
-	ConfigName string `form:"config_name"      binding:"required"`
+	Name string `form:"name"      binding:"required"`
 }
 
 type JsonString []byte

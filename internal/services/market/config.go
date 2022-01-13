@@ -15,7 +15,7 @@ import (
 func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.GetConfigResp) error {
 	defer rpcx.Recover(ctx)
 
-	reply.Data = market.GetConfig(args.ConfigName)
+	reply.Data = market.GetConfig(args.Name)
 
 	if reply.Data == nil {
 		reply.Data = []byte("{}")
