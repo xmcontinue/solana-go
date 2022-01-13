@@ -205,6 +205,7 @@ func (tvl *TVL) pullLastSignature() {
 			before = &(out[size-1].Signature)
 			pullResult = append(pullResult, out[0:(size)]...)
 		}
+		time.Sleep(time.Second * 1)
 	}
 	finalResult := make([]*rpc.TransactionSignature, 0)
 	for _, value := range pullResult {
