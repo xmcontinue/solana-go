@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: api.crema.finance
+  namespace: crema
+spec:
+  rules:
+  - host: api.crema.finance
+    http:
+      paths:
+        - backend:
+            serviceName: gateway
+            servicePort: 8080
+          path: /
