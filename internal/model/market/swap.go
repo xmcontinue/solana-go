@@ -26,3 +26,22 @@ func QuerySwapPairCount(ctx context.Context, filter ...Filter) (*domain.SwapPair
 
 	return info, nil
 }
+
+func QueryTvl(ctx context.Context, filter ...Filter) (*domain.Tvl, error) {
+	var (
+		db   = rDB(ctx)
+		info *domain.Tvl
+	)
+	if err := db.Model(&domain.Tvl{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return info, nil
+}
+
+func CreateTvl(ctx context.Context, tvl *domain.Tvl) error {
+	if err := wDB(ctx).Create(tvl).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}

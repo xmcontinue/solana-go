@@ -23,8 +23,9 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 		return errors.Wrap(err)
 	}
 
-	engine.GET("/swap/count", handler.SwapCount) // NoAuth()
-	engine.GET("/config", handler.Config)        // NoAuth()
+	engine.GET("/swap/count", handler.SwapCount)
+	engine.GET("/config", handler.GetConfig)
+	engine.GET("/tvl/24hour", handler.GetTvl)
 
 	return nil
 }

@@ -53,6 +53,7 @@ func initDB() error {
 func autoMigrate() error {
 	if err := dbWPool.NewConn().AutoMigrate(
 		&domain.SwapPairCount{},
+		&domain.Tvl{},
 	); err != nil {
 		return errors.Wrap(err)
 	}
