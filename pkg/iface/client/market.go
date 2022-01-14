@@ -18,6 +18,10 @@ func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.SwapCount
 	return c.Call(ctx, "SwapCount", args, reply)
 }
 
+func (c *CremaMarketClient) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.JsonString) error {
+	return c.Call(ctx, "GetConfig", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

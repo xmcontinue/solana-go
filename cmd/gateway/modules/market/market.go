@@ -6,4 +6,5 @@ import (
 
 var (
 	SwapCount = handleFunc(marketClient, "SwapCount", &iface.SwapCountReq{}, &iface.SwapCountResp{})
+	Config    = handleFunc(marketClient, "GetConfig", &iface.GetConfigReq{}, &iface.JsonString{})
 )

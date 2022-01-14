@@ -79,12 +79,13 @@ func Init(config *config.Config) error {
 }
 
 func NewTVL(publicKey PublicKey) *TVL {
-
 	// TODO 若重启时是否由数据库中读取last transaction至 tvl中
-	net := rpc.MainNetBeta_RPC
-	if chainNet == "dev" {
-		net = rpc.DevNet_RPC
-	}
+	//net := rpc.MainNetBeta_RPC
+	//if chainNet == "dev" {
+	//	//net = rpc.DevNet_RPC
+	//}
+
+	net := "https://connect.runnode.com/?apikey=PMkQIG6CxY0ybWmaHRHJ"
 
 	return &TVL{
 		transactionCache: make(map[string]*rpc.TransactionWithMeta),
@@ -205,6 +206,7 @@ func (tvl *TVL) pullLastSignature() {
 			before = &(out[size-1].Signature)
 			pullResult = append(pullResult, out[0:(size)]...)
 		}
+		time.Sleep(time.Second * 1)
 	}
 	finalResult := make([]*rpc.TransactionSignature, 0)
 	for _, value := range pullResult {

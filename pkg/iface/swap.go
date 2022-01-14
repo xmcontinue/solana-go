@@ -10,6 +10,7 @@ const MarketServiceName = "CremaMarketService"
 
 type MarketService interface {
 	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
+	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 }
 
 type SwapCountReq struct {
@@ -18,4 +19,23 @@ type SwapCountReq struct {
 
 type SwapCountResp struct {
 	*domain.SwapPairCount `json:"swap_pair_count"`
+}
+
+type GetConfigReq struct {
+	Name string `form:"name"      binding:"required"`
+}
+
+type JsonString []byte
+
+func (j *JsonString) MarshalJSON() ([]byte, error) {
+	return *j, nil
+}
+
+func (j *JsonString) UnmarshalJSON(data []byte) error {
+	*j = data
+	return nil
+}
+
+type GetConfigResp struct {
+	Data JsonString `json:"data"`
 }
