@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -15,6 +16,8 @@ import (
 
 // SyncTvl 同步总Tvl
 func SyncTvl() error {
+	logger.Info("total tvl syncing ......")
+
 	keys := sol.SwapConfigList()
 
 	tvl, pairs := domain.Tvl{}, make([]domain.PairTvl, 0, len(keys))
@@ -38,7 +41,7 @@ func SyncTvl() error {
 			VolInUsd: volInUsd.String(),
 		})
 	}
-	
+
 	if len(pairs) > 0 {
 		tvl.TotalTvlInUsd = totalTvlInUsd.String()
 		tvl.TotalVolInUsd = totalVolInUsd.String()
@@ -48,9 +51,11 @@ func SyncTvl() error {
 
 	err := model.CreateTvl(context.TODO(), &tvl)
 	if err != nil {
+		logger.Error("total tvl sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
+	logger.Info("total tvl sync complete!")
 	return nil
 }
 

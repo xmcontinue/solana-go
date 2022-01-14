@@ -9,6 +9,7 @@ import (
 
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	bin "github.com/gagliardetto/binary"
 
 	"github.com/gagliardetto/solana-go"
@@ -119,9 +120,17 @@ func (tvl *TVL) work() error {
 	} else {
 		tvl.util = nil
 	}
+	
+	logger.Info("tvl sync: pullLastSignature", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.pullLastSignature()
+
+	logger.Info("tvl sync: removeOldSignature", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.removeOldSignature()
+
+	logger.Info("tvl sync: calculate", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.calculate()
+
+	logger.Info("tvl sync: getTvl", logger.String("swap_address:", tvl.SwapAccount))
 	err := tvl.getTvl()
 
 	if err != nil {
@@ -131,9 +140,12 @@ func (tvl *TVL) work() error {
 	return nil
 }
 func (tvl *TVL) Start() error {
+	logger.Info("tvl syncing ......", logger.String("swap_address:", tvl.SwapAccount))
+
 	err := tvl.work()
 
 	if err != nil {
+		logger.Error("tvl sync fail ......", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
@@ -160,9 +172,11 @@ func (tvl *TVL) Start() error {
 
 	err = model.CreateSwapPairCount(context.Background(), swapPairCount)
 	if err != nil {
+		logger.Error("tvl sync fail ......", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
+	logger.Info("tvl sync complete!", logger.String("swap_address:", tvl.SwapAccount))
 	return nil
 }
 

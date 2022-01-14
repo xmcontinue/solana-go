@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/internal/etcd"
 )
@@ -19,17 +20,24 @@ var (
 )
 
 func SyncConfigJob() error {
+	logger.Info("config syncing ......")
 	configMap := make(map[string][]byte)
 
 	listVal, err := etcd.Client().GetKeyValue(context.TODO(), getEtcdConfigKey(confListKey))
 	if err != nil || listVal == nil {
+		logger.Error("config sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
+	}
+	if listVal == nil {
+		logger.Error("config sync fail: conf_list is nil")
+		return errors.Wrap(errors.RecordNotFound)
 	}
 
 	var confList []string
 
 	err = json.Unmarshal(listVal.Value, &confList)
 	if err != nil {
+		logger.Error("config sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
@@ -45,6 +53,7 @@ func SyncConfigJob() error {
 
 	configCache = configMap
 
+	logger.Info("config sync complete!")
 	return nil
 }
 

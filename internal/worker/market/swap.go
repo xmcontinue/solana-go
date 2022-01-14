@@ -3,6 +3,8 @@ package market
 import (
 	"context"
 
+	"git.cplus.link/go/akit/logger"
+
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -14,6 +16,7 @@ var (
 
 // SwapCountCacheJob ...
 func SwapCountCacheJob() error {
+	logger.Info("swap count cache setting ......")
 
 	swapPairCountMap := make(map[string]*domain.SwapPairCount)
 
@@ -31,6 +34,7 @@ func SwapCountCacheJob() error {
 
 	swapPairCountCache = swapPairCountMap
 
+	logger.Info("swap count cache set complete!")
 	return nil
 }
 
