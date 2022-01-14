@@ -23,7 +23,7 @@ func Init(conf *config.Config) error {
 	cron = cronConf.Build()
 
 	// 每组key创建一个定时任务
-	keys := sol.PublicKeys()
+	keys := sol.SwapConfigList()
 	for _, v := range keys {
 		tvl := sol.NewTVL(v)
 		_, err = cron.AddFunc("0 */10 * * * *", tvl.Start)
@@ -31,6 +31,9 @@ func Init(conf *config.Config) error {
 			panic(err)
 		}
 	}
+
+	// 同步总tvl
+	_, err = cron.AddFunc("10 */10 * * * *", SyncTvl)
 
 	cron.Start()
 

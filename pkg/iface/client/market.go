@@ -22,6 +22,10 @@ func (c *CremaMarketClient) GetConfig(ctx context.Context, args *iface.GetConfig
 	return c.Call(ctx, "GetConfig", args, reply)
 }
 
+func (c *CremaMarketClient) GetTvl(ctx context.Context, args *iface.GetTvlReq, reply *iface.GetTvlResp) error {
+	return c.Call(ctx, "GetTvl", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

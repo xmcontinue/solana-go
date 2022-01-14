@@ -17,15 +17,15 @@ func SwapCountCacheJob() error {
 
 	swapPairCountMap := make(map[string]*domain.SwapPairCount)
 
-	for _, v := range addresses {
+	for _, v := range swapConfigList {
 
-		count, err := model.QuerySwapPairCount(context.Background(), model.NewFilter("token_swap_address = ?", v.TokenSwapAddress))
+		count, err := model.QuerySwapPairCount(context.Background(), model.NewFilter("token_swap_address = ?", v.SwapAccount))
 
 		if err != nil {
 			continue
 		}
 
-		swapPairCountMap[v.TokenSwapAddress] = count
+		swapPairCountMap[v.SwapAccount] = count
 
 	}
 

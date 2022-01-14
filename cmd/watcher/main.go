@@ -7,6 +7,7 @@ import (
 
 	"git.cplus.link/go/akit/config"
 
+	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/internal/worker/watcher"
@@ -16,6 +17,11 @@ import (
 
 func main() {
 	configer := config.NewConfiger()
+
+	// etcd初始化
+	if err := etcd.Init(configer); err != nil {
+		panic(err)
+	}
 
 	// 数据库初始化
 	if err := model.Init(configer); err != nil {

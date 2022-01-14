@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 
 	"git.cplus.link/go/akit/errors"
+
+	"git.cplus.link/crema/backend/internal/etcd"
 )
 
 const (
@@ -19,7 +21,7 @@ var (
 func SyncConfigJob() error {
 	configMap := make(map[string][]byte)
 
-	listVal, err := etcdClient.GetKeyValue(context.TODO(), getEtcdConfigKey(confListKey))
+	listVal, err := etcd.Client().GetKeyValue(context.TODO(), getEtcdConfigKey(confListKey))
 	if err != nil || listVal == nil {
 		return errors.Wrap(err)
 	}
@@ -33,7 +35,7 @@ func SyncConfigJob() error {
 
 	for _, v := range confList {
 
-		confVal, err := etcdClient.GetKeyValue(context.TODO(), getEtcdConfigKey(v))
+		confVal, err := etcd.Client().GetKeyValue(context.TODO(), getEtcdConfigKey(v))
 		if err != nil || confVal == nil {
 			continue
 		}

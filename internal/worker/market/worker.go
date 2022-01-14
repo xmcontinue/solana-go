@@ -1,43 +1,49 @@
 package market
 
 import (
-	"git.cplus.link/go/akit/client/etcdv3"
+	"context"
+	"encoding/json"
+
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/internal/etcd"
 )
 
 var (
-	cronConf   *xcron.Config
-	cron       *xcron.Cron
-	addresses  []sol.Address
-	etcdClient *etcdv3.Client
+	cronConf       *xcron.Config
+	cron           *xcron.Cron
+	swapConfigList []sol.SwapConfig
 )
 
 // Init 定时任务
 func Init(conf *config.Config) error {
-	etcdConf := etcdv3.DefaultConfig()
-	err := conf.UnmarshalKey("etcds", &etcdConf.Endpoints)
+
+	// 地址init
+	confVal, err := etcd.Client().GetKeyValue(context.TODO(), "/crema/swap-pairs")
+	if err != nil || confVal == nil {
+		return errors.Wrap(err)
+	}
+	err = json.Unmarshal(confVal.Value, &swapConfigList)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	etcdClient = etcdConf.Build()
 
+	// cron init
 	err = conf.UnmarshalKey("cron", &cronConf)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
-	err = conf.UnmarshalKey("tvl_address", &addresses)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
 	cron = cronConf.Build()
 
 	_, err = cron.AddFunc("*/10 * * * * *", SwapCountCacheJob)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = cron.AddFunc("*/10 * * * * *", TvlCacheJob)
 	if err != nil {
 		panic(err)
 	}

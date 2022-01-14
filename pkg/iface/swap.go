@@ -11,6 +11,7 @@ const MarketServiceName = "CremaMarketService"
 type MarketService interface {
 	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
+	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
 }
 
 type SwapCountReq struct {
@@ -36,6 +37,9 @@ func (j *JsonString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type GetConfigResp struct {
-	Data JsonString `json:"data"`
+type GetTvlReq struct {
+}
+
+type GetTvlResp struct {
+	*domain.Tvl
 }

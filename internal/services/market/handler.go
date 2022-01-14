@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
 
+	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/market"
 
@@ -38,6 +39,11 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 	once.Do(func() {
 		instance = &MarketService{
 			conf: conf,
+		}
+
+		// etcd初始化
+		if err := etcd.Init(conf); err != nil {
+			panic(err)
 		}
 
 		// 数据库初始化
