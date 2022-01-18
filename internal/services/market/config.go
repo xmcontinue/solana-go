@@ -17,7 +17,7 @@ func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq,
 
 	*reply = market.GetConfig(args.Name)
 
-	if reply == nil {
+	if *reply == nil {
 		*reply = []byte("{}")
 		return errors.Wrap(errors.RecordNotFound)
 	}
