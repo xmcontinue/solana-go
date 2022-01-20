@@ -162,9 +162,9 @@ func (tvl *TVL) Start() error {
 
 	swapPairCount := &domain.SwapPairCount{
 		TokenAVolume:      precisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
-		TokenBVolume:      precisionConversion(tokenBVolume, int(tvl.TokenA.Decimal)),
+		TokenBVolume:      precisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
 		TokenABalance:     precisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
-		TokenBBalance:     precisionConversion(tokenBBalance, int(tvl.TokenA.Decimal)),
+		TokenBBalance:     precisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,
