@@ -11,10 +11,10 @@ type SwapPairCount struct {
 	ID                int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	TokenAVolume      decimal.Decimal `json:"tokena_volume" gorm:"type:varchar(64);"`
-	TokenBVolume      decimal.Decimal `json:"tokenb_volume" gorm:"type:varchar(64);"`
-	TokenABalance     decimal.Decimal `json:"tokena_balance" gorm:"type:varchar(64);"`
-	TokenBBalance     decimal.Decimal `json:"tokenb_balance" gorm:"type:varchar(64);"`
+	TokenAVolume      decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);"`
+	TokenBVolume      decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);"`
+	TokenABalance     decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);"`
+	TokenBBalance     decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);"`
 	TokenAPoolAddress string          `json:"-" gorm:"type:varchar(64);  index"`
 	TokenBPoolAddress string          `json:"-" gorm:"type:varchar(64);  index"`
 	TokenSwapAddress  string          `json:"-" gorm:"type:varchar(64);  index"`
@@ -40,6 +40,10 @@ type PairTvl struct {
 	Name     string `json:"name"`
 	TvlInUsd string `json:"tvl_in_usd"`
 	VolInUsd string `json:"vol_in_usd"`
+}
+
+func (*SwapPairCount) TableName() string {
+	return "swap_pairs_counts"
 }
 
 // JsonString 自定义json gorm byte类型

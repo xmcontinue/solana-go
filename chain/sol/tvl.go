@@ -3,6 +3,7 @@ package sol
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"strconv"
 	"sync"
 	"time"
@@ -12,8 +13,8 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
-
 	"github.com/gagliardetto/solana-go"
+
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
@@ -154,11 +155,16 @@ func (tvl *TVL) Start() error {
 	// transactionsByte, _ := json.Marshal(tvl.transactionCache)
 	// signaturesByte, _ := json.Marshal(tvl.signatureList)
 
+	tokenAVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenAVolume, 10))
+	tokenBVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBVolume, 10))
+	tokenABalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenABalance, 10))
+	tokenBBalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBBalance, 10))
+
 	swapPairCount := &domain.SwapPairCount{
-		TokenAVolume:      decimal.NewFromInt(int64(tvl.tokenAVolume)),
-		TokenBVolume:      decimal.NewFromInt(int64(tvl.tokenBVolume)),
-		TokenABalance:     decimal.NewFromInt(int64(tvl.tokenABalance)),
-		TokenBBalance:     decimal.NewFromInt(int64(tvl.tokenBBalance)),
+		TokenAVolume:      precisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
+		TokenBVolume:      precisionConversion(tokenBVolume, int(tvl.TokenA.Decimal)),
+		TokenABalance:     precisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
+		TokenBBalance:     precisionConversion(tokenBBalance, int(tvl.TokenA.Decimal)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,
@@ -282,12 +288,22 @@ func (tvl *TVL) removeOldSignature() {
 func (tvl *TVL) calculate() {
 	for _, meta := range tvl.transactionCache {
 		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
-		tvl.tokenAVolume = tvl.tokenAVolume + uint64(tokenAVolumeTmp)
-		tvl.tokenBVolume = tvl.tokenBVolume + uint64(tokenBVolumeTmp)
+		tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+		tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
 	}
 }
 
-func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int, int) {
+func abs(n int64) int64 {
+	y := n >> 63
+	return (n ^ y) - y
+}
+
+// precisionConversion 精度转换
+func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
+	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
+}
+
+func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int64, int64) {
 	var tokenAPreBalanceStr string
 	var tokenBPreBalanceStr string
 	var tokenAPostBalanceStr string
@@ -319,10 +335,10 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 		}
 	}
 
-	tokenAPreBalance, _ := strconv.Atoi(tokenAPreBalanceStr)
-	tokenAPostBalance, _ := strconv.Atoi(tokenAPostBalanceStr)
-	tokenBPreBalance, _ := strconv.Atoi(tokenBPreBalanceStr)
-	tokenBPostBalance, _ := strconv.Atoi(tokenBPostBalanceStr)
+	tokenAPreBalance, _ := strconv.ParseInt(tokenAPreBalanceStr, 10, 64)
+	tokenAPostBalance, _ := strconv.ParseInt(tokenAPostBalanceStr, 10, 64)
+	tokenBPreBalance, _ := strconv.ParseInt(tokenBPreBalanceStr, 10, 64)
+	tokenBPostBalance, _ := strconv.ParseInt(tokenBPostBalanceStr, 10, 64)
 	tokenADeltaVolume := tokenAPostBalance - tokenAPreBalance
 	tokenBDeltaVolume := tokenBPostBalance - tokenBPreBalance
 	return tokenADeltaVolume, tokenBDeltaVolume

@@ -3,7 +3,6 @@ package watcher
 import (
 	"context"
 	"encoding/json"
-	"math"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -65,19 +64,14 @@ func compute(count *domain.SwapPairCount) (decimal.Decimal, decimal.Decimal) {
 	// token 价格 TODO 待获取价格
 	tokenAPrice, tokenBPrice := decimal.NewFromInt(1), decimal.NewFromInt(1)
 	// token 余额
-	tokenABalance := precisionConversion(count.TokenABalance.IntPart(), count.TokenADecimal).Mul(tokenAPrice)
-	tokenBBalance := precisionConversion(count.TokenBBalance.IntPart(), count.TokenBDecimal).Mul(tokenBPrice)
+	tokenABalance := count.TokenABalance.Mul(tokenAPrice)
+	tokenBBalance := count.TokenBBalance.Mul(tokenBPrice)
 	// token 交易额
-	tokenAVolume := precisionConversion(count.TokenAVolume.IntPart(), count.TokenADecimal).Mul(tokenAPrice)
-	tokenBVolume := precisionConversion(count.TokenBVolume.IntPart(), count.TokenBDecimal).Mul(tokenBPrice)
+	tokenAVolume := count.TokenAVolume.Mul(tokenAPrice)
+	tokenBVolume := count.TokenBVolume.Mul(tokenBPrice)
 
 	tvlInUsd = tokenABalance.Add(tokenBBalance)
 	volInUsd = tokenAVolume.Add(tokenBVolume)
 
 	return tvlInUsd, volInUsd
-}
-
-// precisionConversion 精度转换
-func precisionConversion(num int64, precision int) decimal.Decimal {
-	return decimal.NewFromInt(num).Div(decimal.NewFromFloat(math.Pow10(precision)))
 }

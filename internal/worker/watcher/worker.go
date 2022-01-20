@@ -36,7 +36,7 @@ func Init(conf *config.Config) error {
 	}
 
 	// 同步总tvl
-	_, err = cron.AddFunc("10 */10 * * * *", SyncTvl)
+	_, err = cron.AddFunc("*/60 * * * * *", SyncTvl)
 
 	cron.Start()
 
