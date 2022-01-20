@@ -3,26 +3,28 @@ package domain
 import (
 	"database/sql/driver"
 	"time"
+
+	"git.cplus.link/go/akit/util/decimal"
 )
 
 type SwapPairCount struct {
-	ID                int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt         *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt         *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	TokenAVolume      uint64     `json:"token_a_volume" gorm:""`
-	TokenBVolume      uint64     `json:"token_b_volume" gorm:""`
-	TokenABalance     uint64     `json:"token_a_balance" gorm:""`
-	TokenBBalance     uint64     `json:"token_b_balance" gorm:""`
-	TokenAPoolAddress string     `json:"-" gorm:"type:varchar(64);  index"`
-	TokenBPoolAddress string     `json:"-" gorm:"type:varchar(64);  index"`
-	TokenSwapAddress  string     `json:"-" gorm:"type:varchar(64);  index"`
-	LastTransaction   string     `json:"-" gorm:"type:varchar(1024);"`
-	Signature         string     `json:"-" gorm:"type:varchar(1024);"`
-	PairName          string     `json:"-" gorm:"type:varchar(64);"`
-	TokenASymbol      string     `json:"-" gorm:"type:varchar(32);"`
-	TokenBSymbol      string     `json:"-" gorm:"type:varchar(32);"`
-	TokenADecimal     int        `json:"-" gorm:"type:int2;"`
-	TokenBDecimal     int        `json:"-" gorm:"type:int2;"`
+	ID                int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	TokenAVolume      decimal.Decimal `json:"tokena_volume" gorm:"type:varchar(64);"`
+	TokenBVolume      decimal.Decimal `json:"tokenb_volume" gorm:"type:varchar(64);"`
+	TokenABalance     decimal.Decimal `json:"tokena_balance" gorm:"type:varchar(64);"`
+	TokenBBalance     decimal.Decimal `json:"tokenb_balance" gorm:"type:varchar(64);"`
+	TokenAPoolAddress string          `json:"-" gorm:"type:varchar(64);  index"`
+	TokenBPoolAddress string          `json:"-" gorm:"type:varchar(64);  index"`
+	TokenSwapAddress  string          `json:"-" gorm:"type:varchar(64);  index"`
+	LastTransaction   string          `json:"-" gorm:"type:varchar(1024);"`
+	Signature         string          `json:"-" gorm:"type:varchar(1024);"`
+	PairName          string          `json:"-" gorm:"type:varchar(64);"`
+	TokenASymbol      string          `json:"-" gorm:"type:varchar(32);"`
+	TokenBSymbol      string          `json:"-" gorm:"type:varchar(32);"`
+	TokenADecimal     int             `json:"-" gorm:"type:int2;"`
+	TokenBDecimal     int             `json:"-" gorm:"type:int2;"`
 }
 
 type Tvl struct {

@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
 
 	"github.com/gagliardetto/solana-go"
@@ -120,7 +121,7 @@ func (tvl *TVL) work() error {
 	} else {
 		tvl.util = nil
 	}
-	
+
 	logger.Info("tvl sync: pullLastSignature", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.pullLastSignature()
 
@@ -150,24 +151,24 @@ func (tvl *TVL) Start() error {
 	}
 
 	// 存入数据库
-	transactionsByte, _ := json.Marshal(tvl.transactionCache)
-	signaturesByte, _ := json.Marshal(tvl.signatureList)
+	// transactionsByte, _ := json.Marshal(tvl.transactionCache)
+	// signaturesByte, _ := json.Marshal(tvl.signatureList)
 
 	swapPairCount := &domain.SwapPairCount{
-		TokenAVolume:      tvl.tokenAVolume,
-		TokenBVolume:      tvl.tokenBVolume,
-		TokenABalance:     tvl.tokenABalance,
-		TokenBBalance:     tvl.tokenBBalance,
+		TokenAVolume:      decimal.NewFromInt(int64(tvl.tokenAVolume)),
+		TokenBVolume:      decimal.NewFromInt(int64(tvl.tokenBVolume)),
+		TokenABalance:     decimal.NewFromInt(int64(tvl.tokenABalance)),
+		TokenBBalance:     decimal.NewFromInt(int64(tvl.tokenBBalance)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,
-		LastTransaction:   string(transactionsByte),
-		Signature:         string(signaturesByte),
-		PairName:          tvl.Name,
-		TokenASymbol:      tvl.TokenA.Symbol,
-		TokenBSymbol:      tvl.TokenB.Symbol,
-		TokenADecimal:     int(tvl.TokenA.Decimal),
-		TokenBDecimal:     int(tvl.TokenB.Decimal),
+		// LastTransaction:   string(transactionsByte),
+		// Signature:     string(signaturesByte),
+		PairName:      tvl.Name,
+		TokenASymbol:  tvl.TokenA.Symbol,
+		TokenBSymbol:  tvl.TokenB.Symbol,
+		TokenADecimal: int(tvl.TokenA.Decimal),
+		TokenBDecimal: int(tvl.TokenB.Decimal),
 	}
 
 	err = model.CreateSwapPairCount(context.Background(), swapPairCount)

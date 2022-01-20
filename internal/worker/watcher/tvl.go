@@ -65,11 +65,11 @@ func compute(count *domain.SwapPairCount) (decimal.Decimal, decimal.Decimal) {
 	// token 价格 TODO 待获取价格
 	tokenAPrice, tokenBPrice := decimal.NewFromInt(1), decimal.NewFromInt(1)
 	// token 余额
-	tokenABalance := precisionConversion(int64(count.TokenABalance), count.TokenADecimal).Mul(tokenAPrice)
-	tokenBBalance := precisionConversion(int64(count.TokenBBalance), count.TokenBDecimal).Mul(tokenBPrice)
+	tokenABalance := precisionConversion(count.TokenABalance.IntPart(), count.TokenADecimal).Mul(tokenAPrice)
+	tokenBBalance := precisionConversion(count.TokenBBalance.IntPart(), count.TokenBDecimal).Mul(tokenBPrice)
 	// token 交易额
-	tokenAVolume := precisionConversion(int64(count.TokenAVolume), count.TokenADecimal).Mul(tokenAPrice)
-	tokenBVolume := precisionConversion(int64(count.TokenBVolume), count.TokenBDecimal).Mul(tokenBPrice)
+	tokenAVolume := precisionConversion(count.TokenAVolume.IntPart(), count.TokenADecimal).Mul(tokenAPrice)
+	tokenBVolume := precisionConversion(count.TokenBVolume.IntPart(), count.TokenBDecimal).Mul(tokenBPrice)
 
 	tvlInUsd = tokenABalance.Add(tokenBBalance)
 	volInUsd = tokenAVolume.Add(tokenBVolume)
