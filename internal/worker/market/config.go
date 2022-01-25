@@ -23,7 +23,7 @@ func SyncConfigJob() error {
 	logger.Info("config syncing ......")
 	configMap := make(map[string][]byte)
 
-	listVal, err := etcd.Client().GetKeyValue(context.TODO(), getEtcdConfigKey(confListKey))
+	listVal, err := etcd.Api().Get(context.TODO(), getEtcdConfigKey(confListKey), nil)
 	if err != nil || listVal == nil {
 		logger.Error("config sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
@@ -35,7 +35,7 @@ func SyncConfigJob() error {
 
 	var confList []string
 
-	err = json.Unmarshal(listVal.Value, &confList)
+	err = json.Unmarshal([]byte(listVal.Node.Value), &confList)
 	if err != nil {
 		logger.Error("config sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
@@ -43,12 +43,12 @@ func SyncConfigJob() error {
 
 	for _, v := range confList {
 
-		confVal, err := etcd.Client().GetKeyValue(context.TODO(), getEtcdConfigKey(v))
+		confVal, err := etcd.Api().Get(context.TODO(), getEtcdConfigKey(v), nil)
 		if err != nil || confVal == nil {
 			continue
 		}
 
-		configMap[v] = confVal.Value
+		configMap[v] = []byte(confVal.Node.Value)
 	}
 
 	configCache = configMap

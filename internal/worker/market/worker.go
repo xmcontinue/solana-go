@@ -22,15 +22,15 @@ var (
 func Init(conf *config.Config) error {
 
 	// 地址init
-	confVal, err := etcd.Client().GetKeyValue(context.TODO(), "/crema/swap-pairs")
+	confVal, err := etcd.Api().Get(context.TODO(), "/crema/swap-pairs", nil)
 	if err != nil || confVal == nil {
 		return errors.Wrap(err)
 	}
-	err = json.Unmarshal(confVal.Value, &swapConfigList)
+	err = json.Unmarshal([]byte(confVal.Node.Value), &swapConfigList)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	
 	// cron init
 	err = conf.UnmarshalKey("cron", &cronConf)
 	if err != nil {

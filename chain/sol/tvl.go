@@ -70,12 +70,13 @@ var (
 func Init(config *config.Config) error {
 	var rErr error
 	once.Do(func() {
-		confVal, err := etcd.Client().GetKeyValue(context.TODO(), "/crema/swap-pairs")
+		confVal, err := etcd.Api().Get(context.TODO(), "/crema/swap-pairs", nil)
 		if err != nil || confVal == nil {
 			rErr = errors.Wrap(err)
 			return
 		}
-		err = json.Unmarshal(confVal.Value, &swapConfigList)
+		
+		err = json.Unmarshal([]byte(confVal.Node.Value), &swapConfigList)
 		if err != nil {
 			rErr = errors.Wrap(err)
 			return

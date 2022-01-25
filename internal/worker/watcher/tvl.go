@@ -68,10 +68,10 @@ func compute(count *domain.SwapPairCount) (decimal.Decimal, decimal.Decimal) {
 	tokenBBalance := count.TokenBBalance.Mul(tokenBPrice)
 	// token 交易额
 	tokenAVolume := count.TokenAVolume.Mul(tokenAPrice)
-	tokenBVolume := count.TokenBVolume.Mul(tokenBPrice)
+	// tokenBVolume := count.TokenBVolume.Mul(tokenBPrice)
 
 	tvlInUsd = tokenABalance.Add(tokenBBalance)
-	volInUsd = tokenAVolume.Add(tokenBVolume)
+	volInUsd = tokenAVolume // .Add(tokenBVolume)
 
 	return tvlInUsd, volInUsd
 }
