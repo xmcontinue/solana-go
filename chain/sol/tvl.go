@@ -75,7 +75,7 @@ func Init(config *config.Config) error {
 			rErr = errors.Wrap(err)
 			return
 		}
-		
+
 		err = json.Unmarshal([]byte(confVal.Node.Value), &swapConfigList)
 		if err != nil {
 			rErr = errors.Wrap(err)
@@ -144,7 +144,8 @@ func (tvl *TVL) work() error {
 }
 func (tvl *TVL) Start() error {
 	logger.Info("tvl syncing ......", logger.String("swap_address:", tvl.SwapAccount))
-
+	tvl.tokenAVolume = 0
+	tvl.tokenBVolume = 0
 	err := tvl.work()
 
 	if err != nil {
