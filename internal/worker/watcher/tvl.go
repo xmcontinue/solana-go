@@ -53,7 +53,7 @@ func CreateSyncTvl() error {
 	err := job.WatchJobForMap("SyncTvl", &m, func(value interface{}) JobInterface {
 		return &SyncTvl{
 			name: "sync_tvl",
-			spec: "0 * * * * *",
+			spec: "0 */10 * * * *",
 			tvl:  sol.NewTVL(value.(*sol.SwapConfig)),
 		}
 	})
