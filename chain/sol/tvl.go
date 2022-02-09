@@ -14,7 +14,6 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
-
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
@@ -70,17 +69,34 @@ var (
 func Init(config *config.Config) error {
 	var rErr error
 	once.Do(func() {
-		confVal, err := etcd.Api().Get(context.TODO(), "/crema/swap-pairs", nil)
-		if err != nil || confVal == nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
-		err = json.Unmarshal([]byte(confVal.Node.Value), &swapConfigList)
+		stopChan := make(chan struct{})
+		resChan, err := etcd.Watch("/crema/swap-pairs", stopChan)
 		if err != nil {
 			rErr = errors.Wrap(err)
 			return
 		}
+
+		go func() {
+			for {
+				select {
+				case res := <-resChan:
+					err = json.Unmarshal(res.Value, &swapConfigList)
+					if err != nil {
+						rErr = errors.Wrap(err)
+						return
+					}
+
+					// 加载配置
+					for _, v := range swapConfigList {
+						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
+						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
+						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+					}
+				}
+			}
+		}()
+
+		time.Sleep(time.Second) // todo
 
 		err = config.UnmarshalKey("chain_net_rpc", &chainNetRpc)
 		if err != nil {
@@ -88,12 +104,6 @@ func Init(config *config.Config) error {
 			return
 		}
 
-		// 加载配置
-		for _, v := range swapConfigList {
-			v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-			v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-			v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
-		}
 	})
 	return rErr
 }
