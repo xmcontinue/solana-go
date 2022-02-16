@@ -33,7 +33,6 @@ func (s *SyncTransaction) DeleteJobFunc(_ *JobInfo) error {
 }
 
 func (s *SyncTransaction) Run() error {
-	s.tvl.Height()
 	// query the last success sync transaction
 	var signature *solana.Signature
 	transaction, err := model.QueryBaseTransaction(context.Background())
@@ -68,6 +67,9 @@ func (s *SyncTransaction) Run() error {
 			MateData:        string(metaData),
 			Signature:       v.Transaction.GetParsedTransaction().Signatures[0].String(),
 		})
+	}
+	if len(baseTransactions) == 0 {
+		return nil
 	}
 
 	// created transaction record

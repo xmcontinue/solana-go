@@ -18,7 +18,7 @@ func (tvl *TVL) PullSignatures(before *solana.Signature, limit int) ([]*rpc.Tran
 		opts.Before = *before
 	}
 
-	out, err := tvl.client.GetSignaturesForAddressWithOpts(
+	out, err := GetRpcClient().GetSignaturesForAddressWithOpts(
 		context.TODO(),
 		tvl.SwapPublicKey,
 		opts,
@@ -40,7 +40,7 @@ func (tvl *TVL) GetTransactionsForSignature(signatures []*rpc.TransactionSignatu
 	}
 
 	for _, value := range signatures {
-		out, err := tvl.client.GetTransaction(
+		out, err := GetRpcClient().GetTransaction(
 			context.TODO(),
 			value.Signature,
 			&opts,
