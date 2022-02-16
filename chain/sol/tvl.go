@@ -3,6 +3,7 @@ package sol
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"sync"
@@ -393,4 +394,9 @@ func (tvl *TVL) getTvl() error {
 
 func SwapConfigList() []*SwapConfig {
 	return swapConfigList
+}
+
+func (tvl *TVL) Height() {
+	height, _ := tvl.client.GetBlockHeight(context.TODO(), rpc.CommitmentMax)
+	fmt.Println("height : ", height)
 }

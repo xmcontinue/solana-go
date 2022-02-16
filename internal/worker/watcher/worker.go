@@ -55,10 +55,15 @@ func Init(conf *config.Config) error {
 
 	job.Cron = job.CronConf.Build()
 
-	// 创建同步tvl
-	syncJob := NewJobInfo("SyncTvl")
-	job.JobList["SyncTvl"] = syncJob
+	// create sync tvl cron job
+	syncTvlJob := NewJobInfo("SyncTvl")
+	job.JobList["SyncTvl"] = syncTvlJob
 	_, err = job.Cron.AddFunc("*/60 * * * * *", CreateSyncTvl)
+
+	// create sync transaction cron job
+	syncTransactionJob := NewJobInfo("SyncTvl")
+	job.JobList["SyncTransaction"] = syncTransactionJob
+	_, err = job.Cron.AddFunc("*/60 * * * * *", CreateSyncTransaction)
 
 	// 同步总tvl
 	_, err = job.Cron.AddFunc("*/60 * * * * *", SyncTotalTvl)

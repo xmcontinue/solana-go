@@ -54,6 +54,7 @@ func autoMigrate() error {
 	if err := dbWPool.NewConn().AutoMigrate(
 		&domain.SwapPairCount{},
 		&domain.Tvl{},
+		&domain.TransactionBase{},
 	); err != nil {
 		return errors.Wrap(err)
 	}

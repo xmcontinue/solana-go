@@ -41,8 +41,6 @@ func (s *SyncTvl) Run() error {
 }
 
 func CreateSyncTvl() error {
-	// 同步单个tvl
-
 	m := sync.Map{}
 
 	keys := sol.SwapConfigList()
@@ -50,10 +48,10 @@ func CreateSyncTvl() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("SyncTvl", &m, func(value interface{}) JobInterface {
+	err := job.WatchJobForMap("SyncTransaction", &m, func(value interface{}) JobInterface {
 		return &SyncTvl{
-			name: "sync_tvl",
-			spec: "0 */10 * * * *",
+			name: "sync_transaction",
+			spec: "*/10 * * * * *",
 			tvl:  sol.NewTVL(value.(*sol.SwapConfig)),
 		}
 	})
