@@ -2,14 +2,10 @@ package sol
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"math"
 	"strconv"
-	"sync"
 	"time"
 
-	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
@@ -18,7 +14,6 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
-	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -31,17 +26,11 @@ type TVL struct {
 	signatureList    []*rpc.TransactionSignature
 	tokenAVolume     uint64
 	tokenBVolume     uint64
-	client           *rpc.Client
-	tokenABalance    uint64
-	tokenBBalance    uint64
-	util             *solana.Signature
+	// client           *rpc.Client
+	tokenABalance uint64
+	tokenBBalance uint64
+	util          *solana.Signature
 	*SwapConfig
-}
-
-type PublicKey struct {
-	TokenAPoolAddress solana.PublicKey
-	TokenBPoolAddress solana.PublicKey
-	TokenSwapAddress  solana.PublicKey
 }
 
 type SwapConfig struct {
@@ -61,53 +50,47 @@ type Token struct {
 	Decimal            uint8 `json:"decimal" mapstructure:"decimal"`
 }
 
-var (
-	once           sync.Once
-	chainNetRpc    string
-	swapConfigList []*SwapConfig
-)
-
-func Init(config *config.Config) error {
-	var rErr error
-	once.Do(func() {
-		stopChan := make(chan struct{})
-		resChan, err := etcd.Watch("/crema/swap-pairs", stopChan)
-		if err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
-		go func() {
-			for {
-				select {
-				case res := <-resChan:
-					err = json.Unmarshal(res.Value, &swapConfigList)
-					if err != nil {
-						rErr = errors.Wrap(err)
-						return
-					}
-
-					// 加载配置
-					for _, v := range swapConfigList {
-						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
-					}
-				}
-			}
-		}()
-
-		time.Sleep(time.Second) // todo
-
-		err = config.UnmarshalKey("chain_net_rpc", &chainNetRpc)
-		if err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
-	})
-	return rErr
-}
+// func Init(config *config.Config) error {
+// 	var rErr error
+// 	once.Do(func() {
+// 		stopChan := make(chan struct{})
+// 		resChan, err := etcd.Watch("/crema/swap-pairs", stopChan)
+// 		if err != nil {
+// 			rErr = errors.Wrap(err)
+// 			return
+// 		}
+//
+// 		go func() {
+// 			for {
+// 				select {
+// 				case res := <-resChan:
+// 					err = json.Unmarshal(res.Value, &swapConfigList)
+// 					if err != nil {
+// 						rErr = errors.Wrap(err)
+// 						return
+// 					}
+//
+// 					// 加载配置
+// 					for _, v := range swapConfigList {
+// 						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
+// 						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
+// 						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+// 					}
+// 				}
+// 			}
+// 		}()
+//
+// 		time.Sleep(time.Second) // todo
+//
+// 		err = config.UnmarshalKey("chain_net_rpc", &chainNetRpc)
+// 		if err != nil {
+// 			rErr = errors.Wrap(err)
+// 			return
+// 		}
+//
+// 	})
+// 	return rErr
+// }
 
 func NewTVL(swapConfig *SwapConfig) *TVL {
 	// TODO 若重启时是否由数据库中读取last transaction至 tvl中
@@ -123,7 +106,6 @@ func NewTVL(swapConfig *SwapConfig) *TVL {
 		signatureList:    make([]*rpc.TransactionSignature, 0),
 		tokenAVolume:     0,
 		tokenBVolume:     0,
-		client:           rpc.New(chainNetRpc),
 		SwapConfig:       swapConfig,
 	}
 }
@@ -231,7 +213,7 @@ func (tvl *TVL) pullLastSignature() {
 				Commitment: rpc.CommitmentFinalized,
 			}
 		}
-		out, err := tvl.client.GetSignaturesForAddressWithOpts(
+		out, err := GetRpcClient().GetSignaturesForAddressWithOpts(
 			context.TODO(),
 			tvl.SwapPublicKey,
 			opts,
@@ -265,7 +247,7 @@ func (tvl *TVL) pullLastSignature() {
 	}
 	finalResult := make([]*rpc.TransactionSignature, 0)
 	for _, value := range pullResult {
-		out, err := tvl.client.GetConfirmedTransaction(
+		out, err := GetRpcClient().GetConfirmedTransaction(
 			context.TODO(),
 			value.Signature,
 		)
@@ -358,7 +340,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 }
 
 func (tvl *TVL) getTvl() error {
-	resp, err := tvl.client.GetAccountInfo(
+	resp, err := GetRpcClient().GetAccountInfo(
 		context.TODO(),
 		tvl.TokenA.SwapTokenPublicKey,
 	)
@@ -373,7 +355,7 @@ func (tvl *TVL) getTvl() error {
 		return errors.Wrap(err)
 	}
 	tvl.tokenABalance = tokenA.Amount
-	resp, err = tvl.client.GetAccountInfo(
+	resp, err = GetRpcClient().GetAccountInfo(
 		context.TODO(),
 		tvl.TokenB.SwapTokenPublicKey,
 	)
@@ -394,9 +376,4 @@ func (tvl *TVL) getTvl() error {
 
 func SwapConfigList() []*SwapConfig {
 	return swapConfigList
-}
-
-func (tvl *TVL) Height() {
-	height, _ := tvl.client.GetBlockHeight(context.TODO(), rpc.CommitmentMax)
-	fmt.Println("height : ", height)
 }
