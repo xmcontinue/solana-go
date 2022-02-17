@@ -10,8 +10,11 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+const defaultBaseSpec = "0 * * * * *"
+
 var (
-	job *Job
+	job  *Job
+	conf *config.Config
 )
 
 type Job struct {
@@ -45,8 +48,9 @@ type JobInterface interface {
 }
 
 // Init 定时任务
-func Init(conf *config.Config) error {
+func Init(viperConf *config.Config) error {
 	job = NewJob()
+	conf = viperConf
 
 	err := conf.UnmarshalKey("cron", &job.CronConf)
 	if err != nil {
@@ -58,15 +62,15 @@ func Init(conf *config.Config) error {
 	// create sync tvl cron job
 	syncTvlJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTvl"] = syncTvlJob
-	_, err = job.Cron.AddFunc("*/60 * * * * *", CreateSyncTvl)
+	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTvl)
 
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTransaction"] = syncTransactionJob
-	_, err = job.Cron.AddFunc("*/60 * * * * *", CreateSyncTransaction)
+	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
 	// 同步总tvl
-	_, err = job.Cron.AddFunc("*/60 * * * * *", SyncTotalTvl)
+	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalTvl)
 
 	job.Cron.Start()
 
@@ -146,4 +150,8 @@ func (j *Job) WatchJobForMap(name string, newMap *sync.Map, createFunc func(inte
 	})
 
 	return nil
+}
+
+func getSpec(key string) string {
+	return conf.Get("cron_spec." + key).(string)
 }
