@@ -255,7 +255,7 @@ func (tvl *TVL) pullLastSignature() {
 			continue
 		}
 		key := value.Signature.String()
-		if len(out.Transaction.Message.Instructions[0].Data) != 17 {
+		if len(out.Transaction.Message.Instructions[0].Data) != 17 || len(out.Transaction.Message.Instructions) > 1 {
 			continue
 		}
 		tvl.transactionCache[key] = out
