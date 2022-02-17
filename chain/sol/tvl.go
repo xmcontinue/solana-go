@@ -288,11 +288,23 @@ func (tvl *TVL) removeOldSignature() {
 }
 
 func (tvl *TVL) calculate() {
+	tvl.tokenAVolume = 0
+	tvl.tokenBVolume = 0
 	for _, meta := range tvl.transactionCache {
 		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
-		tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
-		tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+		if tokenAVolumeTmp < 0 {
+			tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+		}
+		if tokenBVolumeTmp < 0 {
+			tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+		}
 	}
+
+	// for _, meta := range tvl.transactionCache {
+	// 	tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
+	// 	tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+	// 	tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+	// }
 }
 
 func abs(n int64) int64 {
