@@ -265,6 +265,9 @@ func (tvl *TVL) pullLastSignature() {
 		// 	(len(out.Transaction.Message.Instructions[0].Data) != 17 || len(out.Transaction.Message.Instructions[0].Data) != 26) {
 		// 	continue
 		// }
+		if len(out.Transaction.Message.Instructions[0].Data) == 50 || len(out.Transaction.Message.Instructions[0].Data) == 41 {
+			continue
+		}
 		tvl.transactionCache[key] = out
 		finalResult = append(finalResult, value)
 	}
