@@ -89,10 +89,10 @@ func CreateSyncTransaction() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("SyncTvl", &m, func(value interface{}) JobInterface {
+	err := job.WatchJobForMap("SyncTransaction", &m, func(value interface{}) JobInterface {
 		return &SyncTransaction{
-			name: "sync_tvl",
-			spec: "0 */10 * * * *",
+			name: "sync_transaction",
+			spec: getSpec("sync_transaction"),
 			tvl:  sol.NewTVL(value.(*sol.SwapConfig)),
 		}
 	})

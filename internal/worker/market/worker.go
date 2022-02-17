@@ -16,11 +16,12 @@ var (
 	cronConf       *xcron.Config
 	cron           *xcron.Cron
 	swapConfigList []sol.SwapConfig
+	conf           *config.Config
 )
 
 // Init 定时任务
-func Init(conf *config.Config) error {
-
+func Init(viperConf *config.Config) error {
+	conf = viperConf
 	// 地址init
 	confVal, err := etcd.Api().Get(context.TODO(), "/crema/swap-pairs", nil)
 	if err != nil || confVal == nil {
@@ -30,7 +31,7 @@ func Init(conf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	
+
 	// cron init
 	err = conf.UnmarshalKey("cron", &cronConf)
 	if err != nil {
@@ -38,17 +39,17 @@ func Init(conf *config.Config) error {
 	}
 	cron = cronConf.Build()
 
-	_, err = cron.AddFunc("*/10 * * * * *", SwapCountCacheJob)
+	_, err = cron.AddFunc(getSpec("swap_count_cache"), SwapCountCacheJob)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = cron.AddFunc("*/10 * * * * *", TvlCacheJob)
+	_, err = cron.AddFunc(getSpec("tvl_cache"), TvlCacheJob)
 	if err != nil {
 		panic(err)
 	}
 
-	_, err = cron.AddFunc("*/60 * * * * *", SyncConfigJob)
+	_, err = cron.AddFunc(getSpec("sync_config"), SyncConfigJob)
 	if err != nil {
 		panic(err)
 	}
@@ -56,4 +57,8 @@ func Init(conf *config.Config) error {
 	cron.Start()
 
 	return nil
+}
+
+func getSpec(key string) string {
+	return conf.Get("cron_spec." + key).(string)
 }
