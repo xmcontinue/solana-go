@@ -41,6 +41,7 @@ type PairTvl struct {
 	Name     string `json:"name"`
 	TvlInUsd string `json:"tvl_in_usd"`
 	VolInUsd string `json:"vol_in_usd"`
+	TxNum    uint64 `json:"tx_num"`
 }
 
 func (*SwapPairCount) TableName() string {
