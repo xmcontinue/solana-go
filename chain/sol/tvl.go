@@ -255,7 +255,17 @@ func (tvl *TVL) pullLastSignature() {
 			continue
 		}
 		key := value.Signature.String()
-		if len(out.Transaction.Message.Instructions[0].Data) != 17 {
+		// if len(out.Transaction.Message.Instructions[0].Data) != 17 &&
+		// 	len(out.Transaction.Message.Instructions) > 1 &&
+		// 	len(out.Transaction.Message.Instructions[0].Data) != 26 {
+		// 	continue
+		// }
+
+		// if len(out.Transaction.Message.Instructions) == 1 &&
+		// 	(len(out.Transaction.Message.Instructions[0].Data) != 17 || len(out.Transaction.Message.Instructions[0].Data) != 26) {
+		// 	continue
+		// }
+		if len(out.Transaction.Message.Instructions[0].Data) == 50 || len(out.Transaction.Message.Instructions[0].Data) == 41 {
 			continue
 		}
 		tvl.transactionCache[key] = out
@@ -281,11 +291,23 @@ func (tvl *TVL) removeOldSignature() {
 }
 
 func (tvl *TVL) calculate() {
+	tvl.tokenAVolume = 0
+	tvl.tokenBVolume = 0
 	for _, meta := range tvl.transactionCache {
 		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
-		tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
-		tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+		if tokenAVolumeTmp < 0 {
+			tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+		}
+		if tokenBVolumeTmp < 0 {
+			tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+		}
 	}
+
+	// for _, meta := range tvl.transactionCache {
+	// 	tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
+	// 	tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+	// 	tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+	// }
 }
 
 func abs(n int64) int64 {
