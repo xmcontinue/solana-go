@@ -29,6 +29,7 @@ type TVL struct {
 	// client           *rpc.Client
 	tokenABalance uint64
 	tokenBBalance uint64
+	txNum         uint64
 	util          *solana.Signature
 	*SwapConfig
 }
@@ -165,6 +166,7 @@ func (tvl *TVL) Start() error {
 		TokenSwapAddress:  tvl.SwapAccount,
 		// LastTransaction:   string(transactionsByte),
 		// Signature:     string(signaturesByte),
+		TxNum:         tvl.txNum,
 		PairName:      tvl.Name,
 		TokenASymbol:  tvl.TokenA.Symbol,
 		TokenBSymbol:  tvl.TokenB.Symbol,
@@ -293,8 +295,13 @@ func (tvl *TVL) removeOldSignature() {
 func (tvl *TVL) calculate() {
 	tvl.tokenAVolume = 0
 	tvl.tokenBVolume = 0
+	tvl.txNum = 0
+
 	for _, meta := range tvl.transactionCache {
 		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
+		if tokenAVolumeTmp < 0 || tokenBVolumeTmp < 0 {
+			tvl.txNum += 1
+		}
 		if tokenAVolumeTmp < 0 {
 			tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
 		}
