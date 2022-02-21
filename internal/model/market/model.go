@@ -55,6 +55,7 @@ func autoMigrate() error {
 		&domain.SwapPairCount{},
 		&domain.Tvl{},
 		&domain.TransactionBase{},
+		&domain.SwapPairBase{},
 	); err != nil {
 		return errors.Wrap(err)
 	}
@@ -125,6 +126,11 @@ func Transaction(ctx context.Context, f func(context.Context) error) error {
 // IDFilter ID查询条件生成
 func IDFilter(id int64) Filter {
 	return NewFilter("id = ?", id)
+}
+
+// SwapAddress swapAddress查询条件生成
+func SwapAddress(swapAddress string) Filter {
+	return NewFilter("swap_address = ?", swapAddress)
 }
 
 // OrderFilter order查询条件生成

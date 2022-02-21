@@ -7,6 +7,7 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"github.com/gagliardetto/solana-go"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -33,18 +34,56 @@ func (s *SyncTransaction) DeleteJobFunc(_ *JobInfo) error {
 }
 
 func (s *SyncTransaction) Run() error {
-	// query the last success sync transaction
-	var signature *solana.Signature
-	transaction, err := model.QueryBaseTransaction(context.Background())
-	if err == nil {
-		sig, _ := solana.SignatureFromBase58(transaction.Signature)
-		signature = &sig
+	// create before, until
+	before, until := &solana.Signature{}, &solana.Signature{}
+	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
+			SwapAddress:   s.tvl.SwapAccount,
+			TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
+			TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
+			IsSync:        false,
+		})
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	} else {
+		if swapPairBase.IsSync {
+			*before, _ = solana.SignatureFromBase58(swapPairBase.EndSignature)
+		} else {
+			*until, _ = solana.SignatureFromBase58(swapPairBase.StartSignature)
+		}
 	}
 
 	// get signature list
-	signatures, err := s.tvl.PullSignatures(signature, 10)
+	signatures, err := s.tvl.PullSignatures(before, until, 10)
 	if err != nil {
 		return errors.Wrap(err)
+	}
+
+	if len(signatures) == 0 {
+		// sync finished
+		if before == nil {
+			return nil
+		} else {
+			err = model.UpdateSwapPairBase(
+				context.Background(),
+				map[string]interface{}{
+					"is_sync": true,
+				},
+				model.SwapAddress(s.tvl.SwapAccount),
+			)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			return nil
+		}
+	}
+
+	// array inversion
+	for i := 0; i < len(signatures)/2; i++ {
+		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
 	}
 
 	// get transaction list
@@ -74,6 +113,21 @@ func (s *SyncTransaction) Run() error {
 
 	// created transaction record
 	err = model.CreateBaseTransactions(context.Background(), baseTransactions)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	// update schedule
+	swapPairBaseMap := map[string]interface{}{
+		"start_signature": signatures[len(signatures)-1].Signature.String(),
+		"end_signature":   signatures[0].Signature.String(),
+	}
+
+	err = model.UpdateSwapPairBase(
+		context.Background(),
+		swapPairBaseMap,
+		model.SwapAddress(s.tvl.SwapAccount),
+	)
 	if err != nil {
 		return errors.Wrap(err)
 	}
