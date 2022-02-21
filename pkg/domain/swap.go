@@ -25,6 +25,7 @@ type SwapPairCount struct {
 	TokenBSymbol      string          `json:"-" gorm:"type:varchar(32);"`
 	TokenADecimal     int             `json:"-" gorm:"type:int2;"`
 	TokenBDecimal     int             `json:"-" gorm:"type:int2;"`
+	TxNum             uint64          `json:"tx_num" gorm:""`
 }
 
 type Tvl struct {
@@ -40,6 +41,7 @@ type PairTvl struct {
 	Name     string `json:"name"`
 	TvlInUsd string `json:"tvl_in_usd"`
 	VolInUsd string `json:"vol_in_usd"`
+	TxNum    uint64 `json:"tx_num"`
 }
 
 func (*SwapPairCount) TableName() string {

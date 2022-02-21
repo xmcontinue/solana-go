@@ -37,6 +37,7 @@ func SyncTotalTvl() error {
 			Name:     count.PairName,
 			TvlInUsd: tvlInUsd.String(),
 			VolInUsd: volInUsd.String(),
+			TxNum:    count.TxNum,
 		})
 	}
 
