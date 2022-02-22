@@ -69,7 +69,7 @@ func parserSwapTvlCount(swapTransaction *domain.SwapTransaction) *domain.SwapTvl
 	return swapTvlCount
 }
 
-func parserSwapTvlCountDate(swapTransaction *domain.SwapTransaction, date string) *domain.SwapTvlCountDay {
+func parserSwapTvlCountDate(swapTransaction *domain.SwapTransaction, blockDate *time.Time) *domain.SwapTvlCountDay {
 	return &domain.SwapTvlCountDay{
 		LastSwapTransactionID: swapTransaction.ID,
 		SwapAddress:           swapTransaction.SwapAddress,
@@ -81,7 +81,7 @@ func parserSwapTvlCountDate(swapTransaction *domain.SwapTransaction, date string
 		TokenBBalance:         swapTransaction.TokenBBalance,
 		Tvl:                   swapTransaction.TokenABalance.Add(swapTransaction.TokenBBalance),
 		Vol:                   swapTransaction.TokenAVolume,
-		Date:                  date,
+		Date:                  blockDate,
 		TxNum:                 1,
 	}
 
@@ -91,9 +91,9 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 	// 统计tvl
 	swapTvlCount := parserSwapTvlCount(swapTransaction)
 
-	date := time.Unix(swapTransaction.BlockTime.Unix(), 0).Format("2006-01-02")
+	blockDate := time.Date(swapTransaction.BlockTime.Year(), swapTransaction.BlockTime.Month(), swapTransaction.BlockTime.Day(), 0, 0, 0, 0, time.UTC)
 	// 统计 每日 tvl
-	swapTvlCountDay := parserSwapTvlCountDate(swapTransaction, date)
+	swapTvlCountDay := parserSwapTvlCountDate(swapTransaction, &blockDate)
 
 	transaction := &rpc.TransactionWithMeta{}
 	err := json.Unmarshal([]byte(swapTransaction.TxData), transaction)
@@ -129,7 +129,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 		UserTokenABalance:     userTokenABalance,
 		UserTokenBBalance:     userTokenBBalance,
 		TxNum:                 1,
-		Date:                  date,
+		Date:                  &blockDate,
 	}
 
 	trans := func(ctx context.Context) error {
@@ -138,7 +138,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 			return errors.Wrap(err)
 		}
 
-		_, err = model.UpsertSwapTvlCountDay(ctx, swapTvlCountDay, date)
+		_, err = model.UpsertSwapTvlCountDay(ctx, swapTvlCountDay, &blockDate)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -154,7 +154,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 			0,
 			model.NewFilter("user_address = ?", userSwapCount.UserAddress),
 			model.NewFilter("swap_address = ?", userSwapCount.SwapAddress),
-			model.NewFilter("date = ?", date),
+			model.NewFilter("date = ?", blockDate),
 		)
 
 		if err != nil {
@@ -174,7 +174,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 			}
 		}
 
-		_, err = model.UpsertUserSwapCountDay(ctx, userSwapCountDay, date)
+		_, err = model.UpsertUserSwapCountDay(ctx, userSwapCountDay, &blockDate)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -208,7 +208,7 @@ func getUserSwapVolumeAndBalance(transaction *rpc.TransactionWithMeta) (decimal.
 		userTokenAPostVolumeStr string
 		userTokenBPostVolumeStr string
 		userTokenABalance       decimal.Decimal
-		userTokenBbalance       decimal.Decimal
+		userTokenBalance        decimal.Decimal
 	)
 
 	// 此做法只是用于transaction数据是通过GetConfirmedTransaction rpc接口获取的
@@ -225,7 +225,7 @@ func getUserSwapVolumeAndBalance(transaction *rpc.TransactionWithMeta) (decimal.
 	userTokenBPostVolume, _ := strconv.ParseInt(userTokenBPostVolumeStr, 10, 64)
 
 	userTokenABalance = decimal.NewFromInt(userTokenAPostVolume).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(transaction.Meta.PreTokenBalances[0].UiTokenAmount.Decimals)).Neg()))
-	userTokenBbalance = decimal.NewFromInt(userTokenBPostVolume).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(transaction.Meta.PreTokenBalances[1].UiTokenAmount.Decimals)).Neg()))
+	userTokenBalance = decimal.NewFromInt(userTokenBPostVolume).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(transaction.Meta.PreTokenBalances[1].UiTokenAmount.Decimals)).Neg()))
 
 	userTokenADeltaVolume := userTokenAPostVolume - userTokenAPreVolume
 	userTokenBDeltaVolume := userTokenBPostVolume - userTokenBPreVolume
@@ -233,5 +233,5 @@ func getUserSwapVolumeAndBalance(transaction *rpc.TransactionWithMeta) (decimal.
 	userTokenADeltaVolumeDecimal := decimal.NewFromInt(userTokenADeltaVolume).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(transaction.Meta.PreTokenBalances[0].UiTokenAmount.Decimals)).Neg()))
 	userTokenBDeltaVolumeDecimal := decimal.NewFromInt(userTokenBDeltaVolume).Div(decimal.NewFromInt(10).Pow(decimal.NewFromInt(int64(transaction.Meta.PreTokenBalances[1].UiTokenAmount.Decimals)).Neg()))
 
-	return userTokenADeltaVolumeDecimal, userTokenBDeltaVolumeDecimal, userTokenABalance, userTokenBbalance
+	return userTokenADeltaVolumeDecimal, userTokenBDeltaVolumeDecimal, userTokenABalance, userTokenBalance
 }

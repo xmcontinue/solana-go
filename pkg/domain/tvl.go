@@ -46,7 +46,7 @@ type SwapTvlCountDay struct {
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                        // swap token b 余额
 	Tvl                   decimal.Decimal `json:"tvl"  gorm:"type:decimal(36,18);default:0"`                                                                   // tvl
 	Vol                   decimal.Decimal `json:"vol"  gorm:"type:decimal(36,18);default:0"`                                                                   // vol
-	Date                  string          `json:"date" gorm:"not null;type:varchar(64);uniqueIndex:swap_tvl_count_day_date_swap_address_unique_key"`           // 统计日期
+	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_tvl_count_day_date_swap_address_unique_key"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                      // 交易笔数
 }
 
