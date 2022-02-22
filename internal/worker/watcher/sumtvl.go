@@ -28,16 +28,18 @@ func SyncTotalTvl() error {
 			continue
 		}
 
-		tvlInUsd, volInUsd := compute(count)
+		tvlInUsd, volInUsd, apr := compute(count, v.Fee)
 
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 
 		pairs = append(pairs, domain.PairTvl{
-			Name:     count.PairName,
-			TvlInUsd: tvlInUsd.String(),
-			VolInUsd: volInUsd.String(),
-			TxNum:    count.TxNum,
+			Name:        count.PairName,
+			TvlInUsd:    tvlInUsd.String(),
+			VolInUsd:    volInUsd.String(),
+			TxNum:       count.TxNum,
+			SwapAccount: v.SwapAccount,
+			Apr:         apr,
 		})
 	}
 
@@ -58,9 +60,9 @@ func SyncTotalTvl() error {
 	return nil
 }
 
-// compute 计算数量
-func compute(count *domain.SwapPairCount) (decimal.Decimal, decimal.Decimal) {
-	tvlInUsd, volInUsd := decimal.Decimal{}, decimal.Decimal{}
+// compute 计算 tvl vol apr数量
+func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
+	tvlInUsd, volInUsd, apr := decimal.Decimal{}, decimal.Decimal{}, ""
 	// token 价格 TODO 待获取价格
 	tokenAPrice, tokenBPrice := decimal.NewFromInt(1), decimal.NewFromInt(1)
 	// token 余额
@@ -73,5 +75,12 @@ func compute(count *domain.SwapPairCount) (decimal.Decimal, decimal.Decimal) {
 	tvlInUsd = tokenABalance.Add(tokenBBalance)
 	volInUsd = tokenAVolume.Add(tokenBVolume)
 
-	return tvlInUsd, volInUsd
+	if tvlInUsd.IsZero() {
+		apr = "0%"
+	} else {
+		fee, _ := decimal.NewFromString(feeStr)
+		apr = volInUsd.Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 36500为365天*百分比转化100得出
+	}
+
+	return tvlInUsd, volInUsd, apr
 }
