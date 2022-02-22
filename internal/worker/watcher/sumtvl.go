@@ -10,6 +10,7 @@ import (
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -63,8 +64,10 @@ func SyncTotalTvl() error {
 // compute 计算 tvl vol apr数量
 func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
 	tvlInUsd, volInUsd, apr := decimal.Decimal{}, decimal.Decimal{}, ""
-	// token 价格 TODO 待获取价格
-	tokenAPrice, tokenBPrice := decimal.NewFromInt(1), decimal.NewFromInt(1)
+	// token 价格
+	tokenAPrice, _ := coingecko.GetPriceFromTokenAccount(count.TokenAPoolAddress)
+	tokenBPrice, _ := coingecko.GetPriceFromTokenAccount(count.TokenBPoolAddress)
+
 	// token 余额
 	tokenABalance := count.TokenABalance.Mul(tokenAPrice)
 	tokenBBalance := count.TokenBBalance.Mul(tokenBPrice)

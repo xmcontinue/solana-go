@@ -7,6 +7,7 @@ import (
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
+	"git.cplus.link/go/akit/pkg/xlog"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/etcd"
@@ -33,10 +34,11 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// cron init
-	err = conf.UnmarshalKey("cron", &cronConf)
+	err = conf.UnmarshalKey("cron_job_conf", &cronConf)
 	if err != nil {
 		return errors.Wrap(err)
 	}
+	cronConf.WithLogger(xlog.Config{}.Build())
 	cron = cronConf.Build()
 
 	_, err = cron.AddFunc(getSpec("swap_count_cache"), SwapCountCacheJob)
@@ -60,5 +62,5 @@ func Init(viperConf *config.Config) error {
 }
 
 func getSpec(key string) string {
-	return conf.Get("cron_spec." + key).(string)
+	return conf.Get("cron_job_interval." + key).(string)
 }

@@ -7,6 +7,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
+	"git.cplus.link/go/akit/pkg/xlog"
 	"github.com/robfig/cron/v3"
 )
 
@@ -52,11 +53,13 @@ func Init(viperConf *config.Config) error {
 	job = NewJob()
 	conf = viperConf
 
-	err := conf.UnmarshalKey("cron", &job.CronConf)
+	err := conf.UnmarshalKey("cron_job_conf", &job.CronConf)
+
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	job.CronConf.WithLogger(xlog.Config{}.Build())
+	
 	job.Cron = job.CronConf.Build()
 
 	// create sync tvl cron job
@@ -153,5 +156,5 @@ func (j *Job) WatchJobForMap(name string, newMap *sync.Map, createFunc func(inte
 }
 
 func getSpec(key string) string {
-	return conf.Get("cron_spec." + key).(string)
+	return conf.Get("cron_job_interval." + key).(string)
 }
