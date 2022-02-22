@@ -60,8 +60,10 @@ type Tvl struct {
 }
 
 type PairTvl struct {
-	Name     string `json:"name"`
-	TvlInUsd string `json:"tvl_in_usd"`
-	VolInUsd string `json:"vol_in_usd"`
-	TxNum    uint64 `json:"tx_num"`
+	Name        string `json:"name"`
+	TvlInUsd    string `json:"tvl_in_usd"`
+	VolInUsd    string `json:"vol_in_usd"`
+	TxNum       uint64 `json:"tx_num"`
+	Apr         string `json:"apr"`
+	SwapAccount string `json:"swap_account"`
 }
