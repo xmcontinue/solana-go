@@ -22,3 +22,26 @@ func QueryBaseTransaction(ctx context.Context, filter ...Filter) (*domain.Transa
 	}
 	return transaction, nil
 }
+
+func QuerySwapPairBase(ctx context.Context, filter ...Filter) (*domain.SwapPairBase, error) {
+	var info *domain.SwapPairBase
+	if err := wDB(ctx).Model(&domain.SwapPairBase{}).Scopes(filter...).First(&info).Error; err != nil {
+		return info, errors.Wrap(err)
+	}
+	return info, nil
+}
+
+func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBase) error {
+	if err := wDB(ctx).Create(swapPairBase).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func UpdateSwapPairBase(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	db := wDB(ctx).Model(&domain.SwapPairBase{}).Scopes(filter...).Updates(updates)
+	if err := db.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}

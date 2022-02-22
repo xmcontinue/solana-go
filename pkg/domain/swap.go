@@ -28,24 +28,45 @@ type SwapPairCount struct {
 	TxNum             uint64          `json:"tx_num" gorm:""`
 }
 
-type Tvl struct {
-	ID            int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt     *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt     *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	TotalTvlInUsd string     `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
-	TotalVolInUsd string     `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
-	Pairs         JsonString `json:"pairs" gorm:"type:text;"`
-}
-
-type PairTvl struct {
-	Name     string `json:"name"`
-	TvlInUsd string `json:"tvl_in_usd"`
-	VolInUsd string `json:"vol_in_usd"`
-	TxNum    uint64 `json:"tx_num"`
-}
-
 func (*SwapPairCount) TableName() string {
 	return "swap_pairs_counts"
+}
+
+type UserSwapCount struct {
+	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`        // 最后同步的transaction id
+	UserAddress           string          `json:"user_address" gorm:"not null;type:varchar(64);  index"`     // 用户 address
+	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);  index"`     // swap地址
+	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`  // swap token a 地址
+	TokenBAddress         string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`  // swap token b 地址
+	UserTokenAVolume      decimal.Decimal `json:"user_token_a_volume" gorm:"type:decimal(36,18);default:0"`  // swap token a 总交易额
+	UserTokenBVolume      decimal.Decimal `json:"user_token_b_volume" gorm:"type:decimal(36,18);default:0"`  // swap token b 总交易额
+	UserTokenABalance     decimal.Decimal `json:"user_token_a_balance" gorm:"type:decimal(36,18);default:0"` // swap token a 余额
+	UserTokenBBalance     decimal.Decimal `json:"user_token_b_balance" gorm:"type:decimal(36,18);default:0"` // swap token b 余额
+	TxNum                 int64           `json:"tx_num"`                                                    // 交易笔数
+	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`        // 最大交易额
+	MinTxVolume           decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`       // 最小交易额
+}
+
+type UserSwapCountDay struct {
+	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`        // 最后同步的transaction id
+	UserAddress           string          `json:"user_address" gorm:"not null;type:varchar(64);  index"`     // 用户 address
+	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);  index"`     // swap地址
+	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`  // swap token a 地址
+	TokenBAddress         string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`  // swap token b 地址
+	UserTokenAVolume      decimal.Decimal `json:"user_token_a_volume" gorm:"type:decimal(36,18);default:0"`  // swap token a 总交易额
+	UserTokenBVolume      decimal.Decimal `json:"user_token_b_volume" gorm:"type:decimal(36,18);default:0"`  // swap token b 总交易额
+	UserTokenABalance     decimal.Decimal `json:"user_token_a_balance" gorm:"type:decimal(36,18);default:0"` // swap token a 余额
+	UserTokenBBalance     decimal.Decimal `json:"user_token_b_balance" gorm:"type:decimal(36,18);default:0"` // swap token b 余额
+	TxNum                 int64           `json:"tx_num"`                                                    // 交易笔数
+	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`        // 最大交易额
+	MinTxVolume           decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`       // 最小交易额
+	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);index"`              // 统计日期
 }
 
 // JsonString 自定义json gorm byte类型
