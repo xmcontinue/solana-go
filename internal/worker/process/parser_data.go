@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -33,6 +34,7 @@ func syncData() error {
 	for {
 		swapTransactions, total, err := model.QuerySwapTransaction(context.TODO(), 1, 0, model.NewFilter("id > ?", lastSwapTransactionID))
 		if err != nil {
+			logger.Error("get single transaction err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
 
@@ -40,12 +42,16 @@ func syncData() error {
 			return nil
 		}
 
-		parserData(context.TODO(), swapTransactions[0])
+		if err = parserData(context.TODO(), swapTransactions[0]); err != nil {
+			logger.Error("parser data err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
 
 		// 同步到redis
 		lastSwapTransactionID = swapTransactions[len(swapTransactions)-1].ID
 		err = redisClient.Set(context.TODO(), string(LastSwapTransactionID), lastSwapTransactionID, 0).Err()
 		if err != nil {
+			logger.Error("sync transaction id err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
 	}
@@ -62,8 +68,8 @@ func parserSwapTvlCount(swapTransaction *domain.SwapTransaction) *domain.SwapTvl
 		TokenBVolume:          swapTransaction.TokenBVolume,
 		TokenABalance:         swapTransaction.TokenABalance,
 		TokenBBalance:         swapTransaction.TokenBBalance,
-		Tvl:                   swapTransaction.TokenABalance.Add(swapTransaction.TokenBBalance),
-		Vol:                   swapTransaction.TokenAVolume,
+		Tvl:                   swapTransaction.TokenABalance.Add(swapTransaction.TokenBBalance), // todo 汇率转换
+		Vol:                   swapTransaction.TokenAVolume,                                     // todo 汇率转换
 	}
 
 	return swapTvlCount
@@ -79,15 +85,15 @@ func parserSwapTvlCountDate(swapTransaction *domain.SwapTransaction, blockDate *
 		TokenBVolume:          swapTransaction.TokenBVolume,
 		TokenABalance:         swapTransaction.TokenABalance,
 		TokenBBalance:         swapTransaction.TokenBBalance,
-		Tvl:                   swapTransaction.TokenABalance.Add(swapTransaction.TokenBBalance),
-		Vol:                   swapTransaction.TokenAVolume,
+		Tvl:                   swapTransaction.TokenABalance.Add(swapTransaction.TokenBBalance), // todo 汇率转换
+		Vol:                   swapTransaction.TokenAVolume,                                     // todo 汇率转换
 		Date:                  blockDate,
 		TxNum:                 1,
 	}
 
 }
 
-func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
+func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) error {
 	// 统计tvl
 	swapTvlCount := parserSwapTvlCount(swapTransaction)
 
@@ -98,7 +104,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 	transaction := &rpc.TransactionWithMeta{}
 	err := json.Unmarshal([]byte(swapTransaction.TxData), transaction)
 	if err != nil {
-		return
+		return errors.Wrap(err)
 	}
 	// 统计用户swap
 	userTokenADeltaVolumeDecimal, userTokenBDeltaVolumeDecimal, userTokenABalance, userTokenBBalance := getUserSwapVolumeAndBalance(transaction)
@@ -179,13 +185,27 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) {
 			return errors.Wrap(err)
 		}
 
+		// 同步用户的tvl 到redis，在这里同步，主要是为了减少查库
+		if err = redisClient.Set(ctx, getUserSwapTvlKey(userSwapCountDay.UserAddress), userSwapCountDay.UserTokenABalance, 0).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		// swap address 最新tvl
+		if err = redisClient.Set(ctx, getSwapTvlCountKey(swapTvlCount.SwapAddress), swapTvlCount.TokenABalance, 0).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+
 		return nil
 	}
 
 	if err = model.Transaction(ctx, trans); err != nil {
-		return
+		return errors.Wrap(err)
 	}
+	return errors.Wrap(err)
+}
 
+func getUserSwapTvlKey(key string) string {
+	return fmt.Sprintf("user:swap:lasttvl:%s", key)
 }
 
 // swap 交易量是不能为0的

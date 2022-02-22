@@ -161,3 +161,10 @@ func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 		return by.SetOrderBy(tag, db)
 	}
 }
+
+// IDDESCFilter ID降序序过滤
+func IDDESCFilter() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order("id desc")
+	}
+}
