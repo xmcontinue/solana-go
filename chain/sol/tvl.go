@@ -190,9 +190,6 @@ func (tvl *TVL) pullLastSignature() {
 	var opts *rpc.GetSignaturesForAddressOpts
 	pullResult := make([]*rpc.TransactionSignature, 0)
 	for {
-		if len(pullResult) > 10000 {
-			break
-		}
 		if tvl.util == nil && before == nil {
 			opts = &rpc.GetSignaturesForAddressOpts{
 				Limit:      &limit,
