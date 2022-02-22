@@ -34,6 +34,21 @@ func (s *SyncTransaction) DeleteJobFunc(_ *JobInfo) error {
 }
 
 func (s *SyncTransaction) Run() error {
+	// success := false
+	// for {
+	// 	err := s.SyncTransaction(&success)
+	// 	if err != nil {
+	// 		break
+	// 	}
+	// 	if success {
+	// 		break
+	// 	}
+	// }
+
+	return nil
+}
+
+func (s *SyncTransaction) SyncTransaction(success *bool) error {
 	// create before, until
 	before, until := &solana.Signature{}, &solana.Signature{}
 	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
@@ -62,6 +77,7 @@ func (s *SyncTransaction) Run() error {
 	}
 
 	if len(signatures) == 0 {
+		*success = true
 		// sync finished
 		if before == nil {
 			return nil
@@ -92,6 +108,10 @@ func (s *SyncTransaction) Run() error {
 		return errors.Wrap(err)
 	}
 
+	if len(transactions) != len(signatures) {
+		return errors.Wrap(errors.New("query transaction failed !"))
+	}
+
 	baseTransactions := make([]*domain.TransactionBase, 0, len(transactions))
 
 	for _, v := range transactions {
@@ -106,9 +126,6 @@ func (s *SyncTransaction) Run() error {
 			MateData:        string(metaData),
 			Signature:       v.Transaction.GetParsedTransaction().Signatures[0].String(),
 		})
-	}
-	if len(baseTransactions) == 0 {
-		return nil
 	}
 
 	// created transaction record
