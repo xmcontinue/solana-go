@@ -84,7 +84,7 @@ func UpsertSwapTvlCount(ctx context.Context, swapTvlCount *domain.SwapTvlCount) 
 	return &after, nil
 }
 
-func UpsertSwapTvlCountDay(ctx context.Context, swapTvlCount *domain.SwapTvlCountDay, date string) (*domain.SwapTvlCountDay, error) {
+func UpsertSwapTvlCountDay(ctx context.Context, swapTvlCount *domain.SwapTvlCountDay, blockDate *time.Time) (*domain.SwapTvlCountDay, error) {
 	var (
 		after   domain.SwapTvlCountDay
 		now     = time.Now().UTC()
@@ -101,7 +101,7 @@ func UpsertSwapTvlCountDay(ctx context.Context, swapTvlCount *domain.SwapTvlCoun
 			"vol":                      swapTvlCount.Vol,
 			"updated_at":               &now,
 			"created_at":               &now,
-			"date":                     date,
+			"date":                     blockDate,
 			"tx_num":                   1,
 		}
 	)
@@ -172,7 +172,7 @@ func UpsertUserSwapCount(ctx context.Context, userSwapCount *domain.UserSwapCoun
 	return &after, nil
 }
 
-func UpsertUserSwapCountDay(ctx context.Context, userSwapCount *domain.UserSwapCountDay, date string) (*domain.UserSwapCountDay, error) {
+func UpsertUserSwapCountDay(ctx context.Context, userSwapCount *domain.UserSwapCountDay, blockDate *time.Time) (*domain.UserSwapCountDay, error) {
 
 	var (
 		after   domain.UserSwapCountDay
@@ -190,7 +190,7 @@ func UpsertUserSwapCountDay(ctx context.Context, userSwapCount *domain.UserSwapC
 			"updated_at":               &now,
 			"created_at":               &now,
 			"tx_num":                   1,
-			"date":                     date,
+			"date":                     blockDate,
 		}
 	)
 
