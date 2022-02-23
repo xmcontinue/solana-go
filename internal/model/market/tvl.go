@@ -7,11 +7,12 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
 	sq "github.com/Masterminds/squirrel"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func QuerySwapTransaction(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransaction, int64, error) {
+func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransaction, int64, error) {
 	var (
 		db    = rDB(ctx)
 		list  []*domain.SwapTransaction
@@ -47,6 +48,47 @@ func SumLast24hVol(ctx context.Context, typ string, filter ...Filter) (decimal.D
 	}
 
 	return decimal.Zero, nil
+}
+
+type SwapVol struct {
+	AccountAddress string
+	Vol            decimal.Decimal
+}
+
+// SumSwapAccountLast24Vol 最近24小时 swap account 的总交易额
+func SumSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*SwapVol, error) {
+	var (
+		err     error
+		db      = rDB(ctx)
+		swapVol []*SwapVol
+	)
+
+	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Select("sum(token_a_volume) as vol,swap_address").Group("swap_address").Find(&swapVol).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.Wrap(errors.RecordNotFound)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return swapVol, nil
+}
+
+// SumUserSwapAccountLast24Vol 最近24小时 user account 的总交易额
+func SumUserSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*SwapVol, error) {
+	var (
+		err     error
+		db      = rDB(ctx)
+		swapVol []*SwapVol
+	)
+
+	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Select("sum(token_a_volume) as vol,user_address").Group("user_address").Find(&swapVol).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.Wrap(errors.RecordNotFound)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return swapVol, nil
 }
 
 func UpsertSwapTvlCount(ctx context.Context, swapTvlCount *domain.SwapTvlCount) (*domain.SwapTvlCount, error) {

@@ -3,6 +3,7 @@ package handler
 import (
 	"sync"
 
+	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/types"
@@ -17,7 +18,8 @@ import (
 )
 
 type MarketService struct {
-	conf *config.Config
+	conf        *config.Config
+	redisClient *redisV8.Client
 }
 
 var (
@@ -61,6 +63,12 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		if err := market.Init(conf); err != nil {
 			panic(err)
 		}
+		var err error
+		instance.redisClient, err = initRedis(conf)
+		if err != nil {
+			rErr = errors.Wrap(err)
+			return
+		}
 
 	})
 	return instance, rErr
@@ -81,4 +89,14 @@ func limit(limit int) int {
 		return MaxLimit
 	}
 	return limit
+}
+
+// initRedis 初始化redis
+func initRedis(conf *config.Config) (*redisV8.Client, error) {
+	c := redisV8.DefaultRedisConfig()
+	err := conf.UnmarshalKey("redis", c)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return redisV8.NewClient(c)
 }

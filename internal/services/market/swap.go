@@ -5,11 +5,13 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
+	"git.cplus.link/go/akit/util/decimal"
 	"git.cplus.link/go/akit/util/gquery"
 
+	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/market"
-
+	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
@@ -45,19 +47,47 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	swapTvl, err := model.GetLastSwapTvlCount(ctx, gquery.ParseQuery(args))
-	if err != nil {
-		return errors.Wrap(err)
+	swapAddressList := make([]string, 0, 5)
+
+	if args.SwapAddress == "" {
+		// 表示获取所有swap address 的tvl
+		for _, v := range sol.SwapConfigList() {
+			swapAddressList = append(swapAddressList, v.SwapAccount)
+		}
+	} else {
+		swapAddressList = append(swapAddressList, args.SwapAddress)
 	}
 
-	reply.SwapTvlCount = swapTvl
+	for _, swapAddress := range swapAddressList {
+		tvl, err := t.redisClient.Get(ctx, domain.SwapTvlCountKey(swapAddress).Key).Result()
+		if err != nil && !t.redisClient.ErrIsNil(err) {
+			return errors.Wrap(err)
+		} else if err != nil && !t.redisClient.ErrIsNil(err) {
+			continue
+		}
+
+		tvlDecimal, _ := decimal.NewFromString(tvl)
+		swapAddressTvl := &iface.SwapAddressTvl{
+			SwapAccount: swapAddress,
+			Tvl:         tvlDecimal,
+		}
+
+		reply.List = append(reply.List, swapAddressTvl)
+	}
+
+	//swapTvl, err := model.GetLastSwapTvlCount(ctx, gquery.ParseQuery(args))
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
+
+	//reply.SwapTvlCount = swapTvl
 
 	// gateway 获取数据
 
 	return nil
 }
 
-// GetNetRecord 某一时刻使用的rpc 网络情况
+// GetNetRecord 某一时刻使用的rpc 网络情况，仅给后端使用
 func (t *MarketService) GetNetRecord(ctx context.Context, args *iface.GetNetRecordReq, reply *iface.GetNetRecordResp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
@@ -77,21 +107,29 @@ func (t *MarketService) GetNetRecord(ctx context.Context, args *iface.GetNetReco
 	return nil
 }
 
+// Get24hVolV2 获取swap account 或者 user account 的24小时的交易量
 func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2Req, reply *iface.Get24hVolV2Resp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	list, total, err := model.QuerySwapTvlCountDay(ctx, limit(args.Limit), args.Offset, gquery.ParseQuery(args))
-	if err != nil {
+	vol, err := t.redisClient.Get(ctx, domain.SwapVolCountLast24HKey(args.SwapAddress).Key).Result()
+	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
+	} else if err == nil {
+		tvlDecimal, _ := decimal.NewFromString(vol)
+
+		reply.Vol = tvlDecimal
+
+		return nil
 	}
 
-	reply.Limit = limit(args.Limit)
-	reply.Offset = args.Offset
-	reply.List = list
-	reply.Total = total
+	// 在数据库里面找，并且同步到redis里
+
+	tvlDecimal, _ := decimal.NewFromString(vol)
+
+	reply.Vol = tvlDecimal
 
 	return nil
 }
