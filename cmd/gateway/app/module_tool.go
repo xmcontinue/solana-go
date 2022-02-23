@@ -26,6 +26,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("/swap/count", handler.SwapCount)
 	engine.GET("/config", handler.GetConfig)
 	engine.GET("/tvl/24hour", handler.GetTvl)
+	engine.GET("/v2/tvl/24hour", handler.GetTvl)
 
 	return nil
 }

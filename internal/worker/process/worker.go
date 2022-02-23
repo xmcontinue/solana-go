@@ -25,7 +25,7 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// cron init
-	err = conf.UnmarshalKey("cron", &cronConf)
+	err = conf.UnmarshalKey("cron_job_conf", &cronConf)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -51,7 +51,7 @@ func Init(viperConf *config.Config) error {
 }
 
 func getSpec(key string) string {
-	return conf.Get("cron_spec." + key).(string)
+	return conf.Get("cron_job_interval." + key).(string)
 }
 
 // initRedis 初始化redis

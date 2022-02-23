@@ -2,8 +2,6 @@ package process
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -32,7 +30,7 @@ func syncData() error {
 	}
 
 	for {
-		swapTransactions, total, err := model.QuerySwapTransaction(context.TODO(), 1, 0, model.NewFilter("id > ?", lastSwapTransactionID))
+		swapTransactions, total, err := model.QuerySwapTransactions(context.TODO(), 1, 0, model.NewFilter("id > ?", lastSwapTransactionID))
 		if err != nil {
 			logger.Error("get single transaction err", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -102,10 +100,10 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) er
 	swapTvlCountDay := parserSwapTvlCountDate(swapTransaction, &blockDate)
 
 	transaction := &rpc.TransactionWithMeta{}
-	err := json.Unmarshal([]byte(swapTransaction.TxData), transaction)
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	//err := json.Unmarshal(swapTransaction.TxData, transaction)
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
 	// 统计用户swap
 	userTokenADeltaVolumeDecimal, userTokenBDeltaVolumeDecimal, userTokenABalance, userTokenBBalance := getUserSwapVolumeAndBalance(transaction)
 
@@ -139,7 +137,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) er
 	}
 
 	trans := func(ctx context.Context) error {
-		_, err = model.UpsertSwapTvlCount(ctx, swapTvlCount)
+		afterSwapTvlCount, err := model.UpsertSwapTvlCount(ctx, swapTvlCount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -149,7 +147,7 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) er
 			return errors.Wrap(err)
 		}
 
-		_, err = model.UpsertUserSwapCount(ctx, userSwapCount)
+		afterUserSwapCount, err := model.UpsertUserSwapCount(ctx, userSwapCount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -185,27 +183,32 @@ func parserData(ctx context.Context, swapTransaction *domain.SwapTransaction) er
 			return errors.Wrap(err)
 		}
 
-		// 同步用户的tvl 到redis，在这里同步，主要是为了减少查库
-		if err = redisClient.Set(ctx, getUserSwapTvlKey(userSwapCountDay.UserAddress), userSwapCountDay.UserTokenABalance, 0).Err(); err != nil {
+		// swap address 最新tvl
+		redisKey := domain.SwapTvlCountKey(afterSwapTvlCount.SwapAddress)
+		if err = redisClient.Set(ctx, redisKey.Key, afterSwapTvlCount.TokenABalance.String(), redisKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
-		// swap address 最新tvl
-		if err = redisClient.Set(ctx, getSwapTvlCountKey(swapTvlCount.SwapAddress), swapTvlCount.TokenABalance, 0).Err(); err != nil {
+		// swap address 总的交易额（vol）
+		redisKey = domain.AccountSwapVolCountKey(afterSwapTvlCount.SwapAddress)
+		if err = redisClient.Set(ctx, redisKey.Key, afterSwapTvlCount.TokenABalance.String(), redisKey.Timeout).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		// user address 总的交易额（vol）
+		redisKey = domain.AccountSwapVolCountKey(afterUserSwapCount.UserAddress)
+		if err = redisClient.Set(ctx, redisKey.Key, afterUserSwapCount.UserTokenAVolume.String(), redisKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
 		return nil
 	}
 
-	if err = model.Transaction(ctx, trans); err != nil {
+	if err := model.Transaction(ctx, trans); err != nil {
 		return errors.Wrap(err)
 	}
-	return errors.Wrap(err)
-}
 
-func getUserSwapTvlKey(key string) string {
-	return fmt.Sprintf("user:swap:lasttvl:%s", key)
+	return nil
 }
 
 // swap 交易量是不能为0的
