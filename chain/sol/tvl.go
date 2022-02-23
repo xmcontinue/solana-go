@@ -185,7 +185,7 @@ func (tvl *TVL) Start() error {
 }
 
 func (tvl *TVL) pullLastSignature() {
-	limit := 10
+	limit := 1000
 	var before *solana.Signature = nil
 	var opts *rpc.GetSignaturesForAddressOpts
 	pullResult := make([]*rpc.TransactionSignature, 0)
@@ -245,10 +245,22 @@ func (tvl *TVL) pullLastSignature() {
 			before = &(out[size-1].Signature)
 			pullResult = append(pullResult, out[0:(size)]...)
 		}
-		time.Sleep(time.Second * 1)
+
 	}
+	totalSize := len(pullResult)
+	validPullResult := make([]*rpc.TransactionSignature, 0)
+
+	for _, v := range pullResult {
+		if v.Err == nil {
+			validPullResult = append(validPullResult, v)
+		}
+	}
+	logger.Info("tvl sync: signature size", logger.Int("total size:", totalSize), logger.Int("valid size:", len(validPullResult)), logger.String("swap_address:", tvl.SwapAccount))
 	finalResult := make([]*rpc.TransactionSignature, 0)
-	for _, value := range pullResult {
+	for k, value := range validPullResult {
+		if k%100 == 0 && k > 0 {
+			logger.Info("tvl sync: transaction num", logger.Int("now size:", k), logger.Int("valid size:", len(validPullResult)), logger.String("swap_address:", tvl.SwapAccount))
+		}
 		out, err := GetRpcClient().GetConfirmedTransaction(
 			context.TODO(),
 			value.Signature,
