@@ -34,13 +34,13 @@ func (s *SyncTransaction) DeleteJobFunc(_ *JobInfo) error {
 }
 
 func (s *SyncTransaction) Run() error {
-	// success := false
+	// complete := false
 	// for {
-	// 	err := s.SyncTransaction(&success)
+	// 	err := s.SyncTransaction(&complete)
 	// 	if err != nil {
 	// 		break
 	// 	}
-	// 	if success {
+	// 	if complete {
 	// 		break
 	// 	}
 	// }
@@ -50,7 +50,10 @@ func (s *SyncTransaction) Run() error {
 
 func (s *SyncTransaction) SyncTransaction(success *bool) error {
 	// create before, until
-	before, until := &solana.Signature{}, &solana.Signature{}
+	var (
+		before *solana.Signature
+		until  *solana.Signature
+	)
 	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
@@ -64,9 +67,11 @@ func (s *SyncTransaction) SyncTransaction(success *bool) error {
 		}
 	} else {
 		if swapPairBase.IsSync {
-			*before, _ = solana.SignatureFromBase58(swapPairBase.EndSignature)
+			sig, _ := solana.SignatureFromBase58(swapPairBase.EndSignature)
+			before = &sig
 		} else {
-			*until, _ = solana.SignatureFromBase58(swapPairBase.StartSignature)
+			sig, _ := solana.SignatureFromBase58(swapPairBase.StartSignature)
+			until = &sig
 		}
 	}
 
@@ -77,11 +82,8 @@ func (s *SyncTransaction) SyncTransaction(success *bool) error {
 	}
 
 	if len(signatures) == 0 {
-		*success = true
 		// sync finished
-		if before == nil {
-			return nil
-		} else {
+		if before != nil {
 			err = model.UpdateSwapPairBase(
 				context.Background(),
 				map[string]interface{}{
@@ -92,9 +94,11 @@ func (s *SyncTransaction) SyncTransaction(success *bool) error {
 			if err != nil {
 				return errors.Wrap(err)
 			}
-
-			return nil
 		}
+
+		*success = true
+
+		return nil
 	}
 
 	// array inversion
@@ -108,43 +112,57 @@ func (s *SyncTransaction) SyncTransaction(success *bool) error {
 		return errors.Wrap(err)
 	}
 
-	if len(transactions) != len(signatures) {
-		return errors.Wrap(errors.New("query transaction failed !"))
+	// open model transaction
+	txModelTransaction := func(mCtx context.Context) error {
+		// update schedule
+		swapPairBaseMap := map[string]interface{}{}
+		if before == nil {
+			swapPairBaseMap["end_signature"] = signatures[0].Signature.String()
+		}
+
+		if until == nil {
+			swapPairBaseMap["start_signature"] = signatures[len(signatures)-1].Signature.String()
+		}
+
+		err = model.UpdateSwapPairBase(
+			context.Background(),
+			swapPairBaseMap,
+			model.SwapAddress(s.tvl.SwapAccount),
+		)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if len(transactions) == 0 {
+			return nil
+		}
+
+		// created transaction record
+		baseTransactions := make([]*domain.TransactionBase, 0, len(transactions))
+
+		for _, v := range transactions {
+			blockTime := v.BlockTime.Time()
+			transactionData, _ := v.Transaction.MarshalJSON()
+			metaData, _ := json.Marshal(v.Meta)
+
+			baseTransactions = append(baseTransactions, &domain.TransactionBase{
+				BlockTime:       &blockTime,
+				Slot:            v.Slot,
+				TransactionData: string(transactionData),
+				MateData:        string(metaData),
+				Signature:       v.Transaction.GetParsedTransaction().Signatures[0].String(),
+			})
+		}
+
+		err = model.CreateBaseTransactions(context.Background(), baseTransactions)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		return nil
 	}
 
-	baseTransactions := make([]*domain.TransactionBase, 0, len(transactions))
-
-	for _, v := range transactions {
-		blockTime := v.BlockTime.Time()
-		transactionData, _ := v.Transaction.MarshalJSON()
-		metaData, _ := json.Marshal(v.Meta)
-
-		baseTransactions = append(baseTransactions, &domain.TransactionBase{
-			BlockTime:       &blockTime,
-			Slot:            v.Slot,
-			TransactionData: string(transactionData),
-			MateData:        string(metaData),
-			Signature:       v.Transaction.GetParsedTransaction().Signatures[0].String(),
-		})
-	}
-
-	// created transaction record
-	err = model.CreateBaseTransactions(context.Background(), baseTransactions)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	// update schedule
-	swapPairBaseMap := map[string]interface{}{
-		"start_signature": signatures[len(signatures)-1].Signature.String(),
-		"end_signature":   signatures[0].Signature.String(),
-	}
-
-	err = model.UpdateSwapPairBase(
-		context.Background(),
-		swapPairBaseMap,
-		model.SwapAddress(s.tvl.SwapAccount),
-	)
+	err = model.Transaction(context.Background(), txModelTransaction)
 	if err != nil {
 		return errors.Wrap(err)
 	}
