@@ -1,9 +1,12 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
+	"github.com/gagliardetto/solana-go/rpc"
 	"gorm.io/gorm"
 )
 
@@ -46,4 +49,19 @@ type SwapPairBase struct {
 	IsSync         bool   `json:"is_sync"`                                                  // 是否同步至起始区块
 	StartSignature string `json:"start_signature" gorm:"not null;type:varchar(128)"`        // 当前起始签名
 	EndSignature   string `json:"end_signature" gorm:"not null;type:varchar(128)"`          // 当前最新签名
+}
+
+// TxData 自定义tx原始数据类型
+type TxData rpc.GetTransactionResult
+
+func (tx *TxData) Value() (driver.Value, error) {
+	b, err := json.Marshal(tx)
+	if err != nil {
+		return nil, err
+	}
+	return driver.String.ConvertValue(b)
+}
+
+func (tx *TxData) Scan(v interface{}) error {
+	return json.Unmarshal([]byte(v.(string)), tx)
 }

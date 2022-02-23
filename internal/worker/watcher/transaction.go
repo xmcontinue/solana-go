@@ -2,11 +2,13 @@ package watcher
 
 import (
 	"context"
-	"encoding/json"
+	"math"
 	"sync"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -33,125 +35,6 @@ func (s *SyncTransaction) DeleteJobFunc(_ *JobInfo) error {
 	return nil
 }
 
-func (s *SyncTransaction) Run() error {
-	// success := false
-	// for {
-	// 	err := s.SyncTransaction(&success)
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	if success {
-	// 		break
-	// 	}
-	// }
-
-	return nil
-}
-
-func (s *SyncTransaction) SyncTransaction(success *bool) error {
-	// create before, until
-	before, until := &solana.Signature{}, &solana.Signature{}
-	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
-			SwapAddress:   s.tvl.SwapAccount,
-			TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
-			TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
-			IsSync:        false,
-		})
-		if err != nil {
-			return errors.Wrap(err)
-		}
-	} else {
-		if swapPairBase.IsSync {
-			*before, _ = solana.SignatureFromBase58(swapPairBase.EndSignature)
-		} else {
-			*until, _ = solana.SignatureFromBase58(swapPairBase.StartSignature)
-		}
-	}
-
-	// get signature list
-	signatures, err := s.tvl.PullSignatures(before, until, 10)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if len(signatures) == 0 {
-		*success = true
-		// sync finished
-		if before == nil {
-			return nil
-		} else {
-			err = model.UpdateSwapPairBase(
-				context.Background(),
-				map[string]interface{}{
-					"is_sync": true,
-				},
-				model.SwapAddress(s.tvl.SwapAccount),
-			)
-			if err != nil {
-				return errors.Wrap(err)
-			}
-
-			return nil
-		}
-	}
-
-	// array inversion
-	for i := 0; i < len(signatures)/2; i++ {
-		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
-	}
-
-	// get transaction list
-	transactions, err := s.tvl.GetTransactionsForSignature(signatures)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if len(transactions) != len(signatures) {
-		return errors.Wrap(errors.New("query transaction failed !"))
-	}
-
-	baseTransactions := make([]*domain.TransactionBase, 0, len(transactions))
-
-	for _, v := range transactions {
-		blockTime := v.BlockTime.Time()
-		transactionData, _ := v.Transaction.MarshalJSON()
-		metaData, _ := json.Marshal(v.Meta)
-
-		baseTransactions = append(baseTransactions, &domain.TransactionBase{
-			BlockTime:       &blockTime,
-			Slot:            v.Slot,
-			TransactionData: string(transactionData),
-			MateData:        string(metaData),
-			Signature:       v.Transaction.GetParsedTransaction().Signatures[0].String(),
-		})
-	}
-
-	// created transaction record
-	err = model.CreateBaseTransactions(context.Background(), baseTransactions)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	// update schedule
-	swapPairBaseMap := map[string]interface{}{
-		"start_signature": signatures[len(signatures)-1].Signature.String(),
-		"end_signature":   signatures[0].Signature.String(),
-	}
-
-	err = model.UpdateSwapPairBase(
-		context.Background(),
-		swapPairBaseMap,
-		model.SwapAddress(s.tvl.SwapAccount),
-	)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	return nil
-}
-
 func CreateSyncTransaction() error {
 	m := sync.Map{}
 
@@ -172,4 +55,239 @@ func CreateSyncTransaction() error {
 	}
 
 	return nil
+}
+
+func (s *SyncTransaction) Run() error {
+	// complete := false
+	// for {
+	// 	err := s.SyncTransaction(&complete)
+	// 	if err != nil {
+	// 		break
+	// 	}
+	// 	if complete {
+	// 		break
+	// 	}
+	// }
+
+	return nil
+}
+
+func (s *SyncTransaction) SyncTransaction(success *bool) error {
+	// get signatures for swap account address
+	before, until, err := s.getBeforeSignatureForAddress()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	signatures, err := s.getSignatures(before, until, success)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	if *success == true {
+		return nil
+	}
+
+	// get transactions for signatures
+	transactions, err := s.tvl.GetTransactionsForSignature(signatures)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	// update data to pgsql
+	err = s.writeTxToDb(before, until, signatures, transactions)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+// getBeforeSignatureForAddress
+func (s *SyncTransaction) getBeforeSignatureForAddress() (*solana.Signature, *solana.Signature, error) {
+	// create before, until
+	var (
+		before *solana.Signature
+		until  *solana.Signature
+	)
+	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
+			SwapAddress:   s.tvl.SwapAccount,
+			TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
+			TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
+			IsSync:        false,
+		})
+		if err != nil {
+			return before, until, errors.Wrap(err)
+		}
+	} else {
+		if swapPairBase.IsSync {
+			sig, _ := solana.SignatureFromBase58(swapPairBase.EndSignature)
+			until = &sig
+		} else {
+			sig, _ := solana.SignatureFromBase58(swapPairBase.StartSignature)
+			before = &sig
+		}
+	}
+
+	return before, until, nil
+}
+
+// getSignatures
+func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, success *bool) ([]*rpc.TransactionSignature, error) {
+	// get signature list
+	signatures, err := s.tvl.PullSignatures(before, until, 10)
+	if err != nil {
+		return signatures, errors.Wrap(err)
+	}
+
+	if len(signatures) == 0 {
+		// sync finished
+		if before != nil {
+			err = model.UpdateSwapPairBase(
+				context.Background(),
+				map[string]interface{}{
+					"is_sync": true,
+				},
+				model.SwapAddress(s.tvl.SwapAccount),
+			)
+			if err != nil {
+				return signatures, errors.Wrap(err)
+			}
+		}
+
+		*success = true
+
+		return signatures, nil
+	}
+
+	// array inversion
+	for i := 0; i < len(signatures)/2; i++ {
+		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
+	}
+
+	return signatures, nil
+}
+
+// writeTxToDb
+func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
+	// open model transaction
+	txModelTransaction := func(mCtx context.Context) error {
+		// update schedule
+		swapPairBaseMap := map[string]interface{}{}
+		if before == nil {
+			swapPairBaseMap["end_signature"] = signatures[len(signatures)-1].Signature.String()
+		}
+
+		if until == nil {
+			swapPairBaseMap["start_signature"] = signatures[0].Signature.String()
+		}
+
+		err := model.UpdateSwapPairBase(
+			context.Background(),
+			swapPairBaseMap,
+			model.SwapAddress(s.tvl.SwapAccount),
+		)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if len(transactions) == 0 {
+			return nil
+		}
+
+		// created transaction record
+		swapTransactions := make([]*domain.SwapTransaction, 0, len(transactions))
+
+		for _, v := range transactions {
+			blockTime := v.BlockTime.Time()
+
+			data := domain.TxData(*v)
+
+			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v)
+
+			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
+				Signature:     v.Transaction.GetParsedTransaction().Signatures[0].String(),
+				Fee:           precisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
+				BlockTime:     &blockTime,
+				Slot:          v.Slot,
+				UserAddress:   "",
+				SwapAddress:   s.tvl.SwapAccount,
+				TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
+				TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
+				TokenAVolume:  tokenAVolume,
+				TokenBVolume:  tokenBVolume,
+				TokenABalance: tokenABalance,
+				TokenBBalance: tokenBBalance,
+				Status:        true,
+				TxData:        &data,
+			})
+		}
+
+		err = model.CreateSwapTransactions(context.Background(), swapTransactions)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		return nil
+	}
+
+	err := model.Transaction(context.Background(), txModelTransaction)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+	var (
+		tokenAPreBalanceStr  string
+		tokenBPreBalanceStr  string
+		tokenAPostBalanceStr string
+		tokenBPostBalanceStr string
+	)
+
+	for _, tokenBalance := range meta.Meta.PreTokenBalances {
+		keyIndex := tokenBalance.AccountIndex
+		key := meta.Transaction.GetParsedTransaction().Message.AccountKeys[keyIndex]
+		if key.Equals(s.tvl.TokenA.SwapTokenPublicKey) {
+			tokenAPreBalanceStr = tokenBalance.UiTokenAmount.Amount
+			continue
+		}
+		if key.Equals(s.tvl.TokenB.SwapTokenPublicKey) {
+			tokenBPreBalanceStr = tokenBalance.UiTokenAmount.Amount
+			continue
+		}
+	}
+
+	for _, tokenBalance := range meta.Meta.PostTokenBalances {
+		keyIndex := tokenBalance.AccountIndex
+		key := meta.Transaction.GetParsedTransaction().Message.AccountKeys[keyIndex]
+		if key.Equals(s.tvl.TokenA.SwapTokenPublicKey) {
+			tokenAPostBalanceStr = tokenBalance.UiTokenAmount.Amount
+			continue
+		}
+		if key.Equals(s.tvl.TokenB.SwapTokenPublicKey) {
+			tokenBPostBalanceStr = tokenBalance.UiTokenAmount.Amount
+			continue
+		}
+	}
+
+	tokenAPreBalance, _ := decimal.NewFromString(tokenAPreBalanceStr)
+	tokenAPostBalance, _ := decimal.NewFromString(tokenAPostBalanceStr)
+	tokenBPreBalance, _ := decimal.NewFromString(tokenBPreBalanceStr)
+	tokenBPostBalance, _ := decimal.NewFromString(tokenBPostBalanceStr)
+
+	tokenADeltaVolume, tokenBDeltaVolume := tokenAPostBalance.Sub(tokenAPreBalance), tokenBPostBalance.Sub(tokenBPreBalance)
+
+	return precisionConversion(tokenADeltaVolume, int(s.tvl.TokenA.Decimal)),
+		precisionConversion(tokenBDeltaVolume, int(s.tvl.TokenB.Decimal)),
+		precisionConversion(tokenAPostBalance, int(s.tvl.TokenA.Decimal)),
+		precisionConversion(tokenBPostBalance, int(s.tvl.TokenB.Decimal))
+}
+
+// precisionConversion 精度转换
+func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
+	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
