@@ -55,6 +55,12 @@ func autoMigrate() error {
 		&domain.SwapPairCount{},
 		&domain.Tvl{},
 		&domain.TransactionBase{},
+		&domain.SwapTransaction{},
+		&domain.NetRecode{},
+		&domain.SwapTvlCount{},
+		&domain.SwapTvlCountDay{},
+		&domain.UserSwapCount{},
+		&domain.UserSwapCountDay{},
 		&domain.SwapPairBase{},
 	); err != nil {
 		return errors.Wrap(err)
@@ -153,5 +159,12 @@ func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 		}
 		tag := order.Tag.Get("gquery")
 		return by.SetOrderBy(tag, db)
+	}
+}
+
+// IDDESCFilter ID降序序过滤
+func IDDESCFilter() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order("id desc")
 	}
 }
