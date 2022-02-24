@@ -44,8 +44,9 @@ type SwapPairBase struct {
 }
 
 type SumVol struct {
-	TxNum    uint64          `gorm:"tx_num"`    // 总交易笔数
-	TotalVol decimal.Decimal `gorm:"total_vol"` // 总交易量
+	TxNum          uint64          `gorm:"tx_num"`            // 总交易笔数
+	TokenATotalVol decimal.Decimal `gorm:"token_a_total_vol"` // tokenA总交易量
+	TokenBTotalVol decimal.Decimal `gorm:"token_b_total_vol"` // tokenB总交易量
 }
 
 // TxData 自定义tx原始数据类型

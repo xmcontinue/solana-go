@@ -9,6 +9,7 @@ import (
 
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/coingecko"
 
 	"git.cplus.link/crema/backend/internal/worker/watcher"
 
@@ -28,10 +29,13 @@ func main() {
 		panic(err)
 	}
 
-	// sol 初始化
+	// sol初始化
 	if err := sol.Init(configer); err != nil {
 		panic(err)
 	}
+
+	// coinGecko初始化
+	coingecko.Init()
 
 	// cron初始化
 	if err := watcher.Init(configer); err != nil {
