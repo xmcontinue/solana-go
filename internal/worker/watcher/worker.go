@@ -59,7 +59,7 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 	job.CronConf.WithLogger(xlog.Config{}.Build())
-	
+
 	job.Cron = job.CronConf.Build()
 
 	// create sync tvl cron job
@@ -72,8 +72,11 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTransaction"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
-	// 同步总tvl
-	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalTvl)
+	// 同步vol(24h)
+	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)
+
+	// 同步总vol
+	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalVol)
 
 	job.Cron.Start()
 

@@ -54,7 +54,6 @@ func autoMigrate() error {
 	if err := dbWPool.NewConn().AutoMigrate(
 		&domain.SwapPairCount{},
 		&domain.Tvl{},
-		&domain.TransactionBase{},
 		&domain.SwapTransaction{},
 		&domain.NetRecode{},
 		&domain.SwapTvlCount{},
@@ -62,6 +61,7 @@ func autoMigrate() error {
 		&domain.UserSwapCount{},
 		&domain.UserSwapCountDay{},
 		&domain.SwapPairBase{},
+		&domain.SwapTransaction{},
 	); err != nil {
 		return errors.Wrap(err)
 	}
@@ -146,6 +146,11 @@ func OrderFilter(by string) Filter {
 	}
 }
 
+// SwapTransferFilter 从transactions中查询swap操作( TODO 延续初版判断swap方法，后续更改算法，instruction_len为((8,26,17,12)代表swap交易，9,41,50,52为其他操作)
+func SwapTransferFilter() Filter {
+	return NewFilter("instruction_len not in ?", []uint64{9, 41, 50, 52})
+}
+
 // GQueryOrderFilter gQuery order查询条件生成
 func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 	return func(db *gorm.DB) *gorm.DB {
@@ -159,5 +164,12 @@ func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 		}
 		tag := order.Tag.Get("gquery")
 		return by.SetOrderBy(tag, db)
+	}
+}
+
+// IDDESCFilter ID降序序过滤
+func IDDESCFilter() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order("id desc")
 	}
 }

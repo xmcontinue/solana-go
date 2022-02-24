@@ -44,6 +44,9 @@ func (tvl *TVL) GetTransactionsForSignature(signatures []*rpc.TransactionSignatu
 	}
 
 	for _, value := range signatures {
+		if value.Err != nil {
+			continue
+		}
 		out, err := GetRpcClient().GetTransaction(
 			context.TODO(),
 			value.Signature,

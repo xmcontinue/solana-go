@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
@@ -51,19 +53,35 @@ type SwapTvlCountDay struct {
 }
 
 type Tvl struct {
-	ID            int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt     *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt     *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	TotalTvlInUsd string     `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
-	TotalVolInUsd string     `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
-	Pairs         JsonString `json:"pairs" gorm:"type:text;"`
+	ID            int64        `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
+	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
+	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
+	Pairs         *PairTvlList `json:"pairs" gorm:"type:text;"`
 }
 
+type PairTvlList []*PairTvl
+
 type PairTvl struct {
-	Name        string `json:"name"`
-	TvlInUsd    string `json:"tvl_in_usd"`
-	VolInUsd    string `json:"vol_in_usd"`
-	TxNum       uint64 `json:"tx_num"`
-	Apr         string `json:"apr"`
-	SwapAccount string `json:"swap_account"`
+	Name          string `json:"name"`
+	TvlInUsd      string `json:"tvl_in_usd"`
+	VolInUsd      string `json:"vol_in_usd"`
+	TxNum         uint64 `json:"tx_num"`
+	Apr           string `json:"apr"`
+	SwapAccount   string `json:"swap_account"`
+	TotalTxNum    uint64 `json:"total_tx_num"`
+	TotalVolInUsd string `json:"total_vol_in_usd"`
+}
+
+func (pt *PairTvlList) Value() (driver.Value, error) {
+	b, err := json.Marshal(pt)
+	if err != nil {
+		return nil, err
+	}
+	return driver.String.ConvertValue(b)
+}
+
+func (pt *PairTvlList) Scan(v interface{}) error {
+	return json.Unmarshal([]byte(v.(string)), pt)
 }

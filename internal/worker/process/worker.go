@@ -25,7 +25,7 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// cron init
-	err = conf.UnmarshalKey("cron", &cronConf)
+	err = conf.UnmarshalKey("cron_job_conf", &cronConf)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -36,13 +36,22 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
+	if err != nil {
+		panic(err)
+	}
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), userAddressLast24hVol)
+	if err != nil {
+		panic(err)
+	}
+
 	cron.Start()
 
 	return nil
 }
 
 func getSpec(key string) string {
-	return conf.Get("cron_spec." + key).(string)
+	return conf.Get("cron_job_interval." + key).(string)
 }
 
 // initRedis 初始化redis
