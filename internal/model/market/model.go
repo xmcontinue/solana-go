@@ -146,6 +146,11 @@ func OrderFilter(by string) Filter {
 	}
 }
 
+// SwapTransferFilter 从transactions中查询swap操作( TODO 延续初版判断swap方法，后续更改算法，instruction_len为((8,26,17,12)代表swap交易，9,41,50,52为其他操作)
+func SwapTransferFilter() Filter {
+	return NewFilter("instruction_len not in ?", []uint64{9, 41, 50, 52})
+}
+
 // GQueryOrderFilter gQuery order查询条件生成
 func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 	return func(db *gorm.DB) *gorm.DB {
