@@ -63,12 +63,12 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		if err := market.Init(conf); err != nil {
 			panic(err)
 		}
-		var err error
-		instance.redisClient, err = initRedis(conf)
-		if err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
+		// var err error
+		// instance.redisClient, err = initRedis(conf)
+		// if err != nil {
+		// 	rErr = errors.Wrap(err)
+		// 	return
+		// }
 
 	})
 	return instance, rErr
