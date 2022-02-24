@@ -10,17 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// TransactionBase 第一版
-type TransactionBase struct {
-	gorm.Model
-	BlockTime        *time.Time `gorm:"not null;type:timestamp(6)"`
-	Slot             uint64     `gorm:"index"`
-	TransactionData  string     `gorm:"text(0)"`
-	MateData         string     `gorm:"text(0)"`
-	TokenSwapAddress string     `gorm:"varchar(64);index"`
-	Signature        string     `gorm:"varchar(128);index"`
-}
-
 type SwapTransaction struct {
 	ID            int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt     *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
