@@ -40,6 +40,7 @@ type SwapPairBase struct {
 	StartSignature string          `json:"start_signature" gorm:"not null;type:varchar(128)"`        // 当前起始签名
 	EndSignature   string          `json:"end_signature" gorm:"not null;type:varchar(128)"`          // 当前最新签名
 	TotalTxNum     uint64          `json:"total_tx_num" gorm:"default:0"`                            // 总交易笔数
+	FailedTxNum    uint64          `json:"failed_tx_num" gorm:"default:0"`                           // 失败交易笔数
 	TotalVol       decimal.Decimal `json:"total_vol" gorm:"type:decimal(36,18);default:0"`           // 总交易量
 }
 

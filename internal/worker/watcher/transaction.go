@@ -183,11 +183,12 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			swapPairBaseMap["start_signature"] = signatures[0].Signature.String()
 		}
 
-		err := model.UpdateSwapPairBase(
-			context.Background(),
-			swapPairBaseMap,
-			model.SwapAddress(s.tvl.SwapAccount),
-		)
+		failedNum := len(signatures) - len(transactions)
+		if failedNum > 0 {
+			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
+		}
+
+		err := model.UpdateSwapPairBase(context.Background(), swapPairBaseMap, model.SwapAddress(s.tvl.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
 		}
