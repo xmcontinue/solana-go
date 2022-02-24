@@ -14,8 +14,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func SyncTotalTvl() error {
-	logger.Info("total tvl syncing ......")
+func SyncVol24H() error {
+	logger.Info("24h vol syncing ......")
 
 	keys := sol.SwapConfigList()
 
@@ -53,11 +53,44 @@ func SyncTotalTvl() error {
 
 	err := model.CreateTvl(context.TODO(), &tvl)
 	if err != nil {
-		logger.Error("total tvl sync fail:", logger.Errorv(err))
+		logger.Error("24h vol sync fail:", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
-	logger.Info("total tvl sync complete!")
+	logger.Info("24h vol sync complete!")
+	return nil
+}
+
+func SyncTotalVol() error {
+	logger.Info("total vol syncing ......")
+
+	keys := sol.SwapConfigList()
+
+	ctx := context.Background()
+
+	for _, v := range keys {
+
+		info, err := model.QuerySwapPairBase(ctx, model.SwapAddress(v.SwapAccount))
+		if err != nil || !info.IsSync {
+			logger.Info("vol sync Failed : the transaction did not complete synchronously", logger.String("swap_address:", v.SwapAccount))
+			continue
+		}
+
+		vol, err := model.CountTxNum(ctx, model.SwapAddress(v.SwapAccount), model.SwapTransferFilter())
+		if err != nil {
+			continue
+		}
+
+		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{"total_tx_num": vol.TxNum, "total_vol": vol.TotalVol}, model.SwapAddress(v.SwapAccount))
+		if err != nil {
+			continue
+		}
+
+		logger.Info("vol sync complete ", logger.String("swap_address:", v.SwapAccount))
+	}
+
+	logger.Info("total vol sync complete!")
+
 	return nil
 }
 

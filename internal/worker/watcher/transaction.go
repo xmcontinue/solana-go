@@ -72,18 +72,18 @@ func (s *SyncTransaction) Run() error {
 	return nil
 }
 
-func (s *SyncTransaction) SyncTransaction(success *bool) error {
+func (s *SyncTransaction) SyncTransaction(complete *bool) error {
 	// get signatures for swap account address
 	before, until, err := s.getBeforeAndUntil()
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	signatures, err := s.getSignatures(before, until, success)
+	signatures, err := s.getSignatures(before, until, complete)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	if *success == true {
+	if *complete == true {
 		return nil
 	}
 
@@ -134,7 +134,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 }
 
 // getSignatures
-func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, success *bool) ([]*rpc.TransactionSignature, error) {
+func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, complete *bool) ([]*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
 	signatures, err := s.tvl.PullSignatures(before, until, 1000)
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 			}
 		}
 
-		*success = true
+		*complete = true
 
 		return signatures, nil
 	}
@@ -207,20 +207,21 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v)
 
 			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
-				Signature:     v.Transaction.GetParsedTransaction().Signatures[0].String(),
-				Fee:           precisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
-				BlockTime:     &blockTime,
-				Slot:          v.Slot,
-				UserAddress:   "",
-				SwapAddress:   s.tvl.SwapAccount,
-				TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
-				TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
-				TokenAVolume:  tokenAVolume,
-				TokenBVolume:  tokenBVolume,
-				TokenABalance: tokenABalance,
-				TokenBBalance: tokenBBalance,
-				Status:        true,
-				TxData:        &data,
+				Signature:      v.Transaction.GetParsedTransaction().Signatures[0].String(),
+				Fee:            precisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
+				BlockTime:      &blockTime,
+				Slot:           v.Slot,
+				UserAddress:    "",
+				InstructionLen: getInstructionLen(v.Transaction.GetParsedTransaction().Message.Instructions),
+				SwapAddress:    s.tvl.SwapAccount,
+				TokenAAddress:  s.tvl.TokenA.SwapTokenAccount,
+				TokenBAddress:  s.tvl.TokenB.SwapTokenAccount,
+				TokenAVolume:   tokenAVolume,
+				TokenBVolume:   tokenBVolume,
+				TokenABalance:  tokenABalance,
+				TokenBBalance:  tokenBBalance,
+				Status:         true,
+				TxData:         &data,
 			})
 		}
 
@@ -303,4 +304,15 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 // precisionConversion 精度转换
 func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
 	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
+}
+
+// getInstructionLen 获取第一个Instruction data长度
+func getInstructionLen(instructions []rpc.ParsedInstruction) uint64 {
+	for _, v := range instructions {
+		dataLen := len(v.Data)
+		if dataLen > 0 {
+			return uint64(dataLen)
+		}
+	}
+	return 0
 }

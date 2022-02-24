@@ -269,19 +269,12 @@ func (tvl *TVL) pullLastSignature() {
 			continue
 		}
 		key := value.Signature.String()
-		// if len(out.Transaction.Message.Instructions[0].Data) != 17 &&
-		// 	len(out.Transaction.Message.Instructions) > 1 &&
-		// 	len(out.Transaction.Message.Instructions[0].Data) != 26 {
-		// 	continue
-		// }
 
-		// if len(out.Transaction.Message.Instructions) == 1 &&
-		// 	(len(out.Transaction.Message.Instructions[0].Data) != 17 || len(out.Transaction.Message.Instructions[0].Data) != 26) {
-		// 	continue
-		// }
-		if len(out.Transaction.Message.Instructions[0].Data) == 50 || len(out.Transaction.Message.Instructions[0].Data) == 41 {
+		instructionLen := getInstructionLen(out.Transaction.Message.Instructions)
+		if instructionLen == 9 || instructionLen == 41 || instructionLen == 50 || instructionLen == 52 {
 			continue
 		}
+		
 		tvl.transactionCache[key] = out
 		finalResult = append(finalResult, value)
 	}
@@ -417,4 +410,15 @@ func (tvl *TVL) getTvl() error {
 
 func SwapConfigList() []*SwapConfig {
 	return swapConfigList
+}
+
+// getInstructionLen 获取第一个Instruction data长度
+func getInstructionLen(instructions []solana.CompiledInstruction) uint64 {
+	for _, v := range instructions {
+		dataLen := len(v.Data)
+		if dataLen > 0 {
+			return uint64(dataLen)
+		}
+	}
+	return 0
 }
