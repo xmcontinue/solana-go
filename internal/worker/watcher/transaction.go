@@ -2,10 +2,12 @@ package watcher
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -58,16 +60,16 @@ func CreateSyncTransaction() error {
 }
 
 func (s *SyncTransaction) Run() error {
-	// complete := false
-	// for {
-	// 	err := s.SyncTransaction(&complete)
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	if complete {
-	// 		break
-	// 	}
-	// }
+	complete := false
+	for {
+		err := s.SyncTransaction(&complete)
+		if err != nil {
+			break
+		}
+		if complete {
+			break
+		}
+	}
 
 	return nil
 }
@@ -251,6 +253,8 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	logger.Info(fmt.Sprintf("sync transaction : swap account(%s) signature from %s to %s", s.tvl.SwapAccount, signatures[0].Signature.String(), signatures[len(signatures)-1].Signature.String()))
 
 	return nil
 }
