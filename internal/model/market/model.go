@@ -62,6 +62,7 @@ func autoMigrate() error {
 		&domain.UserSwapCount{},
 		&domain.UserSwapCountDay{},
 		&domain.SwapPairBase{},
+		&domain.SwapTransaction{},
 	); err != nil {
 		return errors.Wrap(err)
 	}

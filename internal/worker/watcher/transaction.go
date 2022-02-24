@@ -74,7 +74,7 @@ func (s *SyncTransaction) Run() error {
 
 func (s *SyncTransaction) SyncTransaction(success *bool) error {
 	// get signatures for swap account address
-	before, until, err := s.getBeforeSignatureForAddress()
+	before, until, err := s.getBeforeAndUntil()
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -102,8 +102,8 @@ func (s *SyncTransaction) SyncTransaction(success *bool) error {
 	return nil
 }
 
-// getBeforeSignatureForAddress
-func (s *SyncTransaction) getBeforeSignatureForAddress() (*solana.Signature, *solana.Signature, error) {
+// getBeforeAndUntil
+func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signature, error) {
 	// create before, until
 	var (
 		before *solana.Signature
@@ -135,8 +135,8 @@ func (s *SyncTransaction) getBeforeSignatureForAddress() (*solana.Signature, *so
 
 // getSignatures
 func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, success *bool) ([]*rpc.TransactionSignature, error) {
-	// get signature list
-	signatures, err := s.tvl.PullSignatures(before, until, 10)
+	// get signature list (max limit is 1000 )
+	signatures, err := s.tvl.PullSignatures(before, until, 1000)
 	if err != nil {
 		return signatures, errors.Wrap(err)
 	}
@@ -224,9 +224,22 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			})
 		}
 
-		err = model.CreateSwapTransactions(context.Background(), swapTransactions)
-		if err != nil {
-			return errors.Wrap(err)
+		transactionsLen := len(swapTransactions)
+
+		page := 100
+		for i := 0; i < transactionsLen; i = i + page {
+			if transactionsLen < i+page {
+				err = model.CreateSwapTransactions(context.Background(), swapTransactions[i:transactionsLen])
+				if err != nil {
+					return errors.Wrap(err)
+				}
+				break
+			} else {
+				err = model.CreateSwapTransactions(context.Background(), swapTransactions[i:i+page])
+				if err != nil {
+					return errors.Wrap(err)
+				}
+			}
 		}
 
 		return nil
