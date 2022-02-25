@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -13,20 +14,27 @@ import (
 
 // swapAddressLast24HVol 最近24小时swap address的总交易量
 func swapAddressLast24HVol() error {
+	var (
+		endTime   = time.Now()
+		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
+	)
 
-	endTime := time.Now().UTC()
-	beginTime := endTime.Add(-24 * time.Hour)
-	swapVols, err := model.SumSwapAccountLast24Vol(context.TODO(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
+	swapVols, err := model.SumSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
 	if err != nil {
 		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
 	}
 
-	swapVol := make(map[string]string)
-	for _, v := range swapVols {
-		swapVol[v.AccountAddress] = v.Vol.String()
+	if len(swapVols) == 0 {
+		return nil
 	}
 
-	if err = redisClient.MSet(context.TODO(), swapVol).Err(); err != nil {
+	swapVolMap := make(map[string]string)
+	for _, v := range swapVols {
+		volCount, _ := json.Marshal(v)
+		swapVolMap[domain.SwapVolCountLast24HKey(v.AccountAddress).Key] = string(volCount)
+	}
+
+	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
 		logger.Error("sync swap account last 24h vol to redis err")
 		return errors.Wrap(err)
 	}
@@ -36,32 +44,28 @@ func swapAddressLast24HVol() error {
 // userAddressLast24hVol 普通用户最近24小时的总交易量
 func userAddressLast24hVol() error {
 	var (
-		typ       = "user_address"
-		endTime   = time.Now().UTC()
-		beginTime = endTime.Add(-24 * time.Hour)
-		ctx       = context.Background()
+		endTime   = time.Now()
+		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
 	)
 
-	userAddress, err := model.QueryUserAddressGroupByUserAddress(ctx)
+	swapVols, err := model.SumUserSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
 	if err != nil {
-		return errors.Wrap(err)
+		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
 	}
 
-	if len(userAddress) == 0 {
+	if len(swapVols) == 0 {
 		return nil
 	}
 
-	for _, userAddr := range userAddress {
-		sumVol, err := model.SumLast24hVol(ctx, typ, model.NewFilter("user_address = ?", userAddr), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
-		if err != nil {
-			return errors.Wrap(err)
-		}
-		redisKey := domain.SwapVolCountLast24HKey(userAddr)
-		if err = redisClient.Set(ctx, redisKey.Key, sumVol.String(), redisKey.Timeout).Err(); err != nil { // todo 如何设置过期时间
-			return errors.Wrap(err)
-		}
-
+	swapVolMap := make(map[string]string)
+	for _, v := range swapVols {
+		volCount, _ := json.Marshal(v)
+		swapVolMap[domain.SwapVolCountLast24HKey(v.AccountAddress).Key] = string(volCount)
 	}
 
+	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
+		logger.Error("sync swap account last 24h vol to redis err")
+		return errors.Wrap(err)
+	}
 	return nil
 }

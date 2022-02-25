@@ -67,6 +67,14 @@ type Get24hVolV2Resp struct {
 	Vol decimal.Decimal `json:"vol"`
 }
 
+type GetVolV2Req struct {
+	SwapAddress string `json:"swap_address"           binding:"required"`
+}
+
+type GetVolV2Resp struct {
+	Vol decimal.Decimal `json:"vol"`
+}
+
 type GetNetRecordReq struct {
 	Limit   int              `json:"limit,omitempty"        form:"limit"        gquery:"-"`                        // limit
 	Offset  int              `json:"offset,omitempty"       form:"offset"       gquery:"-"`                        // offset

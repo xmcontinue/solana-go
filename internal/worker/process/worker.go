@@ -4,6 +4,7 @@ import (
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
+	"git.cplus.link/go/akit/pkg/xlog"
 
 	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 )
@@ -29,6 +30,7 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+	cronConf.WithLogger(xlog.Config{}.Build())
 	cron = cronConf.Build()
 
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncData)

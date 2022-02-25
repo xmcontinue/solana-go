@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
@@ -75,6 +76,7 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 		reply.List = append(reply.List, swapAddressTvl)
 	}
 
+	// 直接查询数据库
 	//swapTvl, err := model.GetLastSwapTvlCount(ctx, gquery.ParseQuery(args))
 	//if err != nil {
 	//	return errors.Wrap(err)
@@ -118,6 +120,33 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	} else if err == nil {
+
+		aa := &model.SwapVol{}
+		_ = json.Unmarshal([]byte(vol), aa)
+		reply.Vol = aa.Vol
+
+		return nil
+	}
+
+	// 在数据库里面找，并且同步到redis里 TODO
+
+	tvlDecimal, _ := decimal.NewFromString(vol)
+
+	reply.Vol = tvlDecimal
+
+	return nil
+}
+
+func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, reply *iface.GetVolV2Resp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress).Key).Result()
+	if err != nil && !t.redisClient.ErrIsNil(err) {
+		return errors.Wrap(err)
+	} else if err == nil {
 		tvlDecimal, _ := decimal.NewFromString(vol)
 
 		reply.Vol = tvlDecimal
@@ -125,7 +154,7 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return nil
 	}
 
-	// 在数据库里面找，并且同步到redis里
+	// 在数据库里面找，并且同步到redis里 TODO
 
 	tvlDecimal, _ := decimal.NewFromString(vol)
 
