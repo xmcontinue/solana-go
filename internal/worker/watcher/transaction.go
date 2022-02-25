@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sync"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -112,15 +113,19 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 		until  *solana.Signature
 	)
 	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.tvl.SwapAccount))
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
-			SwapAddress:   s.tvl.SwapAccount,
-			TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
-			TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
-			IsSync:        false,
-		})
-		if err != nil {
-			return before, until, errors.Wrap(err)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
+				SwapAddress:   s.tvl.SwapAccount,
+				TokenAAddress: s.tvl.TokenA.SwapTokenAccount,
+				TokenBAddress: s.tvl.TokenB.SwapTokenAccount,
+				IsSync:        false,
+			})
+			if err != nil {
+				return nil, nil, errors.Wrap(err)
+			}
+		} else {
+			return nil, nil, errors.Wrap(err)
 		}
 	} else {
 		if swapPairBase.IsSync {
@@ -138,7 +143,8 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 // getSignatures
 func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, complete *bool) ([]*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
-	signatures, err := s.tvl.PullSignatures(before, until, 1000)
+	limit := 1000
+	signatures, err := s.tvl.PullSignatures(before, until, limit)
 	if err != nil {
 		return signatures, errors.Wrap(err)
 	}
@@ -163,9 +169,38 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		return signatures, nil
 	}
 
+	isComplete := len(signatures) < limit
+	if before == nil && until != nil && !isComplete {
+		// sync back
+		afterSignatures, afterBefore := make([]*rpc.TransactionSignature, 0), signatures[len(signatures)-1].Signature
+
+		for !isComplete {
+
+			newSignatures, err := s.tvl.PullSignatures(&afterBefore, until, limit)
+			if err != nil {
+				return signatures, errors.Wrap(err)
+			}
+
+			isComplete = len(newSignatures) < limit
+
+			if !isComplete {
+				afterBefore = newSignatures[len(newSignatures)-1].Signature
+			}
+
+			afterSignatures = append(afterSignatures, newSignatures...)
+		}
+
+		signatures = append(signatures, afterSignatures...)
+
+	}
+
 	// array inversion
 	for i := 0; i < len(signatures)/2; i++ {
 		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
+	}
+
+	if len(signatures) > 5000 {
+		signatures = signatures[:5000]
 	}
 
 	return signatures, nil
@@ -251,6 +286,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 	err := model.Transaction(context.Background(), txModelTransaction)
 	if err != nil {
+		time.Sleep(time.Second * 5)
 		return errors.Wrap(err)
 	}
 
