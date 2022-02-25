@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"sync"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -121,10 +122,10 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 				IsSync:        false,
 			})
 			if err != nil {
-				return before, until, errors.Wrap(err)
+				return nil, nil, errors.Wrap(err)
 			}
 		} else {
-			return before, until, errors.Wrap(err)
+			return nil, nil, errors.Wrap(err)
 		}
 	} else {
 		if swapPairBase.IsSync {
@@ -285,6 +286,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 	err := model.Transaction(context.Background(), txModelTransaction)
 	if err != nil {
+		time.Sleep(time.Second * 5)
 		return errors.Wrap(err)
 	}
 
