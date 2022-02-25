@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"database/sql/driver"
 	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
@@ -69,23 +68,23 @@ type UserSwapCountDay struct {
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);index"`              // 统计日期
 }
 
-// JsonString 自定义json gorm byte类型
-type JsonString string
-
-func (j *JsonString) MarshalJSON() ([]byte, error) {
-	return []byte(*j), nil
-}
-
-func (j *JsonString) UnmarshalJSON(data []byte) error {
-	*j = JsonString(data)
-	return nil
-}
-
-func (j *JsonString) Value() (driver.Value, error) {
-	return driver.String.ConvertValue(*j)
-}
-
-func (j *JsonString) Scan(v interface{}) error {
-	*j = JsonString(v.(string))
-	return nil
-}
+// // JsonString 自定义json gorm byte类型
+// type JsonString string
+//
+// func (j *JsonString) MarshalJSON() ([]byte, error) {
+// 	return []byte(*j), nil
+// }
+//
+// func (j *JsonString) UnmarshalJSON(data []byte) error {
+// 	*j = JsonString(data)
+// 	return nil
+// }
+//
+// func (j *JsonString) Value() (driver.Value, error) {
+// 	return driver.String.ConvertValue(*j)
+// }
+//
+// func (j *JsonString) Scan(v interface{}) error {
+// 	*j = JsonString(v.(string))
+// 	return nil
+// }

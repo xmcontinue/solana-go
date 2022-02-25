@@ -48,7 +48,7 @@ func QuerySwapTransaction(ctx context.Context, filter ...Filter) (*domain.SwapTr
 
 func CountTxNum(ctx context.Context, filter ...Filter) (*domain.SumVol, error) {
 	var sumVol *domain.SumVol
-	if err := wDB(ctx).Model(&domain.SwapTransaction{}).Select("count(*) as tx_num , sum(abs(token_a_volume) + abs(token_b_volume)) as total_vol").Scopes(filter...).Take(&sumVol).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapTransaction{}).Select("count(*) as tx_num , sum(abs(token_a_volume)) as token_a_total_vol , sum(abs(token_b_volume)) as token_b_total_vol").Scopes(filter...).Take(&sumVol).Error; err != nil {
 		return sumVol, errors.Wrap(err)
 	}
 	return sumVol, nil

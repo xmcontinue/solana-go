@@ -2,10 +2,12 @@ package watcher
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sync"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -58,16 +60,16 @@ func CreateSyncTransaction() error {
 }
 
 func (s *SyncTransaction) Run() error {
-	// complete := false
-	// for {
-	// 	err := s.SyncTransaction(&complete)
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	if complete {
-	// 		break
-	// 	}
-	// }
+	complete := false
+	for {
+		err := s.SyncTransaction(&complete)
+		if err != nil {
+			break
+		}
+		if complete {
+			break
+		}
+	}
 
 	return nil
 }
@@ -183,11 +185,12 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			swapPairBaseMap["start_signature"] = signatures[0].Signature.String()
 		}
 
-		err := model.UpdateSwapPairBase(
-			context.Background(),
-			swapPairBaseMap,
-			model.SwapAddress(s.tvl.SwapAccount),
-		)
+		failedNum := len(signatures) - len(transactions)
+		if failedNum > 0 {
+			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
+		}
+
+		err := model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.tvl.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -230,13 +233,13 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		page := 100
 		for i := 0; i < transactionsLen; i = i + page {
 			if transactionsLen < i+page {
-				err = model.CreateSwapTransactions(context.Background(), swapTransactions[i:transactionsLen])
+				err = model.CreateSwapTransactions(mCtx, swapTransactions[i:transactionsLen])
 				if err != nil {
 					return errors.Wrap(err)
 				}
 				break
 			} else {
-				err = model.CreateSwapTransactions(context.Background(), swapTransactions[i:i+page])
+				err = model.CreateSwapTransactions(mCtx, swapTransactions[i:i+page])
 				if err != nil {
 					return errors.Wrap(err)
 				}
@@ -250,6 +253,8 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	logger.Info(fmt.Sprintf("sync transaction : swap account(%s) signature from %s to %s", s.tvl.SwapAccount, signatures[0].Signature.String(), signatures[len(signatures)-1].Signature.String()))
 
 	return nil
 }
