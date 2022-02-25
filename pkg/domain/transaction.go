@@ -14,21 +14,21 @@ type SwapTransaction struct {
 	ID             int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	Signature      string          `json:"signature" gorm:"not null;type:varchar(128);  index"`      // 交易签名
-	Fee            decimal.Decimal `json:"fee" gorm:"type:decimal(36,18)"`                           // 手续费
-	BlockTime      *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6)"`             // 打包时间
-	Slot           uint64          `json:"slot"  gorm:"not null"`                                    // 区块高度
-	UserAddress    string          `json:"user_address" gorm:"not null;type:varchar(64);  index"`    // 用户账户
-	InstructionLen uint64          `json:"instruction_len" gorm:"not null;default:0;"`               // instruction 第一个data长度
-	SwapAddress    string          `json:"swap_address" gorm:"not null;type:varchar(64);  index"`    // swap地址
-	TokenAAddress  string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"` // swap token a 地址
-	TokenBAddress  string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"` // swap token b 地址
-	TokenAVolume   decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`      // swap token a 总交易额
-	TokenBVolume   decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`      // swap token b 总交易额
-	TokenABalance  decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`     // swap token a 余额
-	TokenBBalance  decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`     // swap token b 余额
-	Status         bool            `json:"status"`                                                   // 交易状态: 0-失败，1-成功
-	TxData         *TxData         `json:"-"               gorm:"type:text;" `                       // 原数据（json格式）
+	Signature      string          `json:"signature" gorm:"not null;type:varchar(128);  index; uniqueIndex:swap_transaction_signature_swap_address_unique_key"`   // 交易签名
+	Fee            decimal.Decimal `json:"fee" gorm:"type:decimal(36,18)"`                                                                                        // 手续费
+	BlockTime      *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6)"`                                                                          // 打包时间
+	Slot           uint64          `json:"slot"  gorm:"not null"`                                                                                                 // 区块高度
+	UserAddress    string          `json:"user_address" gorm:"not null;type:varchar(64);  index"`                                                                 // 用户账户
+	InstructionLen uint64          `json:"instruction_len" gorm:"not null;default:0;"`                                                                            // instruction 第一个data长度
+	SwapAddress    string          `json:"swap_address" gorm:"not null;type:varchar(64);  index; uniqueIndex:swap_transaction_signature_swap_address_unique_key"` // swap地址
+	TokenAAddress  string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`                                                              // swap token a 地址
+	TokenBAddress  string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`                                                              // swap token b 地址
+	TokenAVolume   decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`                                                                   // swap token a 总交易额
+	TokenBVolume   decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                                                   // swap token b 总交易额
+	TokenABalance  decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                                  // swap token a 余额
+	TokenBBalance  decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                                  // swap token b 余额
+	Status         bool            `json:"status"`                                                                                                                // 交易状态: 0-失败，1-成功
+	TxData         *TxData         `json:"-"               gorm:"type:text;" `                                                                                    // 原数据（json格式）
 }
 
 type SwapPairBase struct {
