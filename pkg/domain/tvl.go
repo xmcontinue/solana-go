@@ -58,6 +58,7 @@ type Tvl struct {
 	UpdatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
 	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
 	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
+	TxNum         uint64       `json:"tx_num"`
 	CumuTxNum     uint64       `json:"cumu_tx_num"`
 	CumuVolInUsd  string       `json:"cumu_vol_in_usd"`
 	Pairs         *PairTvlList `json:"pairs" gorm:"type:text;"`
