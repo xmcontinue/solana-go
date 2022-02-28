@@ -27,6 +27,8 @@ type SwapTransaction struct {
 	TokenBVolume   decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                                                   // swap token b 总交易额
 	TokenABalance  decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                                  // swap token a 余额
 	TokenBBalance  decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                                  // swap token b 余额
+	TokenAUSD      decimal.Decimal `json:"token_a_usd" gorm:"type:decimal(36,18);default:1"`                                                                      // swap token a usd价格
+	TokenBUSD      decimal.Decimal `json:"token_b_usd" gorm:"type:decimal(36,18);default:1"`                                                                      // swap token b usd价格
 	Status         bool            `json:"status"`                                                                                                                // 交易状态: 0-失败，1-成功
 	TxData         *TxData         `json:"-"               gorm:"type:text;" `                                                                                    // 原数据（json格式）
 }
