@@ -58,20 +58,22 @@ type Tvl struct {
 	UpdatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
 	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
 	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
+	CumuTxNum     uint64       `json:"cumu_tx_num"`
+	CumuVolInUsd  string       `json:"cumu_vol_in_usd"`
 	Pairs         *PairTvlList `json:"pairs" gorm:"type:text;"`
 }
 
 type PairTvlList []*PairTvl
 
 type PairTvl struct {
-	Name          string `json:"name"`
-	TvlInUsd      string `json:"tvl_in_usd"`
-	VolInUsd      string `json:"vol_in_usd"`
-	TxNum         uint64 `json:"tx_num"`
-	Apr           string `json:"apr"`
-	SwapAccount   string `json:"swap_account"`
-	TotalTxNum    uint64 `json:"total_tx_num"`
-	TotalVolInUsd string `json:"total_vol_in_usd"`
+	Name         string `json:"name"`
+	TvlInUsd     string `json:"tvl_in_usd"`
+	VolInUsd     string `json:"vol_in_usd"`
+	TxNum        uint64 `json:"tx_num"`
+	Apr          string `json:"apr"`
+	SwapAccount  string `json:"swap_account"`
+	CumuTxNum    uint64 `json:"cumu_tx_num"`
+	CumuVolInUsd string `json:"cumu_vol_in_usd"`
 }
 
 func (pt *PairTvlList) Value() (driver.Value, error) {

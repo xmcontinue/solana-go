@@ -47,9 +47,20 @@ func QuerySwapTransaction(ctx context.Context, filter ...Filter) (*domain.SwapTr
 }
 
 func CountTxNum(ctx context.Context, filter ...Filter) (*domain.SumVol, error) {
-	var sumVol *domain.SumVol
-	if err := wDB(ctx).Model(&domain.SwapTransaction{}).Select("count(*) as tx_num , sum(abs(token_a_volume)) as token_a_total_vol , sum(abs(token_b_volume)) as token_b_total_vol").Scopes(filter...).Take(&sumVol).Error; err != nil {
-		return sumVol, errors.Wrap(err)
+	var (
+		sumTokenAVol *domain.SumVol
+		sumTokenBVol *domain.SumVol
+	)
+	if err := wDB(ctx).Debug().Model(&domain.SwapTransaction{}).Select("count(*) as tx_num , sum(token_a_volume) as token_a_total_vol").Scopes(filter...).Where("token_a_volume < 0").Take(&sumTokenAVol).Error; err != nil {
+		return nil, errors.Wrap(err)
 	}
-	return sumVol, nil
+	if err := wDB(ctx).Debug().Model(&domain.SwapTransaction{}).Select("count(*) as tx_num , sum(token_b_volume) as token_b_total_vol").Scopes(filter...).Where("token_b_volume < 0").Take(&sumTokenBVol).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return &domain.SumVol{
+		TxNum:          sumTokenAVol.TxNum + sumTokenBVol.TxNum,
+		TokenATotalVol: sumTokenAVol.TokenATotalVol.Abs(),
+		TokenBTotalVol: sumTokenBVol.TokenBTotalVol.Abs(),
+	}, nil
 }
