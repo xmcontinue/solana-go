@@ -16,6 +16,7 @@ import (
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -208,6 +209,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 // writeTxToDb
 func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
+	tokenAUSD, tokenBUSD := coingecko.GetPriceForCache(s.tvl.TokenA.SwapTokenAccount), coingecko.GetPriceForCache(s.tvl.TokenB.SwapTokenAccount)
 	// open model transaction
 	txModelTransaction := func(mCtx context.Context) error {
 		// update schedule
@@ -258,6 +260,8 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 				TokenBVolume:   tokenBVolume,
 				TokenABalance:  tokenABalance,
 				TokenBBalance:  tokenBBalance,
+				TokenAUSD:      tokenAUSD,
+				TokenBUSD:      tokenBUSD,
 				Status:         true,
 				TxData:         &data,
 			})
