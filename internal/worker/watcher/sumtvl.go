@@ -19,7 +19,7 @@ func SyncVol24H() error {
 	keys := sol.SwapConfigList()
 
 	tvl, pairs := domain.Tvl{}, domain.PairTvlList{}
-	totalTvlInUsd, totalVolInUsd := decimal.Decimal{}, decimal.Decimal{}
+	totalTvlInUsd, totalVolInUsd, cumuTxNum, cumuVolInUsd := decimal.Decimal{}, decimal.Decimal{}, uint64(0), decimal.Decimal{}
 	ctx := context.Background()
 	// 获取单个swap pair count
 	for _, v := range keys {
@@ -35,15 +35,18 @@ func SyncVol24H() error {
 
 		swapInfo, err := model.QuerySwapPairBase(ctx, model.SwapAddress(v.SwapAccount))
 
+		cumuTxNum = cumuTxNum + swapInfo.TotalTxNum
+		cumuVolInUsd = cumuVolInUsd.Add(swapInfo.TotalVol)
+
 		pairs = append(pairs, &domain.PairTvl{
-			Name:          count.PairName,
-			TvlInUsd:      tvlInUsd.String(),
-			VolInUsd:      volInUsd.String(),
-			TxNum:         count.TxNum,
-			SwapAccount:   v.SwapAccount,
-			Apr:           apr,
-			TotalTxNum:    swapInfo.TotalTxNum,
-			TotalVolInUsd: swapInfo.TotalVol.String(),
+			Name:         count.PairName,
+			TvlInUsd:     tvlInUsd.String(),
+			VolInUsd:     volInUsd.String(),
+			TxNum:        count.TxNum,
+			SwapAccount:  v.SwapAccount,
+			Apr:          apr,
+			CumuTxNum:    swapInfo.TotalTxNum,
+			CumuVolInUsd: swapInfo.TotalVol.String(),
 		})
 	}
 
@@ -51,6 +54,8 @@ func SyncVol24H() error {
 		tvl.Pairs = &pairs
 		tvl.TotalTvlInUsd = totalTvlInUsd.String()
 		tvl.TotalVolInUsd = totalVolInUsd.String()
+		tvl.CumuTxNum = cumuTxNum
+		tvl.CumuVolInUsd = cumuVolInUsd.String()
 	}
 
 	err := model.CreateTvl(context.TODO(), &tvl)
