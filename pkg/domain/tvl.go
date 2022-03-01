@@ -47,7 +47,7 @@ type SwapCountKLine struct {
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                        // swap token b 余额
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_tvl_count_day_date_swap_address_unique_key"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                      // 交易笔数
-	DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                          // 时间类型（1min,15min,1h,1d,1wek,1mon）
+	DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                          // 时间类型（min,quarter,hour,day,wek,mon）
 	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                   // 统计时间段累的第一个值
 	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                   // 最大值
 	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                   // 最小值

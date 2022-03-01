@@ -9,11 +9,11 @@ import (
 )
 
 var (
-	cronConf       *xcron.Config
-	cron           *xcron.Cron
-	redisClient    *redisV8.Client
-	conf           *config.Config
-	swapAccountMap = make(map[string]bool)
+	cronConf           *xcron.Config
+	cron               *xcron.Cron
+	redisClient        *redisV8.Client
+	conf               *config.Config
+	contractAccountMap = make(map[string]bool)
 )
 
 // Init 定时任务
@@ -31,14 +31,14 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
-	swapAccounts := make([]string, 0, 2)
-	err = conf.UnmarshalKey("swap_account", &swapAccounts)
+	contractAccounts := make([]string, 0, 2)
+	err = conf.UnmarshalKey("contract_account", &contractAccounts)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	for _, v := range swapAccounts {
-		swapAccountMap[v] = true
+	for _, v := range contractAccounts {
+		contractAccountMap[v] = true
 	}
 
 	cronConf.WithLogger(xlog.Config{}.Build())
@@ -58,6 +58,12 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		panic(err)
 	}
+
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), userAddressLast24hVol)
+	if err != nil {
+		panic(err)
+	}
+
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), userAddressLast24hVol)
 	if err != nil {
 		panic(err)

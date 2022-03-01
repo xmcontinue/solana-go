@@ -62,7 +62,7 @@ func parserData() error {
 			accountKeys := transaction.TxData.Transaction.GetParsedTransaction().Message.AccountKeys
 			for _, instruction := range transaction.TxData.Transaction.GetParsedTransaction().Message.Instructions {
 				// 仅已知的swap address 才可以解析
-				if _, ok := swapAccountMap[accountKeys[instruction.ProgramIDIndex].String()]; !ok {
+				if _, ok := contractAccountMap[accountKeys[instruction.ProgramIDIndex].String()]; !ok {
 					continue
 				}
 
@@ -87,7 +87,7 @@ func parserData() error {
 			for _, innerInstruction := range transaction.TxData.Meta.InnerInstructions {
 				// 仅已知的swap address 才可以解析
 				for _, compiledInstruction := range innerInstruction.Instructions {
-					if _, ok := swapAccountMap[accountKeys[compiledInstruction.ProgramIDIndex].String()]; !ok {
+					if _, ok := contractAccountMap[accountKeys[compiledInstruction.ProgramIDIndex].String()]; !ok {
 						continue
 					}
 

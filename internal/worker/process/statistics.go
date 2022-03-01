@@ -83,3 +83,7 @@ func userAddressLast24hVol() error {
 	}
 	return nil
 }
+
+func statisticsOneMints() {
+
+}
