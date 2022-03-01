@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
@@ -33,6 +35,7 @@ var (
 	chainNets       []*ChainNet
 	chainNetsConfig []string
 	swapConfigList  []*SwapConfig
+	swapConfigMap   map[string]*SwapConfig
 	once            sync.Once
 )
 
@@ -56,12 +59,17 @@ func Init(config *config.Config) error {
 						return
 					}
 
+					swapMap := make(map[string]*SwapConfig, len(swapConfigList))
+
 					// 加载配置
 					for _, v := range swapConfigList {
 						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
 						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
 						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+						swapMap[v.SwapAccount] = v
 					}
+
+					swapConfigMap = swapMap
 				}
 			}
 		}()
@@ -146,4 +154,14 @@ func GetBlockHeightForClient(rpcClient *rpc.Client) (uint64, error) {
 
 func GetRpcClient() *rpc.Client {
 	return chainNet.Client
+}
+
+func abs(n int64) int64 {
+	y := n >> 63
+	return (n ^ y) - y
+}
+
+// precisionConversion 精度转换
+func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
+	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }

@@ -2,7 +2,6 @@ package sol
 
 import (
 	"context"
-	"math"
 	"strconv"
 	"time"
 
@@ -274,7 +273,7 @@ func (tvl *TVL) pullLastSignature() {
 		if instructionLen == 9 || instructionLen == 41 || instructionLen == 50 || instructionLen == 52 {
 			continue
 		}
-		
+
 		tvl.transactionCache[key] = out
 		finalResult = append(finalResult, value)
 	}
@@ -320,16 +319,6 @@ func (tvl *TVL) calculate() {
 	// 	tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
 	// 	tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
 	// }
-}
-
-func abs(n int64) int64 {
-	y := n >> 63
-	return (n ^ y) - y
-}
-
-// precisionConversion 精度转换
-func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
-	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
 
 func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int64, int64) {
