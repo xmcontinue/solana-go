@@ -41,7 +41,7 @@ type SwapIndex struct {
 }
 
 var (
-	cremaSwapIndex          = &SwapIndex{14, 3, 4, 5, 6}
+	cremaSwapIndex          = &SwapIndex{0, 3, 4, 5, 6}
 	cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
 )
 
@@ -69,7 +69,7 @@ func (t *Tx) ParseTxToSwap() error {
 			continue
 		}
 
-		swapConfig, ok := swapConfigMap[accountKeys[cremaSwapIndex.SwapAddressIndex].String()]
+		swapConfig, ok := swapConfigMap[accountKeys[instruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
 		if !ok {
 			return errors.RecordNotFound
 		}
@@ -103,7 +103,7 @@ func (t *Tx) ParseTxToSwap() error {
 				continue
 			}
 
-			swapConfig, ok := swapConfigMap[accountKeys[cremaSwapIndex.SwapAddressIndex].String()]
+			swapConfig, ok := swapConfigMap[accountKeys[compiledInstruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
 			if !ok {
 				return errors.RecordNotFound
 			}
