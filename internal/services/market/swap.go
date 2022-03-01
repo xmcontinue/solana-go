@@ -77,14 +77,19 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 	}
 
 	// 直接查询数据库
-	//swapTvl, err := model.GetLastSwapTvlCount(ctx, gquery.ParseQuery(args))
-	//if err != nil {
-	//	return errors.Wrap(err)
-	//}
 
-	//reply.SwapTvlCount = swapTvl
+	swapTvl, err := model.GetLastMaxTvls(ctx, gquery.ParseQuery(args))
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
-	// gateway 获取数据
+	for _, tvl := range swapTvl {
+
+		reply.List = append(reply.List, &iface.SwapAddressTvl{
+			SwapAccount: tvl.SwapAddress,
+			Tvl:         tvl.Tvl,
+		})
+	}
 
 	return nil
 }
@@ -116,14 +121,14 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	vol, err := t.redisClient.Get(ctx, domain.SwapVolCountLast24HKey(args.SwapAddress).Key).Result()
+	vol, err := t.redisClient.Get(ctx, domain.SwapVolCountLast24HKey(args.AccountAddress).Key).Result()
 	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	} else if err == nil {
 
 		aa := &model.SwapVol{}
 		_ = json.Unmarshal([]byte(vol), aa)
-		reply.Vol = aa.Vol
+		reply.SwapVol = aa
 
 		return nil
 	}

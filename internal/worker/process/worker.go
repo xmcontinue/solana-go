@@ -1,19 +1,19 @@
 package process
 
 import (
+	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
-
-	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 )
 
 var (
-	cronConf    *xcron.Config
-	cron        *xcron.Cron
-	redisClient *redisV8.Client
-	conf        *config.Config
+	cronConf       *xcron.Config
+	cron           *xcron.Cron
+	redisClient    *redisV8.Client
+	conf           *config.Config
+	swapAccountMap = make(map[string]bool)
 )
 
 // Init 定时任务
@@ -30,10 +30,21 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	swapAccounts := make([]string, 0, 2)
+	err = conf.UnmarshalKey("swap_account", &swapAccounts)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	for _, v := range swapAccounts {
+		swapAccountMap[v] = true
+	}
+
 	cronConf.WithLogger(xlog.Config{}.Build())
 	cron = cronConf.Build()
 
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncData)
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), parserData)
 	if err != nil {
 		panic(err)
 	}

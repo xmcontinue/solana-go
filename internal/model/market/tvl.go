@@ -35,9 +35,13 @@ func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Fil
 }
 
 type SwapVol struct {
-	AccountAddress string          `json:"account_address"`
-	Vol            decimal.Decimal `json:"vol"`
-	Num            int             `json:"num"`
+	SwapAddress   string          `json:"swap_address"`
+	TokenAVolume  decimal.Decimal `json:"token_a_volume"`
+	TokenBVolume  decimal.Decimal `json:"token_b_volume"`
+	TokenAAddress string          `json:"token_a_address"`
+	TokenBAddress string          `json:"token_b_address"`
+	Vol           decimal.Decimal `json:"vol"`
+	Num           int             `json:"num"`
 }
 
 // SumSwapAccountLast24Vol 最近24小时 swap account 的总交易额
@@ -48,7 +52,9 @@ func SumSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*SwapVol,
 		swapVol []*SwapVol
 	)
 
-	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Select("sum(token_a_volume) as vol,count(*) as num ,swap_address as account_address").Group("swap_address").Find(&swapVol).Error; err != nil {
+	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).
+		Select("sum(token_a_volume) as token_a_volume,sum(token_b_volume) as token_b_volume,count(*) as num,swap_address,token_a_address,token_b_address").
+		Group("swap_address,token_a_address,token_b_address").Find(&swapVol).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}
@@ -58,15 +64,28 @@ func SumSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*SwapVol,
 	return swapVol, nil
 }
 
+type UserSwapVol struct {
+	UserAddress   string          `json:"user_address"`
+	TokenAVolume  decimal.Decimal `json:"token_a_volume"`
+	TokenBVolume  decimal.Decimal `json:"token_b_volume"`
+	SwapAddress   string          `json:"swap_address"`
+	TokenAAddress string          `json:"token_a_address"`
+	TokenBAddress string          `json:"token_b_address"`
+	Vol           decimal.Decimal `json:"vol"`
+	Num           int             `json:"num"`
+}
+
 // SumUserSwapAccountLast24Vol 最近24小时 user account 的总交易额
-func SumUserSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*SwapVol, error) {
+func SumUserSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*UserSwapVol, error) {
 	var (
 		err     error
 		db      = rDB(ctx)
-		swapVol []*SwapVol
+		swapVol []*UserSwapVol
 	)
 
-	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Select("sum(token_a_volume) as vol,user_address").Group("user_address").Find(&swapVol).Error; err != nil {
+	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).
+		Select("sum(token_a_volume) as token_a_volume,sum(token_b_volume) as token_b_volume,count(*) as num,user_address,swap_address,token_a_address,token_b_address").
+		Group("user_address,swap_address,token_a_address,token_b_address").Find(&swapVol).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}
@@ -284,6 +303,21 @@ func GetLastSwapTvlCount(ctx context.Context, filter ...Filter) (*domain.SwapTvl
 		return nil, errors.Wrap(err)
 	}
 	return swapTvlCount, nil
+}
+
+func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapTvlCount, error) {
+	var ids []int64
+	if err := wDB(ctx).Model(&domain.SwapTvlCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	if ids == nil {
+		return nil, nil
+	}
+
+	var list []*domain.SwapTvlCount
+	wDB(ctx).Model(&domain.SwapTvlCount{}).Select("tvl,swap_address").Where("id in ?", ids).Scan(&list)
+	return list, nil
 }
 
 func QuerySwapTvlCountDay(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTvlCountDay, int64, error) {
