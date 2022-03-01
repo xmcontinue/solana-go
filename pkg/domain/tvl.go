@@ -33,7 +33,7 @@ type SwapCount struct {
 	TxNum                 int64           `json:"tx_num"`                                                                                           // 交易笔数
 }
 
-type SwapCountDay struct {
+type SwapCountKLine struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -47,13 +47,13 @@ type SwapCountDay struct {
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                        // swap token b 余额
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_tvl_count_day_date_swap_address_unique_key"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                      // 交易笔数
-	//DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                          // 时间类型（1min,15min,1h,1d,1wek,1mon）
-	//Open                  decimal.Decimal
-	//High                  decimal.Decimal
-	//Low                   decimal.Decimal
-	//Settle                decimal.Decimal
-	//Avg                   decimal.Decimal
-	//Price                 decimal.Decimal
+	DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                          // 时间类型（1min,15min,1h,1d,1wek,1mon）
+	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                   // 统计时间段累的第一个值
+	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                   // 最大值
+	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                   // 最小值
+	Settle                decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                 // 结束值
+	Avg                   decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                    // 平均值
+	Price                 decimal.Decimal `json:"price" gorm:"type:decimal(36,18);default:0"`                                                                  // 价格
 }
 
 type Tvl struct {

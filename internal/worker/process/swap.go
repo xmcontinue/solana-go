@@ -205,9 +205,9 @@ func (s *SwapTx) NewSwapTransactionCount() *domain.SwapCount {
 	return swapCount
 }
 
-func (s *SwapTx) NewSwapTransactionCountDay() *domain.SwapCountDay {
+func (s *SwapTx) NewSwapTransactionCountDay() *domain.SwapCountKLine {
 
-	return &domain.SwapCountDay{
+	return &domain.SwapCountKLine{
 		LastSwapTransactionID: s.Transaction.ID,
 		SwapAddress:           s.Transaction.SwapAddress,
 		TokenAAddress:         s.Transaction.TokenAAddress,

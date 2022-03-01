@@ -57,7 +57,7 @@ func autoMigrate() error {
 		&domain.SwapTransaction{},
 		&domain.NetRecode{},
 		&domain.SwapCount{},
-		&domain.SwapCountDay{},
+		&domain.SwapCountKLine{},
 		&domain.UserSwapCount{},
 		&domain.UserSwapCountDay{},
 		&domain.SwapPairBase{},

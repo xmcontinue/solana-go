@@ -131,9 +131,9 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	return &after, nil
 }
 
-func UpsertSwapCountDay(ctx context.Context, swapCount *domain.SwapCountDay, blockDate *time.Time) (*domain.SwapCountDay, error) {
+func UpsertSwapCountDay(ctx context.Context, swapCount *domain.SwapCountKLine, blockDate *time.Time) (*domain.SwapCountKLine, error) {
 	var (
-		after   domain.SwapCountDay
+		after   domain.SwapCountKLine
 		now     = time.Now().UTC()
 		inserts = map[string]interface{}{
 			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
