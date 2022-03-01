@@ -20,17 +20,17 @@ type SwapTx struct {
 }
 
 func (s *SwapTx) Parser() error {
-	swapTvlCount := s.NewSwapTransactionTvlCount()
-	swapTvlCountDay := s.NewSwapTransactionTvlCountDay()
+	swapCount := s.NewSwapTransactionCount()
+	swapCountDay := s.NewSwapTransactionCountDay()
 	userSwapCount, userSwapCountDay := s.NewUserSwapCountAndDay()
 
 	trans := func(ctx context.Context) error {
-		afterSwapTvlCount, err := model.UpsertSwapTvlCount(ctx, swapTvlCount)
+		afterSwapCount, err := model.UpsertSwapCount(ctx, swapCount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
-		_, err = model.UpsertSwapTvlCountDay(ctx, swapTvlCountDay, s.BlockDate)
+		_, err = model.UpsertSwapCountDay(ctx, swapCountDay, s.BlockDate)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -72,15 +72,15 @@ func (s *SwapTx) Parser() error {
 		}
 
 		// swap address 最新tvl,单位是价格
-		swapTvlKey := domain.SwapTvlCountKey(afterSwapTvlCount.SwapAddress)
-		if err = redisClient.Set(ctx, swapTvlKey.Key, afterSwapTvlCount.Tvl.String(), swapTvlKey.Timeout).Err(); err != nil {
+		swapCountKey := domain.SwapCountKey(afterSwapCount.SwapAddress)
+		if err = redisClient.Set(ctx, swapCountKey.Key, afterSwapCount.TokenABalance.Add(afterSwapCount.TokenBBalance).String(), swapCountKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
 		// swap address 总的交易额（vol），单位是价格
-		swapVolKey := domain.AccountSwapVolCountKey(afterSwapTvlCount.SwapAddress)
+		swapVolKey := domain.AccountSwapVolCountKey(afterSwapCount.SwapAddress)
 
-		if err = redisClient.Set(ctx, swapVolKey.Key, afterSwapTvlCount.Vol.String(), swapVolKey.Timeout).Err(); err != nil {
+		if err = redisClient.Set(ctx, swapVolKey.Key, afterSwapCount.TokenAVolume.Add(afterSwapCount.TokenBVolume).String(), swapVolKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
@@ -182,8 +182,8 @@ func (s *SwapTx) NewUserSwapCountAndDay() (*domain.UserSwapCount, *domain.UserSw
 	return userSwapCount, userSwapCountDay
 }
 
-func (s *SwapTx) NewSwapTransactionTvlCount() *domain.SwapTvlCount {
-	swapTvlCount := &domain.SwapTvlCount{
+func (s *SwapTx) NewSwapTransactionCount() *domain.SwapCount {
+	swapCount := &domain.SwapCount{
 		LastSwapTransactionID: s.Transaction.ID,
 		SwapAddress:           s.Transaction.SwapAddress,
 		TokenAAddress:         s.Transaction.TokenAAddress,
@@ -192,16 +192,14 @@ func (s *SwapTx) NewSwapTransactionTvlCount() *domain.SwapTvlCount {
 		TokenBVolume:          s.Transaction.TokenBVolume,
 		TokenABalance:         s.Transaction.TokenABalance,
 		TokenBBalance:         s.Transaction.TokenBBalance,
-		Tvl:                   s.Transaction.TokenABalance.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenABalance.Mul(s.Transaction.TokenBUSD)),
-		Vol:                   s.Transaction.TokenAVolume.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenBVolume.Mul(s.Transaction.TokenBUSD)),
 	}
 
-	return swapTvlCount
+	return swapCount
 }
 
-func (s *SwapTx) NewSwapTransactionTvlCountDay() *domain.SwapTvlCountDay {
+func (s *SwapTx) NewSwapTransactionCountDay() *domain.SwapCountDay {
 
-	return &domain.SwapTvlCountDay{
+	return &domain.SwapCountDay{
 		LastSwapTransactionID: s.Transaction.ID,
 		SwapAddress:           s.Transaction.SwapAddress,
 		TokenAAddress:         s.Transaction.TokenAAddress,
@@ -210,8 +208,6 @@ func (s *SwapTx) NewSwapTransactionTvlCountDay() *domain.SwapTvlCountDay {
 		TokenBVolume:          s.Transaction.TokenBVolume,
 		TokenABalance:         s.Transaction.TokenABalance,
 		TokenBBalance:         s.Transaction.TokenBBalance,
-		Tvl:                   s.Transaction.TokenABalance.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenABalance.Mul(s.Transaction.TokenBUSD)),
-		Vol:                   s.Transaction.TokenAVolume.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenBVolume.Mul(s.Transaction.TokenBUSD)),
 		Date:                  s.BlockDate,
 		TxNum:                 1,
 	}

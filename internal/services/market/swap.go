@@ -60,7 +60,7 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 	}
 
 	for _, swapAddress := range swapAddressList {
-		tvl, err := t.redisClient.Get(ctx, domain.SwapTvlCountKey(swapAddress).Key).Result()
+		tvl, err := t.redisClient.Get(ctx, domain.SwapCountKey(swapAddress).Key).Result()
 		if err != nil && !t.redisClient.ErrIsNil(err) {
 			return errors.Wrap(err)
 		} else if err != nil && !t.redisClient.ErrIsNil(err) {
@@ -87,7 +87,7 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 
 		reply.List = append(reply.List, &iface.SwapAddressTvl{
 			SwapAccount: tvl.SwapAddress,
-			Tvl:         tvl.Tvl,
+			Tvl:         tvl.TokenABalance.Add(tvl.TokenBBalance),
 		})
 	}
 
@@ -161,7 +161,7 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 	return nil
 }
 
-func (t *MarketService) QueryUserSwapTvlCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
+func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)

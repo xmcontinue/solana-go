@@ -88,38 +88,34 @@ func SumUserSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*User
 	return swapVol, nil
 }
 
-func UpsertSwapTvlCount(ctx context.Context, swapTvlCount *domain.SwapTvlCount) (*domain.SwapTvlCount, error) {
+func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.SwapCount, error) {
 	var (
-		after   domain.SwapTvlCount
+		after   domain.SwapCount
 		now     = time.Now().UTC()
 		inserts = map[string]interface{}{
-			"last_swap_transaction_id": swapTvlCount.LastSwapTransactionID,
-			"swap_address":             swapTvlCount.SwapAddress,
-			"token_a_address":          swapTvlCount.TokenAAddress,
-			"token_b_address":          swapTvlCount.TokenBAddress,
-			"token_a_volume":           swapTvlCount.TokenAVolume.Abs(),
-			"token_b_volume":           swapTvlCount.TokenBVolume.Abs(),
-			"token_a_balance":          swapTvlCount.TokenABalance,
-			"token_b_balance":          swapTvlCount.TokenBBalance,
-			"tvl":                      swapTvlCount.Tvl,
-			"vol":                      swapTvlCount.Vol,
+			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
+			"swap_address":             swapCount.SwapAddress,
+			"token_a_address":          swapCount.TokenAAddress,
+			"token_b_address":          swapCount.TokenBAddress,
+			"token_a_volume":           swapCount.TokenAVolume.Abs(),
+			"token_b_volume":           swapCount.TokenBVolume.Abs(),
+			"token_a_balance":          swapCount.TokenABalance,
+			"token_b_balance":          swapCount.TokenBBalance,
 			"updated_at":               &now,
 			"created_at":               &now,
 			"tx_num":                   1,
 		}
 	)
 
-	sql, args, err := sq.Insert("swap_tvl_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
-		Suffix("last_swap_transaction_id = ?,", swapTvlCount.LastSwapTransactionID).
-		Suffix("tvl = ?,", swapTvlCount.Tvl).
-		Suffix("vol = swap_tvl_counts.vol + ?,", swapTvlCount.Vol).
-		Suffix("token_a_volume = ?,", swapTvlCount.TokenAVolume.Abs()).
-		Suffix("token_b_volume = ?,", swapTvlCount.TokenBVolume.Abs()).
-		Suffix("token_a_balance = ?,", swapTvlCount.TokenABalance).
-		Suffix("token_b_balance = ?,", swapTvlCount.TokenBBalance).
-		Suffix("tx_num = swap_tvl_counts.tx_num + 1").
+	sql, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
+		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
+		Suffix("token_a_volume = swap_counts.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
+		Suffix("token_b_volume = swap_counts.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
+		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
+		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
+		Suffix("tx_num = swap_counts.tx_num + 1").
 		Suffix("WHERE ").
-		Suffix("swap_tvl_counts.last_swap_transaction_id < ?", swapTvlCount.LastSwapTransactionID).
+		Suffix("swap_counts.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -135,37 +131,34 @@ func UpsertSwapTvlCount(ctx context.Context, swapTvlCount *domain.SwapTvlCount) 
 	return &after, nil
 }
 
-func UpsertSwapTvlCountDay(ctx context.Context, swapTvlCount *domain.SwapTvlCountDay, blockDate *time.Time) (*domain.SwapTvlCountDay, error) {
+func UpsertSwapCountDay(ctx context.Context, swapCount *domain.SwapCountDay, blockDate *time.Time) (*domain.SwapCountDay, error) {
 	var (
-		after   domain.SwapTvlCountDay
+		after   domain.SwapCountDay
 		now     = time.Now().UTC()
 		inserts = map[string]interface{}{
-			"last_swap_transaction_id": swapTvlCount.LastSwapTransactionID,
-			"swap_address":             swapTvlCount.SwapAddress,
-			"token_a_address":          swapTvlCount.TokenAAddress,
-			"token_b_address":          swapTvlCount.TokenBAddress,
-			"token_a_volume":           swapTvlCount.TokenAVolume,
-			"token_b_volume":           swapTvlCount.TokenBVolume.Abs(),
-			"token_a_balance":          swapTvlCount.TokenABalance,
-			"token_b_balance":          swapTvlCount.TokenBBalance,
-			"tvl":                      swapTvlCount.Tvl,
-			"vol":                      swapTvlCount.Vol,
-			"updated_at":               &now,
-			"created_at":               &now,
-			"date":                     blockDate,
-			"tx_num":                   1,
+			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
+			"swap_address":             swapCount.SwapAddress,
+			"token_a_address":          swapCount.TokenAAddress,
+			"token_b_address":          swapCount.TokenBAddress,
+			"token_a_volume":           swapCount.TokenAVolume,
+			"token_b_volume":           swapCount.TokenBVolume.Abs(),
+			"token_a_balance":          swapCount.TokenABalance,
+			"token_b_balance":          swapCount.TokenBBalance,
+
+			"updated_at": &now,
+			"created_at": &now,
+			"date":       blockDate,
+			"tx_num":     1,
 		}
 	)
 
-	sql, args, err := sq.Insert("swap_tvl_count_days").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date) DO UPDATE SET").
-		Suffix("last_swap_transaction_id = ?,", swapTvlCount.LastSwapTransactionID).
-		Suffix("tvl = ?,", swapTvlCount.Tvl).
-		Suffix("vol = swap_tvl_count_days.vol + ?,", swapTvlCount.Vol).
-		Suffix("token_a_volume = ?,", swapTvlCount.TokenAVolume).
-		Suffix("token_b_volume = ?,", swapTvlCount.TokenBVolume.Abs()).
-		Suffix("token_a_balance = ?,", swapTvlCount.TokenABalance).
-		Suffix("token_b_balance = ?,", swapTvlCount.TokenBBalance).
-		Suffix("tx_num = swap_tvl_count_days.tx_num + 1").
+	sql, args, err := sq.Insert("swap_count_days").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date) DO UPDATE SET").
+		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
+		Suffix("token_a_volume = swap_count_days.token_a_volume + ?,", swapCount.TokenAVolume).
+		Suffix("token_b_volume = swap_count_days.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
+		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
+		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
+		Suffix("tx_num = swap_count_days.tx_num + 1").
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -290,17 +283,17 @@ func QueryUserSwapCountDay(ctx context.Context, limit, offset int, filter ...Fil
 
 }
 
-func GetLastSwapTvlCount(ctx context.Context, filter ...Filter) (*domain.SwapTvlCount, error) {
-	var swapTvlCount *domain.SwapTvlCount
-	if err := wDB(ctx).Model(&domain.SwapTvlCount{}).Scopes(filter...).Order("id desc").First(&swapTvlCount).Error; err != nil {
+func GetLastSwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
+	var swapCount *domain.SwapCount
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Order("token_a_balance desc").First(&swapCount).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
-	return swapTvlCount, nil
+	return swapCount, nil
 }
 
-func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapTvlCount, error) {
+func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount, error) {
 	var ids []int64
-	if err := wDB(ctx).Model(&domain.SwapTvlCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 
@@ -308,8 +301,8 @@ func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapTvlCou
 		return nil, nil
 	}
 
-	var list []*domain.SwapTvlCount
-	wDB(ctx).Model(&domain.SwapTvlCount{}).Select("tvl,swap_address").Where("id in ?", ids).Scan(&list)
+	var list []*domain.SwapCount
+	wDB(ctx).Model(&domain.SwapCount{}).Select("tvl,swap_address").Where("id in ?", ids).Scan(&list)
 	return list, nil
 }
 

@@ -18,7 +18,7 @@ type NetRecode struct {
 	Enable           bool       `json:"enable" gorm:"default:false"`                // 是否已启用，默认不启用
 }
 
-type SwapTvlCount struct {
+type SwapCount struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -30,12 +30,10 @@ type SwapTvlCount struct {
 	TokenBVolume          decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                              // swap token b 总交易额
 	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                             // swap token a 余额
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                             // swap token b 余额
-	Tvl                   decimal.Decimal `json:"tvl"  gorm:"type:decimal(36,18);default:0"`                                                        // tvl
-	Vol                   decimal.Decimal `json:"vol"  gorm:"type:decimal(36,18);default:0"`                                                        // vol
 	TxNum                 int64           `json:"tx_num"`                                                                                           // 交易笔数
 }
 
-type SwapTvlCountDay struct {
+type SwapCountDay struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -47,10 +45,15 @@ type SwapTvlCountDay struct {
 	TokenBVolume          decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                                         // swap token b 总交易额
 	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                        // swap token a 余额
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                        // swap token b 余额
-	Tvl                   decimal.Decimal `json:"tvl"  gorm:"type:decimal(36,18);default:0"`                                                                   // tvl
-	Vol                   decimal.Decimal `json:"vol"  gorm:"type:decimal(36,18);default:0"`                                                                   // vol
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_tvl_count_day_date_swap_address_unique_key"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                      // 交易笔数
+	//DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                          // 时间类型（1min,15min,1h,1d,1wek,1mon）
+	//Open                  decimal.Decimal
+	//High                  decimal.Decimal
+	//Low                   decimal.Decimal
+	//Settle                decimal.Decimal
+	//Avg                   decimal.Decimal
+	//Price                 decimal.Decimal
 }
 
 type Tvl struct {

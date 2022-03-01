@@ -2,7 +2,6 @@ package process
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -34,15 +33,16 @@ func parserData() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	swapTvlCount, err := model.GetLastSwapTvlCount(context.TODO())
+
+	swapCount, err := model.GetLastSwapCount(context.TODO())
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Error("get last transaction id err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
 	var beforeSwapTransactionID int64
-	if swapTvlCount != nil {
-		beforeSwapTransactionID = swapTvlCount.LastSwapTransactionID
+	if swapCount != nil {
+		beforeSwapTransactionID = swapCount.LastSwapTransactionID
 	}
 
 	for {
@@ -62,7 +62,6 @@ func parserData() error {
 			accountKeys := transaction.TxData.Transaction.GetParsedTransaction().Message.AccountKeys
 			for _, instruction := range transaction.TxData.Transaction.GetParsedTransaction().Message.Instructions {
 				// 仅已知的swap address 才可以解析
-				fmt.Println(accountKeys[instruction.ProgramIDIndex].String())
 				if _, ok := swapAccountMap[accountKeys[instruction.ProgramIDIndex].String()]; !ok {
 					continue
 				}

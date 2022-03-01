@@ -17,8 +17,8 @@ func SwapVolCountLast24HKey(accountAddress string) RedisKey {
 	return RedisKey{key, time.Hour * 1, 0}
 }
 
-// SwapTvlCountKey swap account 的锁仓量
-func SwapTvlCountKey(swapAddress string) RedisKey {
+// SwapCountKey swap account 的锁仓量
+func SwapCountKey(swapAddress string) RedisKey {
 	key := fmt.Sprintf("swap:tvl:%s", swapAddress)
 	return RedisKey{key, 0, 0}
 }

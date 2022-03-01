@@ -40,7 +40,7 @@ func CreateSwapTransactions(ctx context.Context, transactions []*domain.SwapTran
 
 func QuerySwapTransaction(ctx context.Context, filter ...Filter) (*domain.SwapTransaction, error) {
 	var info *domain.SwapTransaction
-	if err := wDB(ctx).Model(&domain.SwapTransaction{}).Scopes(filter...).First(&info).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapTransaction{}).Scopes(filter...).Take(&info).Error; err != nil {
 		return info, errors.Wrap(err)
 	}
 	return info, nil
