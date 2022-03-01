@@ -33,6 +33,11 @@ func Init(viperConf *config.Config) error {
 	cronConf.WithLogger(xlog.Config{}.Build())
 	cron = cronConf.Build()
 
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), transactionIDCache)
+	if err != nil {
+		panic(err)
+	}
+
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncData)
 	if err != nil {
 		panic(err)

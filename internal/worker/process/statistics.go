@@ -18,8 +18,12 @@ func swapAddressLast24HVol() error {
 		endTime   = time.Now()
 		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
 	)
+	lastSwapTransactionID, err := getTransactionID()
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
-	swapVols, err := model.SumSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
+	swapVols, err := model.SumSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime), model.NewFilter("id <= ?", lastSwapTransactionID))
 	if err != nil {
 		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
 	}
@@ -47,8 +51,12 @@ func userAddressLast24hVol() error {
 		endTime   = time.Now()
 		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
 	)
+	lastSwapTransactionID, err := getTransactionID()
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
-	swapVols, err := model.SumUserSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime))
+	swapVols, err := model.SumUserSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime), model.NewFilter("id <= ?", lastSwapTransactionID))
 	if err != nil {
 		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
 	}

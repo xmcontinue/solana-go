@@ -14,11 +14,6 @@ import (
 
 type syncType string
 
-var (
-	LastSwapTransactionID syncType = "last:swap:transaction:id"
-	// 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
-)
-
 type SwapTokenIndex struct {
 	TokenAIndex int64
 	TokenBIndex int64
@@ -43,19 +38,24 @@ var swapInstructionLenMap = map[int]*SwapTokenIndex{
 }
 
 func syncData() error {
-	var lastSwapTransactionID int64
+	lastSwapTransactionID, err := getTransactionID()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	swapTvlCount, err := model.GetLastSwapTvlCount(context.TODO())
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Error("get last transaction id err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
+	var beforeSwapTransactionID int64
 	if swapTvlCount != nil {
-		lastSwapTransactionID = swapTvlCount.LastSwapTransactionID
+		beforeSwapTransactionID = swapTvlCount.LastSwapTransactionID
 	}
 
 	for {
-		swapTransactions, _, err := model.QuerySwapTransactions(context.TODO(), 1, 0, model.NewFilter("id > ?", lastSwapTransactionID))
+		swapTransactions, _, err := model.QuerySwapTransactions(context.TODO(), 1, 0, model.NewFilter("id > ?", beforeSwapTransactionID), model.NewFilter("id <= ?", lastSwapTransactionID))
 		if err != nil {
 			logger.Error("get single transaction err", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -96,13 +96,6 @@ func syncData() error {
 
 			}
 
-			// 同步当前处理数据进度到redis
-			lastSwapTransactionID = swapTransactions[len(swapTransactions)-1].ID
-			err = redisClient.Set(context.TODO(), string(LastSwapTransactionID), lastSwapTransactionID, 0).Err()
-			if err != nil {
-				logger.Error("sync transaction id err", logger.Errorv(err))
-				return errors.Wrap(err)
-			}
 		}
 
 	}
