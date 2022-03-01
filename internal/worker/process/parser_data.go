@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -20,9 +21,7 @@ type SwapTokenIndex struct {
 }
 
 var (
-	OriginalSwap = &SwapTokenIndex{3, 4}
-
-	JupeterSwap = &SwapTokenIndex{3, 4}
+	cremaSwap = &SwapTokenIndex{3, 4}
 )
 
 // ParserTransaction 不同的transaction使用同一套接口，再解析出transaction后做选择
@@ -30,19 +29,11 @@ type ParserTransaction interface {
 	Parser(tx *rpc.GetTransactionResult) error
 }
 
-var swapInstructionLenMap = map[int]*SwapTokenIndex{
-	8:  OriginalSwap,
-	26: JupeterSwap,
-	17: JupeterSwap,
-	12: JupeterSwap,
-}
-
-func syncData() error {
+func parserData() error {
 	lastSwapTransactionID, err := getTransactionID()
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
 	swapTvlCount, err := model.GetLastSwapTvlCount(context.TODO())
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Error("get last transaction id err", logger.Errorv(err))
@@ -66,34 +57,58 @@ func syncData() error {
 		}
 
 		for _, transaction := range swapTransactions {
-
+			blockDate := time.Date(transaction.BlockTime.Year(), transaction.BlockTime.Month(), transaction.BlockTime.Day(), 0, 0, 0, 0, time.UTC)
 			// parser instructions
+			accountKeys := transaction.TxData.Transaction.GetParsedTransaction().Message.AccountKeys
 			for _, instruction := range transaction.TxData.Transaction.GetParsedTransaction().Message.Instructions {
+				// 仅已知的swap address 才可以解析
+				fmt.Println(accountKeys[instruction.ProgramIDIndex].String())
+				if _, ok := swapAccountMap[accountKeys[instruction.ProgramIDIndex].String()]; !ok {
+					continue
+				}
 
-				tokenIndex, ok := swapInstructionLenMap[len(instruction.Data)]
+				// swap 函数在合约里面的下表是1
+				if instruction.Data[0] != 1 {
+					continue
+				}
 
-				if ok {
+				swapTx := &SwapTx{
+					Transaction: transaction,
+					TokenAIndex: instruction.Accounts[cremaSwap.TokenAIndex],
+					TokenBIndex: instruction.Accounts[cremaSwap.TokenBIndex],
+					BlockDate:   &blockDate,
+				}
 
-					if tokenIndex.TokenAIndex == 3 && tokenIndex.TokenBIndex == 4 {
-						fmt.Println(tokenIndex.TokenAIndex)
+				if err = swapTx.Parser(); err != nil {
+					logger.Error("parser data err", logger.Errorv(err))
+					return errors.Wrap(err)
+				}
+			}
+
+			for _, innerInstruction := range transaction.TxData.Meta.InnerInstructions {
+				// 仅已知的swap address 才可以解析
+				for _, compiledInstruction := range innerInstruction.Instructions {
+					if _, ok := swapAccountMap[accountKeys[compiledInstruction.ProgramIDIndex].String()]; !ok {
+						continue
+					}
+
+					// swap 函数在合约里面的下表是1
+					if compiledInstruction.Data[0] != 1 {
+						continue
 					}
 
 					swapTx := &SwapTx{
 						Transaction: transaction,
-						TokenAIndex: tokenIndex.TokenAIndex,
-						TokenBIndex: tokenIndex.TokenBIndex,
+						TokenAIndex: int64(compiledInstruction.Accounts[cremaSwap.TokenAIndex]),
+						TokenBIndex: int64(compiledInstruction.Accounts[cremaSwap.TokenBIndex]),
+						BlockDate:   &blockDate,
 					}
 
 					if err = swapTx.Parser(); err != nil {
 						logger.Error("parser data err", logger.Errorv(err))
 						return errors.Wrap(err)
 					}
-
-					continue
 				}
-
-				// 其他方法
-
 			}
 
 		}

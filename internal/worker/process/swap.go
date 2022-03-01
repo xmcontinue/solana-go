@@ -9,7 +9,6 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 
 	model "git.cplus.link/crema/backend/internal/model/market"
-	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -17,10 +16,10 @@ type SwapTx struct {
 	Transaction *domain.SwapTransaction // 可以使用里面的swap address tokenAAddress tokenBAddress
 	TokenAIndex int64
 	TokenBIndex int64
+	BlockDate   *time.Time
 }
 
 func (s *SwapTx) Parser() error {
-	blockDate := time.Date(s.Transaction.BlockTime.Year(), s.Transaction.BlockTime.Month(), s.Transaction.BlockTime.Day(), 0, 0, 0, 0, time.UTC)
 	swapTvlCount := s.NewSwapTransactionTvlCount()
 	swapTvlCountDay := s.NewSwapTransactionTvlCountDay()
 	userSwapCount, userSwapCountDay := s.NewUserSwapCountAndDay()
@@ -31,7 +30,7 @@ func (s *SwapTx) Parser() error {
 			return errors.Wrap(err)
 		}
 
-		_, err = model.UpsertSwapTvlCountDay(ctx, swapTvlCountDay, &blockDate)
+		_, err = model.UpsertSwapTvlCountDay(ctx, swapTvlCountDay, s.BlockDate)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -47,7 +46,7 @@ func (s *SwapTx) Parser() error {
 			0,
 			model.NewFilter("user_address = ?", userSwapCount.UserAddress),
 			model.NewFilter("swap_address = ?", userSwapCount.SwapAddress),
-			model.NewFilter("date = ?", blockDate),
+			model.NewFilter("date = ?", s.BlockDate),
 		)
 
 		if err != nil {
@@ -67,27 +66,27 @@ func (s *SwapTx) Parser() error {
 			}
 		}
 
-		_, err = model.UpsertUserSwapCountDay(ctx, userSwapCountDay, &blockDate)
+		_, err = model.UpsertUserSwapCountDay(ctx, userSwapCountDay, s.BlockDate)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
 		// swap address 最新tvl,单位是价格
-		redisKey := domain.SwapTvlCountKey(afterSwapTvlCount.SwapAddress)
-		if err = redisClient.Set(ctx, redisKey.Key, afterSwapTvlCount.Tvl.String(), redisKey.Timeout).Err(); err != nil {
+		swapTvlKey := domain.SwapTvlCountKey(afterSwapTvlCount.SwapAddress)
+		if err = redisClient.Set(ctx, swapTvlKey.Key, afterSwapTvlCount.Tvl.String(), swapTvlKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
 		// swap address 总的交易额（vol），单位是价格
-		redisKey = domain.AccountSwapVolCountKey(afterSwapTvlCount.SwapAddress)
+		swapVolKey := domain.AccountSwapVolCountKey(afterSwapTvlCount.SwapAddress)
 
-		if err = redisClient.Set(ctx, redisKey.Key, afterSwapTvlCount.Vol.String(), redisKey.Timeout).Err(); err != nil {
+		if err = redisClient.Set(ctx, swapVolKey.Key, afterSwapTvlCount.Vol.String(), swapVolKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
 		// user address 总的交易额（vol）
-		redisKey = domain.AccountSwapVolCountKey(afterUserSwapCount.UserAddress)
-		if err = redisClient.Set(ctx, redisKey.Key, afterUserSwapCount.UserTokenAVolume.String(), redisKey.Timeout).Err(); err != nil {
+		userVolKey := domain.AccountSwapVolCountKey(afterUserSwapCount.UserAddress)
+		if err = redisClient.Set(ctx, userVolKey.Key, afterUserSwapCount.UserTokenAVolume.Add(afterUserSwapCount.UserTokenBVolume).String(), userVolKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
 
@@ -111,8 +110,6 @@ func (s *SwapTx) NewUserSwapCountAndDay() (*domain.UserSwapCount, *domain.UserSw
 		userTokenABalance       decimal.Decimal
 		userTokenBBalance       decimal.Decimal
 	)
-
-	tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(s.Transaction.TokenAAddress), coingecko.GetPriceForCache(s.Transaction.TokenBAddress)
 
 	for _, v := range s.Transaction.TxData.Meta.PreTokenBalances {
 		if s.TokenAIndex == int64(v.AccountIndex) {
@@ -160,34 +157,32 @@ func (s *SwapTx) NewUserSwapCountAndDay() (*domain.UserSwapCount, *domain.UserSw
 		SwapAddress:           s.Transaction.SwapAddress,
 		TokenAAddress:         s.Transaction.TokenAAddress,
 		TokenBAddress:         s.Transaction.TokenBAddress,
-		UserTokenAVolume:      userTokenADeltaVolumeDecimal.Mul(tokenAPrice),
-		UserTokenBVolume:      userTokenBDeltaVolumeDecimal.Mul(tokenBPrice),
+		UserTokenAVolume:      userTokenADeltaVolumeDecimal,
+		UserTokenBVolume:      userTokenBDeltaVolumeDecimal,
 		UserTokenABalance:     userTokenABalance,
 		UserTokenBBalance:     userTokenBBalance,
 		TxNum:                 1,
 	}
 
 	// 统计用户每日swap count
-	blockDate := time.Date(s.Transaction.BlockTime.Year(), s.Transaction.BlockTime.Month(), s.Transaction.BlockTime.Day(), 0, 0, 0, 0, time.UTC)
 	userSwapCountDay := &domain.UserSwapCountDay{
 		LastSwapTransactionID: s.Transaction.ID,
 		UserAddress:           s.Transaction.UserAddress,
 		SwapAddress:           s.Transaction.SwapAddress,
 		TokenAAddress:         s.Transaction.TokenAAddress,
 		TokenBAddress:         s.Transaction.TokenBAddress,
-		UserTokenAVolume:      userTokenADeltaVolumeDecimal.Mul(tokenAPrice),
-		UserTokenBVolume:      userTokenBDeltaVolumeDecimal.Mul(tokenBPrice),
+		UserTokenAVolume:      userTokenADeltaVolumeDecimal,
+		UserTokenBVolume:      userTokenBDeltaVolumeDecimal,
 		UserTokenABalance:     userTokenABalance,
 		UserTokenBBalance:     userTokenBBalance,
 		TxNum:                 1,
-		Date:                  &blockDate,
+		Date:                  s.BlockDate,
 	}
 
 	return userSwapCount, userSwapCountDay
 }
 
 func (s *SwapTx) NewSwapTransactionTvlCount() *domain.SwapTvlCount {
-	tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(s.Transaction.TokenAAddress), coingecko.GetPriceForCache(s.Transaction.TokenBAddress)
 	swapTvlCount := &domain.SwapTvlCount{
 		LastSwapTransactionID: s.Transaction.ID,
 		SwapAddress:           s.Transaction.SwapAddress,
@@ -197,16 +192,15 @@ func (s *SwapTx) NewSwapTransactionTvlCount() *domain.SwapTvlCount {
 		TokenBVolume:          s.Transaction.TokenBVolume,
 		TokenABalance:         s.Transaction.TokenABalance,
 		TokenBBalance:         s.Transaction.TokenBBalance,
-		Tvl:                   s.Transaction.TokenABalance.Mul(tokenAPrice).Add(s.Transaction.TokenABalance.Mul(tokenBPrice)),
-		Vol:                   s.Transaction.TokenABalance.Mul(tokenAPrice),
+		Tvl:                   s.Transaction.TokenABalance.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenABalance.Mul(s.Transaction.TokenBUSD)),
+		Vol:                   s.Transaction.TokenAVolume.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenBVolume.Mul(s.Transaction.TokenBUSD)),
 	}
 
 	return swapTvlCount
 }
 
 func (s *SwapTx) NewSwapTransactionTvlCountDay() *domain.SwapTvlCountDay {
-	blockDate := time.Date(s.Transaction.BlockTime.Year(), s.Transaction.BlockTime.Month(), s.Transaction.BlockTime.Day(), 0, 0, 0, 0, time.UTC)
-	tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(s.Transaction.TokenAAddress), coingecko.GetPriceForCache(s.Transaction.TokenBAddress)
+
 	return &domain.SwapTvlCountDay{
 		LastSwapTransactionID: s.Transaction.ID,
 		SwapAddress:           s.Transaction.SwapAddress,
@@ -216,9 +210,9 @@ func (s *SwapTx) NewSwapTransactionTvlCountDay() *domain.SwapTvlCountDay {
 		TokenBVolume:          s.Transaction.TokenBVolume,
 		TokenABalance:         s.Transaction.TokenABalance,
 		TokenBBalance:         s.Transaction.TokenBBalance,
-		Tvl:                   s.Transaction.TokenABalance.Mul(tokenAPrice).Add(s.Transaction.TokenABalance.Mul(tokenBPrice)),
-		Vol:                   s.Transaction.TokenABalance.Mul(tokenAPrice),
-		Date:                  &blockDate,
+		Tvl:                   s.Transaction.TokenABalance.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenABalance.Mul(s.Transaction.TokenBUSD)),
+		Vol:                   s.Transaction.TokenAVolume.Mul(s.Transaction.TokenAUSD).Add(s.Transaction.TokenBVolume.Mul(s.Transaction.TokenBUSD)),
+		Date:                  s.BlockDate,
 		TxNum:                 1,
 	}
 }

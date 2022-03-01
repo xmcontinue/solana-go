@@ -6,6 +6,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"git.cplus.link/go/akit/util/gquery"
 
+	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -60,11 +61,11 @@ type GetTvlRespV2 struct {
 }
 
 type Get24hVolV2Req struct {
-	SwapAddress string `json:"swap_address"           binding:"required"`
+	AccountAddress string `json:"account_address"           binding:"required"`
 }
 
 type Get24hVolV2Resp struct {
-	Vol decimal.Decimal `json:"vol"`
+	*model.SwapVol
 }
 
 type GetVolV2Req struct {

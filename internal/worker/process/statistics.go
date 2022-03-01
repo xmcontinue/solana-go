@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -16,7 +17,7 @@ import (
 func swapAddressLast24HVol() error {
 	var (
 		endTime   = time.Now()
-		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
+		beginTime = endTime.Add(-24 * time.Hour)
 	)
 	lastSwapTransactionID, err := getTransactionID()
 	if err != nil {
@@ -34,8 +35,10 @@ func swapAddressLast24HVol() error {
 
 	swapVolMap := make(map[string]string)
 	for _, v := range swapVols {
+		tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(v.TokenAAddress), coingecko.GetPriceForCache(v.TokenBAddress)
+		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
-		swapVolMap[domain.SwapVolCountLast24HKey(v.AccountAddress).Key] = string(volCount)
+		swapVolMap[domain.SwapVolCountLast24HKey(v.SwapAddress).Key] = string(volCount)
 	}
 
 	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
@@ -49,7 +52,7 @@ func swapAddressLast24HVol() error {
 func userAddressLast24hVol() error {
 	var (
 		endTime   = time.Now()
-		beginTime = endTime.Add(-108 * time.Hour) // todo 修改为24
+		beginTime = endTime.Add(-24 * time.Hour)
 	)
 	lastSwapTransactionID, err := getTransactionID()
 	if err != nil {
@@ -66,9 +69,12 @@ func userAddressLast24hVol() error {
 	}
 
 	swapVolMap := make(map[string]string)
+
 	for _, v := range swapVols {
+		tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(v.TokenAAddress), coingecko.GetPriceForCache(v.TokenBAddress)
+		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
-		swapVolMap[domain.SwapVolCountLast24HKey(v.AccountAddress).Key] = string(volCount)
+		swapVolMap[domain.SwapVolCountLast24HKey(v.UserAddress).Key] = string(volCount)
 	}
 
 	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
