@@ -12,26 +12,19 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransaction, int64, error) {
+func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransaction, error) {
 	var (
-		db    = rDB(ctx)
-		list  []*domain.SwapTransaction
-		total int64
-		err   error
-	)
-	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Count(&total).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
-	}
+		db   = rDB(ctx)
+		list []*domain.SwapTransaction
 
-	if total == 0 {
-		return nil, 0, nil
-	}
+		err error
+	)
 
 	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).Limit(limit).Offset(offset).Order("id asc").Scan(&list).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 
-	return list, total, nil
+	return list, nil
 }
 
 type SwapVol struct {
@@ -318,28 +311,6 @@ func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapTvlCou
 	var list []*domain.SwapTvlCount
 	wDB(ctx).Model(&domain.SwapTvlCount{}).Select("tvl,swap_address").Where("id in ?", ids).Scan(&list)
 	return list, nil
-}
-
-func QuerySwapTvlCountDay(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTvlCountDay, int64, error) {
-	var (
-		db    = rDB(ctx)
-		list  []*domain.SwapTvlCountDay
-		total int64
-		err   error
-	)
-	if err = db.Model(&domain.SwapTvlCountDay{}).Scopes(filter...).Count(&total).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
-	}
-
-	if total == 0 {
-		return list, 0, nil
-	}
-
-	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
-	}
-
-	return list, total, nil
 }
 
 func QueryUserSwapCount(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCount, int64, error) {

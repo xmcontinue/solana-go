@@ -14,7 +14,7 @@ type RedisKey struct {
 // SwapVolCountLast24HKey 最近24小时的总的交易额
 func SwapVolCountLast24HKey(accountAddress string) RedisKey {
 	key := fmt.Sprintf("swap:vol:count:last24h:%s", accountAddress)
-	return RedisKey{key, time.Minute * 10, 0}
+	return RedisKey{key, time.Hour * 1, 0}
 }
 
 // SwapTvlCountKey swap account 的锁仓量

@@ -133,15 +133,12 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return nil
 	}
 
-	// 在数据库里面找，并且同步到redis里 TODO
-
-	tvlDecimal, _ := decimal.NewFromString(vol)
-
-	reply.Vol = tvlDecimal
+	// 未在redis中找到，直接返回空数据
 
 	return nil
 }
 
+// GetVolV2 获取swap account 或者user account 的总交易额
 func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, reply *iface.GetVolV2Resp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
@@ -159,11 +156,7 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 		return nil
 	}
 
-	// 在数据库里面找，并且同步到redis里 TODO
-
-	tvlDecimal, _ := decimal.NewFromString(vol)
-
-	reply.Vol = tvlDecimal
+	// 在数据库里面找，直接返回空数据
 
 	return nil
 }

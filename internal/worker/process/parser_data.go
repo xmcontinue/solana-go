@@ -46,7 +46,7 @@ func parserData() error {
 	}
 
 	for {
-		swapTransactions, _, err := model.QuerySwapTransactions(context.TODO(), 1, 0, model.NewFilter("id > ?", beforeSwapTransactionID), model.NewFilter("id <= ?", lastSwapTransactionID))
+		swapTransactions, err := model.QuerySwapTransactions(context.TODO(), 10, 0, model.NewFilter("id > ?", beforeSwapTransactionID), model.NewFilter("id <= ?", lastSwapTransactionID))
 		if err != nil {
 			logger.Error("get single transaction err", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -67,7 +67,7 @@ func parserData() error {
 					continue
 				}
 
-				// swap 函数在合约里面的下表是1
+				// swap 函数在合约里面的下标是1
 				if instruction.Data[0] != 1 {
 					continue
 				}
@@ -92,7 +92,7 @@ func parserData() error {
 						continue
 					}
 
-					// swap 函数在合约里面的下表是1
+					// swap 函数在合约里面的下标是1
 					if compiledInstruction.Data[0] != 1 {
 						continue
 					}
