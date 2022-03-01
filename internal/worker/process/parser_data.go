@@ -112,6 +112,8 @@ func parserData() error {
 
 		}
 
+		beforeSwapTransactionID = swapTransactions[len(swapTransactions)-1].ID
+
 	}
 
 	return nil

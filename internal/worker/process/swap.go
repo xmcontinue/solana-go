@@ -30,6 +30,10 @@ func (s *SwapTx) Parser() error {
 			return errors.Wrap(err)
 		}
 
+		if afterSwapCount == nil {
+			return errors.Wrap(errors.RecordNotFound)
+		}
+
 		_, err = model.UpsertSwapCountDay(ctx, swapCountDay, s.BlockDate)
 		if err != nil {
 			return errors.Wrap(err)
@@ -38,6 +42,10 @@ func (s *SwapTx) Parser() error {
 		afterUserSwapCount, err := model.UpsertUserSwapCount(ctx, userSwapCount)
 		if err != nil {
 			return errors.Wrap(err)
+		}
+
+		if afterUserSwapCount == nil {
+			return errors.Wrap(errors.RecordNotFound)
 		}
 
 		userSwapCountDays, total, err := model.QueryUserSwapCountDay(

@@ -144,11 +144,10 @@ func UpsertSwapCountDay(ctx context.Context, swapCount *domain.SwapCountDay, blo
 			"token_b_volume":           swapCount.TokenBVolume.Abs(),
 			"token_a_balance":          swapCount.TokenABalance,
 			"token_b_balance":          swapCount.TokenBBalance,
-
-			"updated_at": &now,
-			"created_at": &now,
-			"date":       blockDate,
-			"tx_num":     1,
+			"updated_at":               &now,
+			"created_at":               &now,
+			"date":                     blockDate,
+			"tx_num":                   1,
 		}
 	)
 
@@ -159,6 +158,8 @@ func UpsertSwapCountDay(ctx context.Context, swapCount *domain.SwapCountDay, blo
 		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
 		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
 		Suffix("tx_num = swap_count_days.tx_num + 1").
+		Suffix("WHERE ").
+		Suffix("swap_count_days.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -201,6 +202,8 @@ func UpsertUserSwapCount(ctx context.Context, userSwapCount *domain.UserSwapCoun
 		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
 		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
 		Suffix("tx_num = user_swap_counts.tx_num +1").
+		Suffix("WHERE ").
+		Suffix("user_swap_counts.last_swap_transaction_id < ?", userSwapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -245,6 +248,8 @@ func UpsertUserSwapCountDay(ctx context.Context, userSwapCount *domain.UserSwapC
 		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
 		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
 		Suffix("tx_num = user_swap_count_days.tx_num +1").
+		Suffix("WHERE ").
+		Suffix("user_swap_count_days.last_swap_transaction_id < ?", userSwapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
