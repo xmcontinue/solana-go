@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	LastSwapTransactionID syncType = "last:swap:transaction:id"
+	LastSwapTransactionID syncType = "swap:transaction:last_id"
 	// 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
 )
 
