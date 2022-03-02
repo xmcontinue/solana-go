@@ -203,24 +203,28 @@ func (t *Tx) calculate(swapCount *SwapCount) {
 
 	for _, preVal := range t.Data.Meta.PreTokenBalances {
 		if swapCount.TokenAIndex == int64(preVal.AccountIndex) {
-			TokenAPreVolume = decimal.NewFromFloat(*preVal.UiTokenAmount.UiAmount).Abs()
+			TokenAPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
+			TokenAPreVolume = TokenAPreVolume.Abs()
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(preVal.AccountIndex) {
-			TokenBPreVolume = decimal.NewFromFloat(*preVal.UiTokenAmount.UiAmount).Abs()
+			TokenBPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
+			TokenBPreVolume = TokenBPreVolume.Abs()
 			continue
 		}
 	}
 
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
 		if swapCount.TokenAIndex == int64(postVal.AccountIndex) {
-			TokenAPostVolume = decimal.NewFromFloat(*postVal.UiTokenAmount.UiAmount).Abs()
+			TokenAPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
+			TokenAPostVolume = TokenAPostVolume.Abs()
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(postVal.AccountIndex) {
-			TokenBPostVolume = decimal.NewFromFloat(*postVal.UiTokenAmount.UiAmount).Abs()
+			TokenBPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
+			TokenBPostVolume = TokenBPostVolume.Abs()
 			continue
 		}
 	}
