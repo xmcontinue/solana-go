@@ -218,3 +218,10 @@ func (t *Tx) swapCalculate(swapRecord *SwapRecord, swapCount *SwapCount) {
 	swapCount.TokenABalance = precisionConversion(TokenAPostVolume, int(swapRecord.SwapConfig.TokenA.Decimal))
 	swapCount.TokenBBalance = precisionConversion(TokenBPostVolume, int(swapRecord.SwapConfig.TokenB.Decimal))
 }
+
+func (sr *SwapRecord) GetVol() decimal.Decimal {
+	if sr.Direction == 0 {
+		return sr.TokenCount.TokenAVolume
+	}
+	return sr.TokenCount.TokenBVolume
+}
