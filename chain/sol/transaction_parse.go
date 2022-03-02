@@ -18,6 +18,8 @@ type SwapRecord struct {
 	UserOwnerAddress  string
 	UserTokenAAddress string
 	UserTokenBAddress string
+	ProgramAddress    string
+	Direction         int8 // 0为A->B,1为B->A
 	UserCount         *SwapCount
 	TokenCount        *SwapCount
 	SwapConfig        *SwapConfig
@@ -41,7 +43,6 @@ type SwapIndex struct {
 }
 
 var (
-	cremaSwapIndex          = &SwapIndex{0, 3, 4, 5, 6}
 	cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
 )
 
@@ -60,7 +61,8 @@ func (t *Tx) ParseTxToSwap() error {
 
 	for _, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
 		// 仅已知的swap address 才可以解析
-		if accountKeys[instruction.ProgramIDIndex].String() != cremaSwapProgramAddress {
+		programAddress := accountKeys[instruction.ProgramIDIndex].String()
+		if programAddress != cremaSwapProgramAddress {
 			continue
 		}
 
@@ -69,9 +71,17 @@ func (t *Tx) ParseTxToSwap() error {
 			continue
 		}
 
+		cremaSwapIndex := &SwapIndex{0, 3, 4, 5, 6}
+
 		swapConfig, ok := swapConfigMap[accountKeys[instruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
 		if !ok {
 			return errors.RecordNotFound
+		}
+
+		direction := int8(0)
+		if swapConfig.TokenA.SwapTokenAccount != accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String() {
+			cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
+			direction = 1
 		}
 
 		t.SwapRecords = append(t.SwapRecords, &SwapRecord{
@@ -79,6 +89,8 @@ func (t *Tx) ParseTxToSwap() error {
 			SwapConfig:        swapConfig,
 			UserTokenAAddress: accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String(),
 			UserTokenBAddress: accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenBIndex]].String(),
+			ProgramAddress:    programAddress,
+			Direction:         direction,
 			UserCount: &SwapCount{
 				TokenAIndex: instruction.Accounts[cremaSwapIndex.UserTokenAIndex],
 				TokenBIndex: instruction.Accounts[cremaSwapIndex.UserTokenBIndex],
@@ -94,7 +106,9 @@ func (t *Tx) ParseTxToSwap() error {
 		// 仅已知的swap address 才可以解析
 		for _, compiledInstruction := range innerInstruction.Instructions {
 
-			if accountKeys[compiledInstruction.ProgramIDIndex].String() != cremaSwapProgramAddress {
+			programAddress := accountKeys[compiledInstruction.ProgramIDIndex].String()
+
+			if programAddress != cremaSwapProgramAddress {
 				continue
 			}
 
@@ -102,10 +116,17 @@ func (t *Tx) ParseTxToSwap() error {
 			if compiledInstruction.Data[0] != 1 {
 				continue
 			}
+			cremaSwapIndex := &SwapIndex{0, 3, 4, 5, 6}
 
 			swapConfig, ok := swapConfigMap[accountKeys[compiledInstruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
 			if !ok {
 				return errors.RecordNotFound
+			}
+
+			direction := int8(0)
+			if swapConfig.TokenA.SwapTokenAccount != accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String() {
+				cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
+				direction = 1
 			}
 
 			t.SwapRecords = append(t.SwapRecords, &SwapRecord{
@@ -113,6 +134,8 @@ func (t *Tx) ParseTxToSwap() error {
 				SwapConfig:        swapConfig,
 				UserTokenAAddress: accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String(),
 				UserTokenBAddress: accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenBIndex]].String(),
+				ProgramAddress:    programAddress,
+				Direction:         direction,
 				UserCount: &SwapCount{
 					TokenAIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]),
 					TokenBIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.UserTokenBIndex]),
