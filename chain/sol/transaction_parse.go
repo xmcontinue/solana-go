@@ -20,6 +20,7 @@ type SwapRecord struct {
 	UserTokenBAddress string
 	ProgramAddress    string
 	Direction         int8 // 0为A->B,1为B->A
+	Price             decimal.Decimal
 	UserCount         *SwapCount
 	TokenCount        *SwapCount
 	SwapConfig        *SwapConfig
@@ -166,6 +167,11 @@ func (t *Tx) parseSwapRecord() error {
 		t.swapCalculate(v, v.UserCount)
 
 		t.swapCalculate(v, v.TokenCount)
+
+		if v.TokenCount.TokenAVolume.IsZero() {
+			continue
+		}
+		v.Price = precisionConversion(v.TokenCount.TokenBVolume.Div(v.TokenCount.TokenAVolume), int(v.SwapConfig.TokenA.Decimal))
 	}
 
 	return nil
