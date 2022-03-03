@@ -167,7 +167,7 @@ func (t *Tx) calculateSwap() error {
 		if v.TokenCount.TokenAVolume.IsZero() {
 			continue
 		}
-		v.Price = precisionConversion(v.TokenCount.TokenBVolume.Div(v.TokenCount.TokenAVolume), int(v.SwapConfig.TokenA.Decimal))
+		v.Price = v.TokenCount.TokenBVolume.Div(v.TokenCount.TokenAVolume)
 	}
 
 	return nil
@@ -181,13 +181,13 @@ func (t *Tx) calculate(swapCount *SwapCount) {
 	for _, preVal := range t.Data.Meta.PreTokenBalances {
 		if swapCount.TokenAIndex == int64(preVal.AccountIndex) {
 			TokenAPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenAPreVolume = TokenAPreVolume.Abs()
+			TokenAPreVolume = precisionConversion(TokenAPreVolume.Abs(), int(preVal.UiTokenAmount.Decimals))
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(preVal.AccountIndex) {
 			TokenBPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenBPreVolume = TokenBPreVolume.Abs()
+			TokenBPreVolume = precisionConversion(TokenBPreVolume.Abs(), int(preVal.UiTokenAmount.Decimals))
 			continue
 		}
 	}
@@ -195,13 +195,13 @@ func (t *Tx) calculate(swapCount *SwapCount) {
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
 		if swapCount.TokenAIndex == int64(postVal.AccountIndex) {
 			TokenAPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenAPostVolume = TokenAPostVolume.Abs()
+			TokenAPostVolume = precisionConversion(TokenAPostVolume.Abs(), int(postVal.UiTokenAmount.Decimals))
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(postVal.AccountIndex) {
 			TokenBPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenBPostVolume = TokenBPostVolume.Abs()
+			TokenBPostVolume = precisionConversion(TokenBPostVolume.Abs(), int(postVal.UiTokenAmount.Decimals))
 			continue
 		}
 	}
