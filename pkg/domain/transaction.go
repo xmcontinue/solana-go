@@ -41,9 +41,11 @@ type SwapPairBase struct {
 	IsSync         bool            `json:"is_sync"`                                                  // 是否同步至起始区块
 	StartSignature string          `json:"start_signature" gorm:"not null;type:varchar(128)"`        // 当前起始签名
 	EndSignature   string          `json:"end_signature" gorm:"not null;type:varchar(128)"`          // 当前最新签名
-	TotalTxNum     uint64          `json:"total_tx_num" gorm:"default:0"`                            // 总交易笔数
 	FailedTxNum    uint64          `json:"failed_tx_num" gorm:"default:0"`                           // 失败交易笔数
-	TotalVol       decimal.Decimal `json:"total_vol" gorm:"type:decimal(36,18);default:0"`           // 总交易量
+	TotalTxNum     uint64          `json:"total_tx_num" gorm:"default:0"`                            // 总交易笔数 TODO 待开发，由tx解析后统计
+	TotalVol       decimal.Decimal `json:"total_vol" gorm:"type:decimal(36,18);default:0"`           // 总交易量 TODO 待开发，由tx解析后统计
+	TokenNum       uint64          `json:"token_num" gorm:"default:0"`                               // token数量 TODO 待开发，由配置文件中解析统计
+	UserNum        uint64          `json:"user_num" gorm:"default:0"`                                // 用户数量 TODO 待开发，由用户总统计表中统计
 }
 
 type SumVol struct {

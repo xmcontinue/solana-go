@@ -53,7 +53,10 @@ type SwapCountKLine struct {
 	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                  // 最小值
 	Settle                decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                // 结束值
 	Avg                   decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                   // 平均值
-	Price                 decimal.Decimal `json:"price" gorm:"type:decimal(36,18);default:0"`                                                                 // 价格
+	TokenAUSD             decimal.Decimal `json:"token_a_usd" gorm:"type:decimal(36,18);default:1"`                                                           // swap token a usd价格 TODO
+	TokenBUSD             decimal.Decimal `json:"token_b_usd" gorm:"type:decimal(36,18);default:1"`                                                           // swap token b usd价格 TODO
+	TvlInUsd              decimal.Decimal `json:"tvl_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总锁仓量，单位usd）TODO
+	VolInUsd              decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总交易量，单位usd）TODO
 }
 
 type Tvl struct {
