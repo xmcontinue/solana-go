@@ -56,9 +56,7 @@ type LiquidityRecord struct {
 	SwapConfig        *SwapConfig
 }
 
-var (
-	cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
-)
+const cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
 
 func NewTx(txData *domain.TxData) *Tx {
 	return &Tx{
@@ -74,91 +72,35 @@ func (t *Tx) ParseTxToSwap() error {
 	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
 
 	for _, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
-		t.parseInstructionToSwapRecord(instruction)
-		// 仅已知的swap address 才可以解析
-		programAddress := accountKeys[instruction.ProgramIDIndex].String()
-		if programAddress != cremaSwapProgramAddress {
+
+		swapRecord, err := t.parseInstructionToSwapCount(
+			accountKeys[instruction.ProgramIDIndex].String(),
+			instruction.Data[0],
+			instruction.Accounts,
+		)
+		if err != nil {
 			continue
 		}
 
-		// swap 函数在合约里面的是01
-		if instruction.Data[0] != 1 {
-			continue
-		}
+		t.SwapRecords = append(t.SwapRecords, swapRecord)
 
-		cremaSwapIndex := &SwapIndex{0, 3, 4, 5, 6}
-
-		swapConfig, ok := swapConfigMap[accountKeys[instruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
-		if !ok {
-			return errors.RecordNotFound
-		}
-
-		direction := int8(0)
-		if swapConfig.TokenA.SwapTokenAccount != accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String() {
-			cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
-			direction = 1
-		}
-
-		t.SwapRecords = append(t.SwapRecords, &SwapRecord{
-			UserOwnerAddress:  accountKeys[0].String(),
-			SwapConfig:        swapConfig,
-			UserTokenAAddress: accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String(),
-			UserTokenBAddress: accountKeys[instruction.Accounts[cremaSwapIndex.UserTokenBIndex]].String(),
-			ProgramAddress:    programAddress,
-			Direction:         direction,
-			UserCount: &SwapCount{
-				TokenAIndex: instruction.Accounts[cremaSwapIndex.UserTokenAIndex],
-				TokenBIndex: instruction.Accounts[cremaSwapIndex.UserTokenBIndex],
-			},
-			TokenCount: &SwapCount{
-				TokenAIndex: instruction.Accounts[cremaSwapIndex.TokenAIndex],
-				TokenBIndex: instruction.Accounts[cremaSwapIndex.TokenBIndex],
-			},
-		})
 	}
 
 	for _, innerInstruction := range t.Data.Meta.InnerInstructions {
 		// 仅已知的swap address 才可以解析
 		for _, compiledInstruction := range innerInstruction.Instructions {
 
-			programAddress := accountKeys[compiledInstruction.ProgramIDIndex].String()
-			if programAddress != cremaSwapProgramAddress {
+			swapRecord, err := t.parseInstructionToSwapCount(
+				accountKeys[compiledInstruction.ProgramIDIndex].String(),
+				compiledInstruction.Data[0],
+				uint16ListToInt64List(compiledInstruction.Accounts),
+			)
+			if err != nil {
 				continue
 			}
 
-			// swap 函数在合约里面的是01
-			if compiledInstruction.Data[0] != 1 {
-				continue
-			}
-			cremaSwapIndex := &SwapIndex{0, 3, 4, 5, 6}
+			t.SwapRecords = append(t.SwapRecords, swapRecord)
 
-			swapConfig, ok := swapConfigMap[accountKeys[compiledInstruction.Accounts[cremaSwapIndex.SwapAddressIndex]].String()]
-			if !ok {
-				return errors.RecordNotFound
-			}
-
-			direction := int8(0)
-			if swapConfig.TokenA.SwapTokenAccount != accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String() {
-				cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
-				direction = 1
-			}
-
-			t.SwapRecords = append(t.SwapRecords, &SwapRecord{
-				UserOwnerAddress:  accountKeys[0].String(),
-				SwapConfig:        swapConfig,
-				UserTokenAAddress: accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]].String(),
-				UserTokenBAddress: accountKeys[compiledInstruction.Accounts[cremaSwapIndex.UserTokenBIndex]].String(),
-				ProgramAddress:    programAddress,
-				Direction:         direction,
-				UserCount: &SwapCount{
-					TokenAIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.UserTokenAIndex]),
-					TokenBIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.UserTokenBIndex]),
-				},
-				TokenCount: &SwapCount{
-					TokenAIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.TokenAIndex]),
-					TokenBIndex: int64(compiledInstruction.Accounts[cremaSwapIndex.TokenBIndex]),
-				},
-			})
 		}
 	}
 
@@ -170,10 +112,42 @@ func (t *Tx) ParseTxToSwap() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToSwapRecord(data interface{}) *SwapRecord {
-	// solana.CompiledInstruction{}
-	// rpc.ParsedInstruction{}
-	return &SwapRecord{}
+func (t *Tx) parseInstructionToSwapCount(programAddress string, funcNum byte, instructionAccounts []int64) (*SwapRecord, error) {
+	if programAddress != cremaSwapProgramAddress || funcNum != 1 {
+		return nil, errors.New("not swap instruction")
+	}
+
+	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+
+	cremaSwapIndex := &SwapIndex{0, 3, 4, 5, 6}
+
+	swapConfig, ok := swapConfigMap[accountKeys[instructionAccounts[cremaSwapIndex.SwapAddressIndex]].String()]
+	if !ok {
+		return nil, errors.RecordNotFound
+	}
+
+	direction := int8(0)
+	if swapConfig.TokenA.SwapTokenAccount != accountKeys[instructionAccounts[cremaSwapIndex.UserTokenAIndex]].String() {
+		cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
+		direction = 1
+	}
+
+	return &SwapRecord{
+		UserOwnerAddress:  accountKeys[0].String(),
+		SwapConfig:        swapConfig,
+		UserTokenAAddress: accountKeys[instructionAccounts[cremaSwapIndex.UserTokenAIndex]].String(),
+		UserTokenBAddress: accountKeys[instructionAccounts[cremaSwapIndex.UserTokenBIndex]].String(),
+		ProgramAddress:    programAddress,
+		Direction:         direction,
+		UserCount: &SwapCount{
+			TokenAIndex: instructionAccounts[cremaSwapIndex.UserTokenAIndex],
+			TokenBIndex: instructionAccounts[cremaSwapIndex.UserTokenBIndex],
+		},
+		TokenCount: &SwapCount{
+			TokenAIndex: instructionAccounts[cremaSwapIndex.TokenAIndex],
+			TokenBIndex: instructionAccounts[cremaSwapIndex.TokenBIndex],
+		},
+	}, nil
 }
 
 // calculateSwaps ...
@@ -248,100 +222,35 @@ func (t *Tx) ParseTxToLiquidity() error {
 	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
 
 	for _, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
-		// 仅已知的swap address 才可以解析
-		programAddress := accountKeys[instruction.ProgramIDIndex].String()
-		if programAddress != cremaSwapProgramAddress {
-			continue
-		}
 
-		// Liquidity 函数在合约里面的是02,03
-		if instruction.Data[0] != 2 && instruction.Data[0] != 3 {
-			continue
-		}
-
-		var (
-			cremaLiquidityIndex *SwapIndex
-			direction           int8
+		liquidityRecord, err := t.parseInstructionToLiquidityRecord(
+			accountKeys[instruction.ProgramIDIndex].String(),
+			instruction.Data[0],
+			instruction.Accounts,
 		)
-
-		if instruction.Data[0] == 02 {
-			cremaLiquidityIndex = &SwapIndex{0, 3, 4, 5, 6}
-			direction = 1
-		} else {
-			cremaLiquidityIndex = &SwapIndex{0, 7, 8, 5, 6}
-			direction = 0
+		if err != nil {
+			continue
 		}
 
-		swapConfig, ok := swapConfigMap[accountKeys[instruction.Accounts[cremaLiquidityIndex.SwapAddressIndex]].String()]
-		if !ok {
-			return errors.RecordNotFound
-		}
+		t.LiquidityRecords = append(t.LiquidityRecords, liquidityRecord)
 
-		t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecord{
-			UserOwnerAddress:  accountKeys[0].String(),
-			SwapConfig:        swapConfig,
-			UserTokenAAddress: accountKeys[instruction.Accounts[cremaLiquidityIndex.UserTokenAIndex]].String(),
-			UserTokenBAddress: accountKeys[instruction.Accounts[cremaLiquidityIndex.UserTokenBIndex]].String(),
-			ProgramAddress:    programAddress,
-			Direction:         direction,
-			UserCount: &SwapCount{
-				TokenAIndex: instruction.Accounts[cremaLiquidityIndex.UserTokenAIndex],
-				TokenBIndex: instruction.Accounts[cremaLiquidityIndex.UserTokenBIndex],
-			},
-			TokenCount: &SwapCount{
-				TokenAIndex: instruction.Accounts[cremaLiquidityIndex.TokenAIndex],
-				TokenBIndex: instruction.Accounts[cremaLiquidityIndex.TokenBIndex],
-			},
-		})
 	}
 
 	for _, innerInstruction := range t.Data.Meta.InnerInstructions {
 		// 仅已知的swap address 才可以解析
 		for _, compiledInstruction := range innerInstruction.Instructions {
-			programAddress := accountKeys[compiledInstruction.ProgramIDIndex].String()
-			if programAddress != cremaSwapProgramAddress {
-				continue
-			}
 
-			// Liquidity 函数在合约里面的是02,03
-			if compiledInstruction.Data[0] != 2 && compiledInstruction.Data[0] != 3 {
-				continue
-			}
-
-			var (
-				cremaLiquidityIndex *SwapIndex
-				direction           int8
+			liquidityRecord, err := t.parseInstructionToLiquidityRecord(
+				accountKeys[compiledInstruction.ProgramIDIndex].String(),
+				compiledInstruction.Data[0],
+				uint16ListToInt64List(compiledInstruction.Accounts),
 			)
-
-			if compiledInstruction.Data[0] == 02 {
-				cremaLiquidityIndex = &SwapIndex{0, 3, 4, 5, 6}
-				direction = 1
-			} else {
-				cremaLiquidityIndex = &SwapIndex{0, 7, 8, 5, 6}
-				direction = 0
+			if err != nil {
+				continue
 			}
 
-			swapConfig, ok := swapConfigMap[accountKeys[compiledInstruction.Accounts[cremaLiquidityIndex.SwapAddressIndex]].String()]
-			if !ok {
-				return errors.RecordNotFound
-			}
+			t.LiquidityRecords = append(t.LiquidityRecords, liquidityRecord)
 
-			t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecord{
-				UserOwnerAddress:  accountKeys[0].String(),
-				SwapConfig:        swapConfig,
-				UserTokenAAddress: accountKeys[compiledInstruction.Accounts[cremaLiquidityIndex.UserTokenAIndex]].String(),
-				UserTokenBAddress: accountKeys[compiledInstruction.Accounts[cremaLiquidityIndex.UserTokenBIndex]].String(),
-				ProgramAddress:    programAddress,
-				Direction:         direction,
-				UserCount: &SwapCount{
-					TokenAIndex: int64(compiledInstruction.Accounts[cremaLiquidityIndex.UserTokenAIndex]),
-					TokenBIndex: int64(compiledInstruction.Accounts[cremaLiquidityIndex.UserTokenBIndex]),
-				},
-				TokenCount: &SwapCount{
-					TokenAIndex: int64(compiledInstruction.Accounts[cremaLiquidityIndex.TokenAIndex]),
-					TokenBIndex: int64(compiledInstruction.Accounts[cremaLiquidityIndex.TokenBIndex]),
-				},
-			})
 		}
 	}
 
@@ -351,6 +260,49 @@ func (t *Tx) ParseTxToLiquidity() error {
 	}
 
 	return nil
+}
+
+func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, funcNum byte, instructionAccounts []int64) (*LiquidityRecord, error) {
+	if programAddress != cremaSwapProgramAddress || (funcNum != 2 && funcNum != 3) {
+		return nil, errors.New("not liquidity instruction")
+	}
+
+	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+
+	var (
+		cremaLiquidityIndex *SwapIndex
+		direction           int8
+	)
+
+	if funcNum == 02 {
+		cremaLiquidityIndex = &SwapIndex{0, 3, 4, 5, 6}
+		direction = 1
+	} else {
+		cremaLiquidityIndex = &SwapIndex{0, 7, 8, 5, 6}
+		direction = 0
+	}
+
+	swapConfig, ok := swapConfigMap[accountKeys[instructionAccounts[cremaLiquidityIndex.SwapAddressIndex]].String()]
+	if !ok {
+		return nil, errors.RecordNotFound
+	}
+
+	return &LiquidityRecord{
+		UserOwnerAddress:  accountKeys[0].String(),
+		SwapConfig:        swapConfig,
+		UserTokenAAddress: accountKeys[instructionAccounts[cremaLiquidityIndex.UserTokenAIndex]].String(),
+		UserTokenBAddress: accountKeys[instructionAccounts[cremaLiquidityIndex.UserTokenBIndex]].String(),
+		ProgramAddress:    programAddress,
+		Direction:         direction,
+		UserCount: &SwapCount{
+			TokenAIndex: instructionAccounts[cremaLiquidityIndex.UserTokenAIndex],
+			TokenBIndex: instructionAccounts[cremaLiquidityIndex.UserTokenBIndex],
+		},
+		TokenCount: &SwapCount{
+			TokenAIndex: instructionAccounts[cremaLiquidityIndex.TokenAIndex],
+			TokenBIndex: instructionAccounts[cremaLiquidityIndex.TokenBIndex],
+		},
+	}, nil
 }
 
 // calculateLiquidity ...
@@ -366,4 +318,12 @@ func (t *Tx) calculateLiquidity() error {
 	}
 
 	return nil
+}
+
+func uint16ListToInt64List(int16List []uint16) []int64 {
+	int64List := make([]int64, 0, len(int16List))
+	for _, v := range int16List {
+		int64List = append(int64List, int64(v))
+	}
+	return int64List
 }
