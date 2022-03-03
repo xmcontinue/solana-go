@@ -75,7 +75,7 @@ func (t *Tx) ParseTxToSwap() error {
 
 		swapRecord, err := t.parseInstructionToSwapCount(
 			accountKeys[instruction.ProgramIDIndex].String(),
-			instruction.Data[0],
+			instruction.Data,
 			instruction.Accounts,
 		)
 		if err != nil {
@@ -92,7 +92,7 @@ func (t *Tx) ParseTxToSwap() error {
 
 			swapRecord, err := t.parseInstructionToSwapCount(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
-				compiledInstruction.Data[0],
+				compiledInstruction.Data,
 				uint16ListToInt64List(compiledInstruction.Accounts),
 			)
 			if err != nil {
@@ -112,8 +112,11 @@ func (t *Tx) ParseTxToSwap() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToSwapCount(programAddress string, funcNum byte, instructionAccounts []int64) (*SwapRecord, error) {
-	if programAddress != cremaSwapProgramAddress || funcNum != 1 {
+func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, instructionAccounts []int64) (*SwapRecord, error) {
+	if programAddress != cremaSwapProgramAddress {
+		return nil, errors.New("not crema program")
+	}
+	if data[0] != 1 {
 		return nil, errors.New("not swap instruction")
 	}
 
@@ -225,7 +228,7 @@ func (t *Tx) ParseTxToLiquidity() error {
 
 		liquidityRecord, err := t.parseInstructionToLiquidityRecord(
 			accountKeys[instruction.ProgramIDIndex].String(),
-			instruction.Data[0],
+			instruction.Data,
 			instruction.Accounts,
 		)
 		if err != nil {
@@ -242,7 +245,7 @@ func (t *Tx) ParseTxToLiquidity() error {
 
 			liquidityRecord, err := t.parseInstructionToLiquidityRecord(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
-				compiledInstruction.Data[0],
+				compiledInstruction.Data,
 				uint16ListToInt64List(compiledInstruction.Accounts),
 			)
 			if err != nil {
@@ -262,8 +265,11 @@ func (t *Tx) ParseTxToLiquidity() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, funcNum byte, instructionAccounts []int64) (*LiquidityRecord, error) {
-	if programAddress != cremaSwapProgramAddress || (funcNum != 2 && funcNum != 3) {
+func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byte, instructionAccounts []int64) (*LiquidityRecord, error) {
+	if programAddress != cremaSwapProgramAddress {
+		return nil, errors.New("not crema program")
+	}
+	if data[0] != 2 && data[0] != 3 {
 		return nil, errors.New("not liquidity instruction")
 	}
 
@@ -274,7 +280,7 @@ func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, funcNum by
 		direction           int8
 	)
 
-	if funcNum == 02 {
+	if data[0] == 02 {
 		cremaLiquidityIndex = &SwapIndex{0, 3, 4, 5, 6}
 		direction = 1
 	} else {
