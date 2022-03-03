@@ -181,13 +181,13 @@ func (t *Tx) calculate(swapCount *SwapCount) {
 	for _, preVal := range t.Data.Meta.PreTokenBalances {
 		if swapCount.TokenAIndex == int64(preVal.AccountIndex) {
 			TokenAPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenAPreVolume = precisionConversion(TokenAPreVolume.Abs(), int(preVal.UiTokenAmount.Decimals))
+			TokenAPreVolume = precisionConversion(TokenAPreVolume, int(preVal.UiTokenAmount.Decimals))
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(preVal.AccountIndex) {
 			TokenBPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenBPreVolume = precisionConversion(TokenBPreVolume.Abs(), int(preVal.UiTokenAmount.Decimals))
+			TokenBPreVolume = precisionConversion(TokenBPreVolume, int(preVal.UiTokenAmount.Decimals))
 			continue
 		}
 	}
@@ -195,19 +195,19 @@ func (t *Tx) calculate(swapCount *SwapCount) {
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
 		if swapCount.TokenAIndex == int64(postVal.AccountIndex) {
 			TokenAPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenAPostVolume = precisionConversion(TokenAPostVolume.Abs(), int(postVal.UiTokenAmount.Decimals))
+			TokenAPostVolume = precisionConversion(TokenAPostVolume, int(postVal.UiTokenAmount.Decimals))
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(postVal.AccountIndex) {
 			TokenBPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenBPostVolume = precisionConversion(TokenBPostVolume.Abs(), int(postVal.UiTokenAmount.Decimals))
+			TokenBPostVolume = precisionConversion(TokenBPostVolume, int(postVal.UiTokenAmount.Decimals))
 			continue
 		}
 	}
 
-	swapCount.TokenAVolume = TokenAPostVolume.Sub(TokenAPreVolume)
-	swapCount.TokenBVolume = TokenBPostVolume.Sub(TokenBPreVolume)
+	swapCount.TokenAVolume = TokenAPostVolume.Sub(TokenAPreVolume).Abs()
+	swapCount.TokenBVolume = TokenBPostVolume.Sub(TokenBPreVolume).Abs()
 	swapCount.TokenABalance = TokenAPostVolume
 	swapCount.TokenBBalance = TokenBPostVolume
 }
