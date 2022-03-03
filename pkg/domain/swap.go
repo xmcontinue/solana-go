@@ -45,7 +45,7 @@ type UserSwapCount struct {
 	UserTokenABalance     decimal.Decimal `json:"user_token_a_balance" gorm:"type:decimal(36,18);default:0"`                                             // swap token a 余额
 	UserTokenBBalance     decimal.Decimal `json:"user_token_b_balance" gorm:"type:decimal(36,18);default:0"`                                             // swap token b 余额
 	TxNum                 int64           `json:"tx_num"`                                                                                                // 交易笔数
-	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                    // 最大交易额
+	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                    // 最大交易额 ,单位是价格
 	MinTxVolume           decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                   // 最小交易额
 }
 
@@ -63,8 +63,8 @@ type UserSwapCountDay struct {
 	UserTokenABalance     decimal.Decimal `json:"user_token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                   // swap token a 余额
 	UserTokenBBalance     decimal.Decimal `json:"user_token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                   // swap token b 余额
 	TxNum                 int64           `json:"tx_num"`                                                                                                      // 交易笔数
-	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                          // 最大交易额
-	MinTxVolume           decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                         // 最小交易额
+	MaxTxVolume           decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                          // 最大交易额，单位是价格 usd
+	MinTxVolume           decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                         // 最小交易额，单位是价格 usd
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:user_swap_tvl_count_day_swap_address_unique_key"`          // 统计日期
 }
 

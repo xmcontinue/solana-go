@@ -8,6 +8,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 
+	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -84,6 +85,52 @@ func userAddressLast24hVol() error {
 	return nil
 }
 
-func statisticsOneMints() {
+func syncTORedis() error {
 
+	ctx := context.Background()
+	for _, swapConfig := range sol.SwapConfigList() {
+		swapCount, err := model.QuerySwapCount(ctx, model.OrderFilter("id desc"), model.SwapAddress(swapConfig.SwapAccount))
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		// swap address 最新tvl,单位是价格
+		swapCountKey := domain.SwapCountKey(swapCount.SwapAddress)
+		if err = redisClient.Set(ctx, swapCountKey.Key, swapCount.TokenABalance.Add(swapCount.TokenBBalance).String(), swapCountKey.Timeout).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		// swap address 总的交易额（vol），单位是价格
+		swapVolKey := domain.AccountSwapVolCountKey(swapCount.SwapAddress)
+		if err = redisClient.Set(ctx, swapVolKey.Key, swapCount.TokenAVolume.Add(swapCount.TokenBVolume).String(), swapVolKey.Timeout).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+	}
+
+	// user address 总的交易额（vol）
+	index := int64(0)
+	for {
+		userSwapCount, total, err := model.QueryUserSwapCount(ctx, 100, 0, model.NewFilter("id >= ?", index))
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if total == 0 {
+			break
+		}
+
+		userSwapCountMap := make(map[string]string)
+		for _, v := range userSwapCount {
+			userVolKey := domain.AccountSwapVolCountKey(v.UserAddress)
+			userSwapCountMap[userVolKey.Key] = v.UserTokenBVolume.Add(v.UserTokenBVolume).String()
+		}
+
+		if err = redisClient.MSet(ctx, userSwapCountMap).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		index = userSwapCount[len(userSwapCount)-1].ID
+	}
+
+	return nil
 }

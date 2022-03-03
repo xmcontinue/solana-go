@@ -8,6 +8,19 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 )
 
+type DateType string
+
+var (
+	DateMin        DateType = "1min"
+	DateTwelfth    DateType = "5min" // 5分钟
+	DateQuarter    DateType = "15min"
+	DateHalfAnHour DateType = "30min"
+	DateHour       DateType = "hour"
+	DateDay        DateType = "day"
+	DateWek        DateType = "wek"
+	DateMon        DateType = "mon"
+)
+
 type NetRecode struct {
 	ID               int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -47,14 +60,14 @@ type SwapCountKLine struct {
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                       // swap token b 余额
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_count_k_line_date_swap_address_unique_key"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                     // 交易笔数
-	DateType              string          `json:"date_type" gorm:"not null;type:varchar(64);  index"`                                                         // 时间类型（min,quarter,hour,day,wek,mon）
+	DateType              DateType        `json:"date_type" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key"`    // 时间类型（min,quarter,hour,day,wek,mon）
 	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                  // 统计时间段累的第一个值
 	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                  // 最大值
 	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                  // 最小值
 	Settle                decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                // 结束值
 	Avg                   decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                   // 平均值
-	TokenAUSD             decimal.Decimal `json:"token_a_usd" gorm:"type:decimal(36,18);default:1"`                                                           // swap token a usd价格 TODO
-	TokenBUSD             decimal.Decimal `json:"token_b_usd" gorm:"type:decimal(36,18);default:1"`                                                           // swap token b usd价格 TODO
+	TokenAUSD             decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"`                                        // swap token a usd价格 TODO
+	TokenBUSD             decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                        // swap token b usd价格 TODO
 	TvlInUsd              decimal.Decimal `json:"tvl_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总锁仓量，单位usd）TODO
 	VolInUsd              decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总交易量，单位usd）TODO
 }
