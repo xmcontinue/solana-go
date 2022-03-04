@@ -358,6 +358,20 @@ func QueryUserSwapCount(ctx context.Context, limit, offset int, filter ...Filter
 	return list, total, nil
 }
 
+func QueryUserSwapCounts(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCount, error) {
+	var (
+		db   = rDB(ctx)
+		list []*domain.UserSwapCount
+		err  error
+	)
+
+	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return list, nil
+}
+
 func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
 	var swapCount = &domain.SwapCount{}
 	if err := rDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Take(swapCount).Error; err != nil {

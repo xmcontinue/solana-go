@@ -10,8 +10,7 @@ var (
 	dateMin = KLineTyp{
 		BeforeIntervalDateType: domain.DateNone,
 		DateType:               domain.DateMin,
-		Interval:               5,
-		TimeInterval:           time.Minute,
+		Interval:               0,
 	}
 
 	dateTwelfth = KLineTyp{
@@ -68,7 +67,7 @@ type KLineTyp struct {
 	Date                   *time.Time
 	DateType               domain.DateType
 	BeforeIntervalDateType domain.DateType
-	Interval               int
+	Interval               int // 相较于前一个时间段，用多少前一个时间段可以填满当前时间段
 	TimeInterval           time.Duration
 }
 
@@ -109,8 +108,6 @@ func (m *KLineTyp) GetDate() *time.Time {
 	} else if m.DateType == domain.DateMon {
 		firstDateTime := m.Date.AddDate(0, 0, -m.Date.Day()+1)
 		date = time.Date(firstDateTime.Year(), firstDateTime.Month(), firstDateTime.Day(), 0, 0, 0, 0, firstDateTime.Location())
-
-		//date = time.Date(m.Date.Year(), m.Date.Month(), 0, 0, 0, 0, 0, m.Date.Location())
 	}
 
 	return &date

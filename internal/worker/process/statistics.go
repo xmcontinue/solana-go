@@ -110,12 +110,12 @@ func syncTORedis() error {
 	// user address 总的交易额（vol）
 	index := int64(0)
 	for {
-		userSwapCount, total, err := model.QueryUserSwapCount(ctx, 100, 0, model.NewFilter("id >= ?", index))
+		userSwapCount, err := model.QueryUserSwapCounts(ctx, 1000, 0, model.NewFilter("id > ?", index), model.OrderFilter("id asc"))
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
-		if total == 0 {
+		if len(userSwapCount) == 0 {
 			break
 		}
 
