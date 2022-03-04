@@ -130,11 +130,15 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 		}
 	} else {
 		if swapPairBase.IsSync {
-			sig, _ := solana.SignatureFromBase58(swapPairBase.EndSignature)
-			until = &sig
+			if swapPairBase.EndSignature != "" {
+				sig, _ := solana.SignatureFromBase58(swapPairBase.EndSignature)
+				until = &sig
+			}
 		} else {
-			sig, _ := solana.SignatureFromBase58(swapPairBase.StartSignature)
-			before = &sig
+			if swapPairBase.StartSignature != "" {
+				sig, _ := solana.SignatureFromBase58(swapPairBase.StartSignature)
+				before = &sig
+			}
 		}
 	}
 
