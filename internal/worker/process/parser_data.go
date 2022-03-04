@@ -13,17 +13,6 @@ type ParserTransaction interface {
 	ParserDate() error
 }
 
-type syncType string
-
-type SwapTokenIndex struct {
-	TokenAIndex int64
-	TokenBIndex int64
-}
-
-var (
-	swapAccount = "8J3avAjuRfL2CYFKKDwhhceiRoajhrHv9kN5nUiEnuBG"
-)
-
 func parserUserCountAndSwapCount() error {
 
 	lastSwapTransactionID, err := getTransactionID()

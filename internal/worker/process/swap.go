@@ -14,7 +14,7 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-// 同步更新swap_counts表和user_swap_counts表
+// SwapAndUserCount 同步更新swap_counts表和user_swap_counts表
 type SwapAndUserCount struct {
 	ID                 int64
 	LastTransactionID  int64
@@ -262,6 +262,7 @@ func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *sol.
 	return nil
 }
 
+// userSwapCount 写入user_counts 表
 func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *sol.SwapRecord, tx *domain.SwapTransaction) error {
 	userSwapCount := &domain.UserSwapCount{
 		LastSwapTransactionID: s.ID,
@@ -286,6 +287,7 @@ func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *sol.Sw
 	return nil
 }
 
+// userSwapCountDay 写入user_count_days 表
 func (s *SwapAndUserCount) userSwapCountDay(ctx context.Context, swapRecord *sol.SwapRecord, tx *domain.SwapTransaction) error {
 	userSwapCountDate := time.Date(s.BlockDate.Year(), s.BlockDate.Month(), s.BlockDate.Day(), 0, 0, 0, 0, s.BlockDate.Location())
 	// 统计用户每日swap count

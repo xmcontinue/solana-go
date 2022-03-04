@@ -10,7 +10,6 @@ var (
 	dateMin = KLineTyp{
 		BeforeIntervalDateType: domain.DateNone,
 		DateType:               domain.DateMin,
-		Interval:               0,
 	}
 
 	dateTwelfth = KLineTyp{
@@ -72,7 +71,7 @@ type KLineTyp struct {
 }
 
 func (m *KLineTyp) Name() domain.DateType {
-	return domain.DateMin
+	return m.DateType
 }
 
 func (m *KLineTyp) GetDate() *time.Time {

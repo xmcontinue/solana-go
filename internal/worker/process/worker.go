@@ -16,6 +16,10 @@ var (
 	contractAccountMap = make(map[string]bool)
 )
 
+var (
+	swapAccount = "8J3avAjuRfL2CYFKKDwhhceiRoajhrHv9kN5nUiEnuBG"
+)
+
 // Init 定时任务
 func Init(viperConf *config.Config) error {
 	conf = viperConf

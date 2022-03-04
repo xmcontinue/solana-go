@@ -134,3 +134,9 @@ func syncTORedis() error {
 
 	return nil
 }
+
+// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部诗句，有则现获取已同步的数据的最后一条，然后同步新数据
+func syncKLine() error {
+
+	return nil
+}
