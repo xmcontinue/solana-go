@@ -9,6 +9,7 @@ require (
 	github.com/gagliardetto/solana-go v1.0.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
+	github.com/go-redis/redis v6.15.8+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rpcxio/libkv v0.5.0
 	go.etcd.io/etcd/client/v2 v2.305.0
