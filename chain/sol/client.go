@@ -66,6 +66,8 @@ func Init(config *config.Config) error {
 						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
 						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
 						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+						v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
+						v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
 						swapMap[v.SwapAccount] = v
 					}
 

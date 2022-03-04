@@ -1,8 +1,11 @@
 package sol
 
 import (
+	"encoding/binary"
+
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -25,6 +28,7 @@ type SwapRecord struct {
 	UserCount         *SwapCount
 	TokenCount        *SwapCount
 	SwapConfig        *SwapConfig
+	InnerInstructions []solana.CompiledInstruction
 }
 
 type SwapCount struct {
@@ -71,8 +75,7 @@ func (t *Tx) ParseTxToSwap() error {
 	// parser instructions
 	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
 
-	for _, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
-
+	for k, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
 		swapRecord, err := t.parseInstructionToSwapCount(
 			accountKeys[instruction.ProgramIDIndex].String(),
 			instruction.Data,
@@ -82,14 +85,21 @@ func (t *Tx) ParseTxToSwap() error {
 			continue
 		}
 
+		swapRecord.InnerInstructions, err = getInnerInstructionsForInstructionIndex(k, t.Data.Meta.InnerInstructions)
+		if err != nil {
+			continue
+		}
+		if swapRecord.Direction == 1 {
+			swapRecord.InnerInstructions[0], swapRecord.InnerInstructions[1] = swapRecord.InnerInstructions[1], swapRecord.InnerInstructions[0]
+		}
+
 		t.SwapRecords = append(t.SwapRecords, swapRecord)
 
 	}
 
 	for _, innerInstruction := range t.Data.Meta.InnerInstructions {
 		// 仅已知的swap address 才可以解析
-		for _, compiledInstruction := range innerInstruction.Instructions {
-
+		for k, compiledInstruction := range innerInstruction.Instructions {
 			swapRecord, err := t.parseInstructionToSwapCount(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
 				compiledInstruction.Data,
@@ -97,6 +107,18 @@ func (t *Tx) ParseTxToSwap() error {
 			)
 			if err != nil {
 				continue
+			}
+			if len(innerInstruction.Instructions) < k+2 {
+				continue
+			}
+
+			swapRecord.InnerInstructions = []solana.CompiledInstruction{
+				innerInstruction.Instructions[k+1],
+				innerInstruction.Instructions[k+2],
+			}
+
+			if swapRecord.Direction == 1 {
+				swapRecord.InnerInstructions[0], swapRecord.InnerInstructions[1] = swapRecord.InnerInstructions[1], swapRecord.InnerInstructions[0]
 			}
 
 			t.SwapRecords = append(t.SwapRecords, swapRecord)
@@ -116,6 +138,7 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 	if programAddress != cremaSwapProgramAddress {
 		return nil, errors.New("not crema program")
 	}
+
 	if data[0] != 1 {
 		return nil, errors.New("not swap instruction")
 	}
@@ -130,7 +153,7 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 	}
 
 	direction := int8(0)
-	if swapConfig.TokenA.SwapTokenAccount != accountKeys[instructionAccounts[cremaSwapIndex.UserTokenAIndex]].String() {
+	if swapConfig.TokenA.SwapTokenAccount != accountKeys[instructionAccounts[cremaSwapIndex.TokenAIndex]].String() {
 		cremaSwapIndex = &SwapIndex{0, 4, 3, 6, 5}
 		direction = 1
 	}
@@ -159,10 +182,10 @@ func (t *Tx) calculateSwap() error {
 		return errors.RecordNotFound
 	}
 
-	for _, v := range t.SwapRecords {
-		t.calculate(v.UserCount)
+	for k, v := range t.SwapRecords {
+		t.calculate(k, v.UserCount, v.SwapConfig)
 
-		t.calculate(v.TokenCount)
+		t.calculate(k, v.TokenCount, v.SwapConfig)
 
 		if v.TokenCount.TokenAVolume.IsZero() {
 			continue
@@ -173,43 +196,30 @@ func (t *Tx) calculateSwap() error {
 	return nil
 }
 
-func (t *Tx) calculate(swapCount *SwapCount) {
+func (t *Tx) calculate(k int, swapCount *SwapCount, config *SwapConfig) {
 	var (
-		TokenAPreVolume, TokenBPreVolume, TokenAPostVolume, TokenBPostVolume decimal.Decimal
+		TokenAPostVolume, TokenBPostVolume, TokenAPostBalance, TokenBPostBalance decimal.Decimal
 	)
-
-	for _, preVal := range t.Data.Meta.PreTokenBalances {
-		if swapCount.TokenAIndex == int64(preVal.AccountIndex) {
-			TokenAPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenAPreVolume = precisionConversion(TokenAPreVolume, int(preVal.UiTokenAmount.Decimals))
-			continue
-		}
-
-		if swapCount.TokenBIndex == int64(preVal.AccountIndex) {
-			TokenBPreVolume, _ = decimal.NewFromString(preVal.UiTokenAmount.Amount)
-			TokenBPreVolume = precisionConversion(TokenBPreVolume, int(preVal.UiTokenAmount.Decimals))
-			continue
-		}
-	}
 
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
 		if swapCount.TokenAIndex == int64(postVal.AccountIndex) {
-			TokenAPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenAPostVolume = precisionConversion(TokenAPostVolume, int(postVal.UiTokenAmount.Decimals))
+			TokenAPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
 
 		if swapCount.TokenBIndex == int64(postVal.AccountIndex) {
-			TokenBPostVolume, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
-			TokenBPostVolume = precisionConversion(TokenBPostVolume, int(postVal.UiTokenAmount.Decimals))
+			TokenBPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
 	}
 
-	swapCount.TokenAVolume = TokenAPostVolume.Sub(TokenAPreVolume).Abs()
-	swapCount.TokenBVolume = TokenBPostVolume.Sub(TokenBPreVolume).Abs()
-	swapCount.TokenABalance = TokenAPostVolume
-	swapCount.TokenBBalance = TokenBPostVolume
+	TokenAPostVolume = decimal.NewFromInt(int64(binary.LittleEndian.Uint64(t.SwapRecords[k].InnerInstructions[0].Data[1:9])))
+	TokenBPostVolume = decimal.NewFromInt(int64(binary.LittleEndian.Uint64(t.SwapRecords[k].InnerInstructions[1].Data[1:9])))
+
+	swapCount.TokenAVolume = precisionConversion(TokenAPostVolume, int(config.TokenA.Decimal))
+	swapCount.TokenBVolume = precisionConversion(TokenBPostVolume, int(config.TokenB.Decimal))
+	swapCount.TokenABalance = precisionConversion(TokenAPostBalance, int(config.TokenA.Decimal))
+	swapCount.TokenBBalance = precisionConversion(TokenBPostBalance, int(config.TokenB.Decimal))
 }
 
 func (sr *SwapRecord) GetVol() decimal.Decimal {
@@ -317,10 +327,10 @@ func (t *Tx) calculateLiquidity() error {
 		return errors.RecordNotFound
 	}
 
-	for _, v := range t.LiquidityRecords {
-		t.calculate(v.UserCount)
+	for k, v := range t.LiquidityRecords {
+		t.calculate(k, v.UserCount, v.SwapConfig)
 
-		t.calculate(v.TokenCount)
+		t.calculate(k, v.TokenCount, v.SwapConfig)
 	}
 
 	return nil
@@ -332,4 +342,13 @@ func uint16ListToInt64List(int16List []uint16) []int64 {
 		int64List = append(int64List, int64(v))
 	}
 	return int64List
+}
+
+func getInnerInstructionsForInstructionIndex(index int, innerInstructions []rpc.InnerInstruction) ([]solana.CompiledInstruction, error) {
+	for _, v := range innerInstructions {
+		if int(v.Index) == index {
+			return v.Instructions[:2], nil
+		}
+	}
+	return nil, errors.RecordNotFound
 }

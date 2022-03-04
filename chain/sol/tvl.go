@@ -45,6 +45,7 @@ type SwapConfig struct {
 type Token struct {
 	Symbol             string `json:"symbol" mapstructure:"symbol"`
 	TokenMint          string `json:"token_mint" mapstructure:"token_mint"`
+	TokenMintPublicKey solana.PublicKey
 	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
 	SwapTokenPublicKey solana.PublicKey
 	Decimal            uint8 `json:"decimal" mapstructure:"decimal"`
