@@ -54,15 +54,10 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	//_, err = cron.AddFunc(getSpec("sync_swap_cache"), parserKLine)
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	//_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
-	//if err != nil {
-	//	panic(err)
-	//}
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
+	if err != nil {
+		panic(err)
+	}
 
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
 	if err != nil {

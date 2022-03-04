@@ -135,6 +135,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 	var (
 		after   domain.SwapCountKLine
 		now     = time.Now().UTC()
+		avgFmt  string
 		inserts = map[string]interface{}{
 			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
 			"swap_address":             swapCount.SwapAddress,
@@ -161,6 +162,13 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		}
 	)
 
+	// 除了domain.DateMin 类型，其他的都是根据前一个类型求平均值
+	if swapCount.DateType == domain.DateMin {
+		avgFmt = "avg = (swap_count_k_lines.avg * swap_count_k_lines.tx_num + ? )/(swap_count_k_lines.tx_num+ 1)"
+	} else {
+		avgFmt = "avg = ?"
+	}
+
 	sql, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
@@ -175,7 +183,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
 		Suffix("tx_num = swap_count_k_lines.tx_num + 1,").
 		Suffix("vol_in_usd = swap_count_k_lines.vol_in_usd + ?,", swapCount.VolInUsd).
-		Suffix("avg = ?", swapCount.Avg).
+		Suffix(avgFmt, swapCount.Avg).
 		Suffix("WHERE ").
 		Suffix("swap_count_k_lines.last_swap_transaction_id <= ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
@@ -365,7 +373,25 @@ func QuerySwapCountKLine(ctx context.Context, filter ...Filter) (*domain.SwapCou
 		err            error
 		swapCountKLine = &domain.SwapCountKLine{}
 	)
+
 	if err = db.Model(&domain.SwapCountKLine{}).Scopes(filter...).Take(swapCountKLine).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.Wrap(errors.RecordNotFound)
+		}
+		return nil, errors.Wrap(err)
+	}
+
+	return swapCountKLine, nil
+}
+
+func QuerySwapCountKLines(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapCountKLine, error) {
+	var (
+		db             = rDB(ctx)
+		err            error
+		swapCountKLine []*domain.SwapCountKLine
+	)
+
+	if err = db.Model(&domain.SwapCountKLine{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&swapCountKLine).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}

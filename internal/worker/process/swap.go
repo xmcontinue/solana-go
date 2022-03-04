@@ -122,10 +122,13 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				VolInUsd:              swapRecord.TokenCount.TokenAVolume.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBVolume.Mul(tx.TokenBUSD)),
 			}
 
-			for _, dateType := range []domain.DateType{domain.DateMin, domain.DateTwelfth, domain.DateQuarter, domain.DateHalfAnHour, domain.DateDay, domain.DateWek, domain.DateMon} {
+			for _, dateType := range []KLineTyp{dateMin, dateTwelfth, dateQuarter, dateHalfAnHour, dateHour, dateDay, dateWek, dateMon} {
 				KLType := &KLineTyp{
-					Date:     tx.BlockTime,
-					DateType: dateType,
+					Date:                   tx.BlockTime,
+					DateType:               dateType.DateType,
+					BeforeIntervalDateType: dateType.BeforeIntervalDateType,
+					Interval:               dateType.Interval,
+					TimeInterval:           dateType.TimeInterval,
 				}
 
 				if err = KLType.updateKline(ctx, swapCountKLine, swapRecord); err != nil {
@@ -166,12 +169,77 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 		swapCountKLine.Avg = lastSwapCountKLine.Avg.Mul(decimal.NewFromInt(lastSwapCountKLine.TxNum)).Add(swapRecord.TokenCount.TokenAVolume.Div(swapRecord.TokenCount.TokenBVolume).Abs()).Div(decimal.NewFromInt(lastSwapCountKLine.TxNum + 1))
 	}
 
+	if m.DateType != domain.DateMin {
+		avg, err := m.calculateAvg(ctx)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		swapCountKLine.Avg = avg
+	}
+
 	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, swapCountKLine.Date)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
 	return nil
+}
+
+// 按照上一个周期计算平均值，month除外（按照天计算）
+func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
+	type interTime struct {
+		Date time.Time
+		avg  decimal.Decimal
+	}
+
+	var (
+		count     = int32(0)
+		sum       = decimal.Zero
+		beginTime time.Time
+		endTime   time.Time
+	)
+
+	avgList := make([]*interTime, m.Interval, m.Interval)
+	if m.DateType != domain.DateMin {
+		beginTime = *m.GetDate()
+		if m.DateType == domain.DateMon {
+			lastDateTime := m.Date.AddDate(0, 1, -m.Date.Day())
+			endTime = time.Date(lastDateTime.Year(), lastDateTime.Month(), lastDateTime.Day(), 0, 0, 0, 0, m.Date.Location())
+		} else {
+			endTime = beginTime.Add(m.TimeInterval * time.Duration(m.Interval))
+		}
+
+		swapCountKLines, err := model.QuerySwapCountKLines(ctx, m.Interval, 0,
+			model.NewFilter("date_type = ?", m.BeforeIntervalDateType),
+			model.NewFilter("date < ?", endTime))
+		if err != nil {
+			return decimal.Zero, errors.Wrap(err)
+		}
+
+		for index := range avgList {
+			avgList[index] = &interTime{
+				Date: m.GetDate().Add(m.TimeInterval * time.Duration(index)),
+			}
+		}
+
+		for _, v := range swapCountKLines {
+			for _, avg := range avgList {
+				if v.Date.Equal(avg.Date) || v.Date.Before(avg.Date) {
+					avg.avg = v.Avg
+				}
+			}
+		}
+
+		// calculate avg
+		for _, v := range avgList {
+			if !v.avg.IsZero() {
+				sum = sum.Add(v.avg)
+				count++
+			}
+		}
+	}
+	return sum.Div(decimal.NewFromInt32(count)), nil
 }
 
 func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *sol.SwapRecord) error {

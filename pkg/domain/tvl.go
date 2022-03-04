@@ -11,6 +11,7 @@ import (
 type DateType string
 
 var (
+	DateNone       DateType = ""
 	DateMin        DateType = "1min"
 	DateTwelfth    DateType = "5min" // 5分钟
 	DateQuarter    DateType = "15min"

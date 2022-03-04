@@ -6,14 +6,70 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-//type KLineType interface {
-//	Name() domain.DateType
-//	GetDate(domain.DateType) *time.Time
-//}
+var (
+	dateMin = KLineTyp{
+		BeforeIntervalDateType: domain.DateNone,
+		DateType:               domain.DateMin,
+		Interval:               5,
+		TimeInterval:           time.Minute,
+	}
+
+	dateTwelfth = KLineTyp{
+		BeforeIntervalDateType: domain.DateMin,
+		DateType:               domain.DateTwelfth,
+		Interval:               5,
+		TimeInterval:           time.Minute,
+	}
+
+	dateQuarter = KLineTyp{
+		BeforeIntervalDateType: domain.DateTwelfth,
+		DateType:               domain.DateQuarter,
+		Interval:               3,
+		TimeInterval:           time.Minute * 5,
+	}
+
+	dateHalfAnHour = KLineTyp{
+		BeforeIntervalDateType: domain.DateQuarter,
+		DateType:               domain.DateHalfAnHour,
+		Interval:               2,
+		TimeInterval:           time.Minute * 15,
+	}
+
+	dateHour = KLineTyp{
+		BeforeIntervalDateType: domain.DateHalfAnHour,
+		DateType:               domain.DateHour,
+		Interval:               2,
+		TimeInterval:           time.Minute * 30,
+	}
+
+	dateDay = KLineTyp{
+		BeforeIntervalDateType: domain.DateHour,
+		DateType:               domain.DateDay,
+		Interval:               24,
+		TimeInterval:           time.Hour,
+	}
+
+	dateWek = KLineTyp{
+		BeforeIntervalDateType: domain.DateDay,
+		DateType:               domain.DateWek,
+		Interval:               7,
+		TimeInterval:           time.Hour * 24,
+	}
+
+	dateMon = KLineTyp{
+		BeforeIntervalDateType: domain.DateDay,
+		DateType:               domain.DateMon,
+		Interval:               31,
+		TimeInterval:           time.Hour * 24,
+	}
+)
 
 type KLineTyp struct {
-	Date     *time.Time
-	DateType domain.DateType
+	Date                   *time.Time
+	DateType               domain.DateType
+	BeforeIntervalDateType domain.DateType
+	Interval               int
+	TimeInterval           time.Duration
 }
 
 func (m *KLineTyp) Name() domain.DateType {
@@ -51,7 +107,10 @@ func (m *KLineTyp) GetDate() *time.Time {
 			date = innerDate.AddDate(0, 0, offset)
 		}
 	} else if m.DateType == domain.DateMon {
-		date = time.Date(m.Date.Year(), m.Date.Month(), 0, 0, 0, 0, 0, m.Date.Location())
+		firstDateTime := m.Date.AddDate(0, 0, -m.Date.Day()+1)
+		date = time.Date(firstDateTime.Year(), firstDateTime.Month(), firstDateTime.Day(), 0, 0, 0, 0, firstDateTime.Location())
+
+		//date = time.Date(m.Date.Year(), m.Date.Month(), 0, 0, 0, 0, 0, m.Date.Location())
 	}
 
 	return &date

@@ -101,7 +101,7 @@ func syncTORedis() error {
 		}
 
 		// swap address 总的交易额（vol），单位是价格
-		swapVolKey := domain.AccountSwapVolCountKey(swapCount.SwapAddress)
+		swapVolKey := domain.AccountSwapVolCountKey(swapCount.SwapAddress, "")
 		if err = redisClient.Set(ctx, swapVolKey.Key, swapCount.TokenAVolume.Add(swapCount.TokenBVolume).String(), swapVolKey.Timeout).Err(); err != nil {
 			return errors.Wrap(err)
 		}
@@ -121,7 +121,7 @@ func syncTORedis() error {
 
 		userSwapCountMap := make(map[string]string)
 		for _, v := range userSwapCount {
-			userVolKey := domain.AccountSwapVolCountKey(v.UserAddress)
+			userVolKey := domain.AccountSwapVolCountKey(v.UserAddress, v.SwapAddress)
 			userSwapCountMap[userVolKey.Key] = v.UserTokenBVolume.Add(v.UserTokenBVolume).String()
 		}
 

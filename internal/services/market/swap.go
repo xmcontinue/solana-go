@@ -145,7 +145,7 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress).Key).Result()
+	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress, "").Key).Result()
 	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	} else if err == nil {
