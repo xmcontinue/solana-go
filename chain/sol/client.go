@@ -12,8 +12,11 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
+	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/rpcxio/libkv/store"
 
 	"git.cplus.link/crema/backend/internal/etcd"
 )
@@ -36,12 +39,14 @@ var (
 	chainNetsConfig []string
 	swapConfigList  []*SwapConfig
 	swapConfigMap   map[string]*SwapConfig
+	tokenConfigMap  map[string]*Token
 	once            sync.Once
 )
 
 func Init(config *config.Config) error {
 	var rErr error
 	once.Do(func() {
+		// 加载swap pairs配置
 		stopChan := make(chan struct{})
 		resChan, err := etcd.Watch(etcdSwapPairsKey, stopChan)
 		if err != nil {
@@ -49,35 +54,10 @@ func Init(config *config.Config) error {
 			return
 		}
 
-		go func() {
-			for {
-				select {
-				case res := <-resChan:
-					err = json.Unmarshal(res.Value, &swapConfigList)
-					if err != nil {
-						rErr = errors.Wrap(err)
-						return
-					}
-
-					swapMap := make(map[string]*SwapConfig, len(swapConfigList))
-
-					// 加载配置
-					for _, v := range swapConfigList {
-						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
-						v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
-						v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
-						swapMap[v.SwapAccount] = v
-					}
-
-					swapConfigMap = swapMap
-				}
-			}
-		}()
-
+		go watchSwapPairsConfig(resChan)
 		time.Sleep(time.Second) // todo
 
+		// 加载网络配置
 		err = config.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
 		if err != nil {
 			rErr = errors.Wrap(err)
@@ -96,19 +76,56 @@ func Init(config *config.Config) error {
 			})
 		}
 
+		// 默认使用第一个网络
 		chainNet = chainNets[0]
 
-		go WatchNet()
+		// Watch Balance
+		go watchBalance()
+
+		// watchNet 监测网络
+		go watchNet()
 	})
 	return rErr
 }
 
-// WatchNet 监测网络
-func WatchNet() {
+// watchSwapPairsConfig 监听swap pairs配置变动
+func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 	for {
-		WatchBlockHeight()
+		select {
+		case res := <-swapConfigChan:
+			err := json.Unmarshal(res.Value, &swapConfigList)
+			if err != nil {
+				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
+			}
 
-		CheckNet()
+			swapMap := make(map[string]*SwapConfig, len(swapConfigList))
+			tokenMap := make(map[string]*Token, 0)
+
+			// 加载配置
+			for _, v := range swapConfigList {
+				v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
+				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
+				v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+				v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
+				v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
+				swapMap[v.SwapAccount] = v
+				tokenMap[v.TokenA.SwapTokenAccount] = &v.TokenA
+				tokenMap[v.TokenB.SwapTokenAccount] = &v.TokenB
+			}
+
+			swapConfigMap = swapMap
+			tokenConfigMap = tokenMap
+		}
+	}
+}
+
+// WatchNet 监测网络
+func watchNet() {
+	for {
+		// watchBlockHeight 监测区块高度,若落后则切换
+		watchBlockHeight()
+		// checkNet 检查当前网络
+		checkNet()
 
 		logger.Info(fmt.Sprintf("chain net block height is %d", chainNet.Height))
 
@@ -116,8 +133,8 @@ func WatchNet() {
 	}
 }
 
-// CheckNet 检查当前网络
-func CheckNet() {
+// checkNet 检查当前网络
+func checkNet() {
 	// 获取网络组中最高的区块高度
 	var maxHeight uint64
 	for _, v := range chainNets {
@@ -138,8 +155,8 @@ func CheckNet() {
 	}
 }
 
-// WatchBlockHeight 监测区块高度,若落后则切换
-func WatchBlockHeight() {
+// watchBlockHeight 监测区块高度,若落后则切换
+func watchBlockHeight() {
 	// 获取最新区块高度
 	for _, v := range chainNets {
 		height, err := GetBlockHeightForClient(v.Client)
@@ -147,6 +164,30 @@ func WatchBlockHeight() {
 			continue
 		}
 		v.Height = height
+	}
+}
+
+// watchBalance 监听钱包余额变动
+func watchBalance() {
+	for _, v := range tokenConfigMap {
+		resp, err := GetRpcClient().GetAccountInfo(
+			context.TODO(),
+			v.SwapTokenPublicKey,
+		)
+		if err != nil {
+			return
+		}
+		var tokenA token.Account
+		err = bin.NewBinDecoder(resp.Value.Data.GetBinary()).Decode(&tokenA)
+		if err != nil {
+			return
+		}
+		v.Balance = decimal.NewFromInt(int64(tokenA.Amount))
+	}
+
+	for _, v := range swapConfigList {
+		v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
+		v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
 	}
 }
 
@@ -166,4 +207,9 @@ func abs(n int64) int64 {
 // precisionConversion 精度转换
 func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
 	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
+}
+
+// GetTokenForTokenAccount 根据token account获取token配置
+func GetTokenForTokenAccount(account string) *Token {
+	return tokenConfigMap[account]
 }

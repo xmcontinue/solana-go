@@ -39,7 +39,7 @@ func swapAddressLast24HVol() error {
 
 	swapVolMap := make(map[string]string)
 	for _, v := range swapVols {
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(v.TokenAAddress), coingecko.GetPriceForCache(v.TokenBAddress)
+		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenAAddress), coingecko.GetPriceForTokenAccount(v.TokenBAddress)
 		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
 		swapVolMap[domain.SwapVolCountLast24HKey(v.SwapAddress).Key] = string(volCount)
@@ -75,7 +75,7 @@ func userAddressLast24hVol() error {
 	swapVolMap := make(map[string]string)
 
 	for _, v := range swapVols {
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(v.TokenAAddress), coingecko.GetPriceForCache(v.TokenBAddress)
+		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenAAddress), coingecko.GetPriceForTokenAccount(v.TokenBAddress)
 		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
 		swapVolMap[domain.SwapVolCountLast24HKey(v.UserAddress).Key] = string(volCount)

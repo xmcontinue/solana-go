@@ -98,6 +98,54 @@ type PairTvl struct {
 	CumuVolInUsd string `json:"cumu_vol_in_usd"`
 }
 
+type SwapCountKLineVolCount struct {
+	TokenAVolume decimal.Decimal `json:"token_a_volume"` // swap token a 总交易额
+	TokenBVolume decimal.Decimal `json:"token_b_volume"` // swap token b 总交易额
+	TxNum        uint64          `json:"tx_num"`         // swap token 总交易笔数
+}
+
+type SwapCountToApi struct {
+	TvlInUsd    string                 `json:"tvl_in_usd"`
+	VolInUsd24h string                 `json:"vol_in_usd_24h"`
+	TxNum24h    uint64                 `json:"tx_num_24h"`
+	VolInUsd    string                 `json:"vol_in_usd"`
+	TxNum       uint64                 `json:"tx_num"`
+	UserNum     int64                  `json:"user_num"`
+	TokenNum    int                    `json:"token_num"`
+	Pools       []*SwapCountToApiPool  `json:"pools"`
+	Tokens      []*SwapCountToApiToken `json:"tokens"`
+}
+
+type SwapCountToApiPool struct {
+	Name          string          `json:"name"`
+	TvlInUsd      string          `json:"tvl_in_usd"`
+	VolInUsd24h   string          `json:"vol_in_usd_24h"`
+	TxNum24h      uint64          `json:"tx_num_24h"`
+	Apr           string          `json:"apr"`
+	SwapAccount   string          `json:"swap_account"`
+	TxNum         uint64          `json:"tx_num"`
+	VolInUsd      string          `json:"vol_in_usd"`
+	TickIntervals []*TickInterval `json:"tick_intervals"`
+	Price         string          `json:"price"`
+	PriceRate24h  string          `json:"price_rate_24h"`
+}
+
+type SwapCountToApiToken struct {
+	Name         string `json:"name"`
+	TvlInUsd     string `json:"tvl_in_usd"`
+	VolInUsd24h  string `json:"vol_in_usd_24h"`
+	TxNum24h     uint64 `json:"tx_num_24h"`
+	TxNum        uint64 `json:"tx_num"`
+	VolInUsd     string `json:"vol_in_usd"`
+	Price        string `json:"price"`
+	PriceRate24h string `json:"price_rate_24h"`
+}
+
+type TickInterval struct {
+	HighTick uint64 `json:"high_tick"`
+	LowTick  uint64 `json:"low_tick"`
+}
+
 func (pt *PairTvlList) Value() (driver.Value, error) {
 	b, err := json.Marshal(pt)
 	if err != nil {

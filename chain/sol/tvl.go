@@ -48,7 +48,8 @@ type Token struct {
 	TokenMintPublicKey solana.PublicKey
 	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
 	SwapTokenPublicKey solana.PublicKey
-	Decimal            uint8 `json:"decimal" mapstructure:"decimal"`
+	Decimal            uint8           `json:"decimal" mapstructure:"decimal"`
+	Balance            decimal.Decimal `json:"-"`
 }
 
 // func Init(config *config.Config) error {

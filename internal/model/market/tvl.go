@@ -358,6 +358,19 @@ func QueryUserSwapCount(ctx context.Context, limit, offset int, filter ...Filter
 	return list, total, nil
 }
 
+func CountUserSwapCount(ctx context.Context, filter ...Filter) (int64, error) {
+	var (
+		db    = rDB(ctx)
+		total int64
+		err   error
+	)
+	if err = db.Model(&domain.UserSwapCount{}).Scopes(filter...).Count(&total).Error; err != nil {
+		return 0, errors.Wrap(err)
+	}
+
+	return total, nil
+}
+
 func QueryUserSwapCounts(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCount, error) {
 	var (
 		db   = rDB(ctx)
@@ -413,4 +426,18 @@ func QuerySwapCountKLines(ctx context.Context, limit, offset int, filter ...Filt
 	}
 
 	return swapCountKLine, nil
+}
+
+func SumSwapCountVolForKLines(ctx context.Context, filter ...Filter) (*domain.SwapCountKLineVolCount, error) {
+	var (
+		db                     = rDB(ctx)
+		err                    error
+		swapCountKLineVolCount *domain.SwapCountKLineVolCount
+	)
+
+	if err = db.Model(&domain.SwapCountKLine{}).Select("SUM(token_a_volume * token_a_usd) as token_a_volume, SUM(token_b_volume * token_b_usd) as token_b_volume, SUM(tx_num) as tx_num").Scopes(filter...).Scan(&swapCountKLineVolCount).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return swapCountKLineVolCount, nil
 }
