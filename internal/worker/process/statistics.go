@@ -3,7 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -138,31 +138,61 @@ func syncTORedis() error {
 	return nil
 }
 
-// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部诗句，有则现获取已同步的数据的最后一条，然后同步新数据
-func syncKLine() error {
-	ctx := context.Background()
-	for _, v := range []KLineTyp{dateMin, dateTwelfth, dateQuarter, dateHalfAnHour, dateHour, dateDay, dateWek, dateMon} {
-		swapCountKlines, err := model.QuerySwapCountKLines(ctx, 1000, 0, model.NewFilter("date_type = ?", v.DateType), model.OrderFilter("id asc"))
+type Price struct {
+	Open   decimal.Decimal
+	High   decimal.Decimal
+	Low    decimal.Decimal
+	Settle decimal.Decimal
+	Avg    decimal.Decimal
+	Date   *time.Time
+}
+
+func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount string) error {
+	var (
+		key  = domain.KLineKey(klineTyp.DateType, swapAccount)
+		date = &time.Time{}
+	)
+
+	lastValue, err := redisClient.ZRange(ctx, key, -1, -1).Result() // 返回最后一个元素
+	if err != nil && !redisClient.ErrIsNil(err) {
+		return errors.Wrap(err)
+	}
+
+	if len(lastValue) != 0 {
+		pri := &Price{}
+		if err = json.Unmarshal([]byte(lastValue[0]), pri); err != nil {
+			return errors.Wrap(err)
+		}
+		date = pri.Date
+
+		// 最后一个数据会重复，提前删除，以便于更新
+		if lastValue != nil {
+			if err = redisClient.ZRemRangeByScore(ctx, key, strconv.FormatInt(date.Unix(), 10), strconv.FormatInt(date.Unix(), 10)).Err(); err != nil {
+				return errors.Wrap(err)
+			}
+		}
+	}
+
+	for {
+		swapCountKlines, err := model.QuerySwapCountKLines(ctx, 1000, 0,
+			model.NewFilter("date_type = ?", klineTyp.DateType),
+			model.OrderFilter("id asc"),
+			model.NewFilter("date >= ?", date),
+			model.SwapAddress(swapAccount),
+		)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
-		type price struct {
-			Open   decimal.Decimal
-			High   decimal.Decimal
-			Low    decimal.Decimal
-			Settle decimal.Decimal
-			Avg    decimal.Decimal
-		}
-		key := getKLineKey(v.DateType)
 		prices := make([]*redis.Z, 0, len(swapCountKlines))
 		for _, v := range swapCountKlines {
-			p, _ := json.Marshal(price{
+			p, _ := json.Marshal(Price{
 				Open:   v.Open,
 				High:   v.High,
 				Low:    v.Low,
 				Settle: v.Settle,
 				Avg:    v.Avg,
+				Date:   v.Date,
 			})
 
 			prices = append(prices, &redis.Z{
@@ -175,10 +205,26 @@ func syncKLine() error {
 			logger.Error("sync swap account last 24h vol to redis err")
 			return errors.Wrap(err)
 		}
+
+		date = swapCountKlines[len(swapCountKlines)-1].Date
+		// 退出条件
+		if len(swapCountKlines) == 1 {
+			break
+		}
 	}
+
 	return nil
 }
 
-func getKLineKey(dateType domain.DateType) string {
-	return fmt.Sprintf("kline:swap:count:%s", dateType)
+// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部诗句，有则现获取已同步的数据的最后一条，然后同步新数据
+func syncKLine() error {
+	ctx := context.Background()
+	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
+		for _, swapConfig := range sol.SwapConfigList() {
+			if err := syncDateTypeKLine(ctx, v, swapConfig.SwapAccount); err != nil {
+				return errors.Wrap(err)
+			}
+		}
+	}
+	return nil
 }

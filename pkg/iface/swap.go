@@ -2,11 +2,13 @@ package iface
 
 import (
 	"context"
+	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
 	"git.cplus.link/go/akit/util/gquery"
 
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/internal/worker/process"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -115,4 +117,19 @@ type QueryUserSwapTvlCountDayResp struct {
 	Limit  int                        `json:"limit"`
 	Offset int                        `json:"offset"`
 	List   []*domain.UserSwapCountDay `json:"list"`
+}
+
+type GetKlineReq struct {
+	SwapAccount string          `json:"swap_account"      binding:"required"`
+	DateType    domain.DateType `json:"date_type"         binding:"required"`
+	EndTime     time.Time       `json:"end_time"          binding:"omitempty"`                 // 获取数据的结束时间
+	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+}
+
+type GetKlineResp struct {
+	Total  int64            `json:"total"`
+	Limit  int              `json:"limit"`
+	Offset int              `json:"offset"`
+	List   []*process.Price `json:"list"`
 }

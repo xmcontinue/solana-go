@@ -9,7 +9,6 @@ require (
 	github.com/gagliardetto/solana-go v1.0.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
-	github.com/go-redis/redis v6.15.8+incompatible
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rpcxio/libkv v0.5.0
 	go.etcd.io/etcd/client/v2 v2.305.0
@@ -51,7 +50,7 @@ require (
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/go-redis/redis/v8 v8.8.2 // indirect
+	github.com/go-redis/redis/v8 v8.8.2
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect

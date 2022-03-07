@@ -7,58 +7,65 @@ import (
 )
 
 var (
-	dateMin = KLineTyp{
+	DateMin = KLineTyp{
 		BeforeIntervalDateType: domain.DateNone,
 		DateType:               domain.DateMin,
-	}
-
-	dateTwelfth = KLineTyp{
-		BeforeIntervalDateType: domain.DateMin,
-		DateType:               domain.DateTwelfth,
-		Interval:               5,
 		TimeInterval:           time.Minute,
 	}
 
-	dateQuarter = KLineTyp{
-		BeforeIntervalDateType: domain.DateTwelfth,
-		DateType:               domain.DateQuarter,
-		Interval:               3,
+	DateTwelfth = KLineTyp{
+		BeforeIntervalDateType: domain.DateMin,
+		DateType:               domain.DateTwelfth,
+		Interval:               5,
+		InnerTimeInterval:      time.Minute,
 		TimeInterval:           time.Minute * 5,
 	}
 
-	dateHalfAnHour = KLineTyp{
-		BeforeIntervalDateType: domain.DateQuarter,
-		DateType:               domain.DateHalfAnHour,
-		Interval:               2,
+	DateQuarter = KLineTyp{
+		BeforeIntervalDateType: domain.DateTwelfth,
+		DateType:               domain.DateQuarter,
+		Interval:               3,
+		InnerTimeInterval:      time.Minute * 5,
 		TimeInterval:           time.Minute * 15,
 	}
 
-	dateHour = KLineTyp{
-		BeforeIntervalDateType: domain.DateHalfAnHour,
-		DateType:               domain.DateHour,
+	DateHalfAnHour = KLineTyp{
+		BeforeIntervalDateType: domain.DateQuarter,
+		DateType:               domain.DateHalfAnHour,
 		Interval:               2,
+		InnerTimeInterval:      time.Minute * 15,
 		TimeInterval:           time.Minute * 30,
 	}
 
-	dateDay = KLineTyp{
-		BeforeIntervalDateType: domain.DateHour,
-		DateType:               domain.DateDay,
-		Interval:               24,
+	DateHour = KLineTyp{
+		BeforeIntervalDateType: domain.DateHalfAnHour,
+		DateType:               domain.DateHour,
+		Interval:               2,
+		InnerTimeInterval:      time.Minute * 30,
 		TimeInterval:           time.Hour,
 	}
 
-	dateWek = KLineTyp{
-		BeforeIntervalDateType: domain.DateDay,
-		DateType:               domain.DateWek,
-		Interval:               7,
+	DateDay = KLineTyp{
+		BeforeIntervalDateType: domain.DateHour,
+		DateType:               domain.DateDay,
+		Interval:               24,
+		InnerTimeInterval:      time.Hour,
 		TimeInterval:           time.Hour * 24,
 	}
 
-	dateMon = KLineTyp{
+	DateWek = KLineTyp{
+		BeforeIntervalDateType: domain.DateDay,
+		DateType:               domain.DateWek,
+		Interval:               7,
+		InnerTimeInterval:      time.Hour * 24,
+		TimeInterval:           time.Hour * 24 * 7,
+	}
+
+	DateMon = KLineTyp{
 		BeforeIntervalDateType: domain.DateDay,
 		DateType:               domain.DateMon,
 		Interval:               31,
-		TimeInterval:           time.Hour * 24,
+		InnerTimeInterval:      time.Hour * 24,
 	}
 )
 
@@ -66,8 +73,9 @@ type KLineTyp struct {
 	Date                   *time.Time
 	DateType               domain.DateType
 	BeforeIntervalDateType domain.DateType
-	Interval               int // 相较于前一个时间段，用多少前一个时间段可以填满当前时间段
-	TimeInterval           time.Duration
+	Interval               int           // 相较于前一个时间段，用多少前一个时间段可以填满当前时间段
+	InnerTimeInterval      time.Duration // 每个当前时间间隔内部最小单位的间隔
+	TimeInterval           time.Duration // 当前时间类型间隔
 }
 
 func (m *KLineTyp) Name() domain.DateType {

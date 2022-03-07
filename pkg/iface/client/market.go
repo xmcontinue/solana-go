@@ -26,6 +26,10 @@ func (c *CremaMarketClient) GetTvl(ctx context.Context, args *iface.GetTvlReq, r
 	return c.Call(ctx, "GetTvl", args, reply)
 }
 
+func (c *CremaMarketClient) GetKline(ctx context.Context, args *iface.GetKlineReq, reply *iface.GetKlineResp) error {
+	return c.Call(ctx, "GetKline", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)
