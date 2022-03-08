@@ -16,13 +16,30 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
-// SwapCount ...
-func (t *MarketService) SwapCount(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountResp) error {
+// SwapCountOld ...
+func (t *MarketService) SwapCountOld(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountOldResp) error {
 	defer rpcx.Recover(ctx)
 
 	reply.SwapPairCount = market.GetSwapCountCache(args.TokenSwapAddress)
 
 	if reply.SwapPairCount == nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	return nil
+}
+
+// SwapCount ...
+func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
+	defer rpcx.Recover(ctx)
+
+	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKey().Key).Result()
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	err = json.Unmarshal([]byte(res), reply)
+	if err != nil {
 		return errors.Wrap(errors.RecordNotFound)
 	}
 

@@ -15,9 +15,9 @@ import (
 const MarketServiceName = "CremaMarketService"
 
 type MarketService interface {
-	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
+	SwapCount(context.Context, *NilReq, *SwapCountResp) error
 }
 
 type SwapCountReq struct {
@@ -25,6 +25,10 @@ type SwapCountReq struct {
 }
 
 type SwapCountResp struct {
+	*domain.SwapCountToApi
+}
+
+type SwapCountOldResp struct {
 	*domain.SwapPairCount `json:"swap_pair_count"`
 }
 
@@ -43,6 +47,8 @@ func (j *JsonString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type NilReq struct {
+}
 type GetTvlReq struct {
 }
 

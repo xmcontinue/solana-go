@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -125,10 +126,10 @@ func SwapTotalCount() error {
 	swapCountToApi.TxNum = totalTxNum
 
 	// 缓存至redis
-	// swapCountKey := domain.SwapTotalCountKey()
-	// if err := redisClient.Set(context.Background(), swapCountKey.Key, swapCountToApi, swapCountKey.Timeout).Err(); err != nil {
-	// 	return errors.Wrap(err)
-	// }
+	swapCountKey := domain.SwapTotalCountKey()
+	if err := redisClient.Set(context.Background(), swapCountKey.Key, swapCountToApi, swapCountKey.Timeout).Err(); err != nil {
+		return errors.Wrap(err)
+	}
 
 	return nil
 }

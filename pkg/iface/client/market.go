@@ -14,7 +14,7 @@ type CremaMarketClient struct {
 	*rpcx.Client
 }
 
-func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountResp) error {
+func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.NilReq, reply *iface.SwapCountResp) error {
 	return c.Call(ctx, "SwapCount", args, reply)
 }
 

@@ -38,6 +38,11 @@ func SwapCountCacheJob() error {
 	return nil
 }
 
+// GetTotalCountCache ...
+func GetTotalCountCache() error {
+	return nil
+}
+
 // GetSwapCountCache ...
 func GetSwapCountCache(tokenSwapAddress string) *domain.SwapPairCount {
 	return swapPairCountCache[tokenSwapAddress]
