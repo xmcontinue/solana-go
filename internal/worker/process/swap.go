@@ -153,10 +153,11 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 					Interval:               dateType.Interval,
 					InnerTimeInterval:      dateType.InnerTimeInterval,
 				}
-
-				if err = KLType.updateKline(ctx, swapCountKLine); err != nil {
-					return errors.Wrap(err)
-				}
+				_ = KLType
+				_ = swapCountKLine
+				//if err = KLType.updateKline(ctx, swapCountKLine); err != nil {
+				//	return errors.Wrap(err)
+				//}
 			}
 
 			return nil
