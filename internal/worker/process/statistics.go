@@ -184,6 +184,10 @@ func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount strin
 			return errors.Wrap(err)
 		}
 
+		if len(swapCountKlines) == 0 {
+			break
+		}
+
 		prices := make([]*redis.Z, 0, len(swapCountKlines))
 		for _, v := range swapCountKlines {
 			p, _ := json.Marshal(Price{
@@ -201,8 +205,12 @@ func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount strin
 			})
 		}
 
+		if len(prices) == 0 {
+			continue
+		}
+
 		if err = redisClient.ZAdd(context.TODO(), key, prices...).Err(); err != nil {
-			logger.Error("sync swap account last 24h vol to redis err")
+			logger.Error("sync swap account last 24h vol to redis err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
 

@@ -41,12 +41,13 @@ func (s *SwapAndUserCount) ParserDate() error {
 			return errors.Wrap(err)
 		}
 
-		if len(swapTransactions) == 0 {
+		if len(swapTransactions) == 1 && swapTransactions[0].ID <= s.BeginTransactionID {
 			break
 		}
 
 		for _, transaction := range swapTransactions {
 			// 防止重复统计
+
 			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
 				continue
 			}
@@ -201,46 +202,48 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 		swapCountKLine.Avg = avg
 	} else {
 		// 时间类型是domain.DateMin，因为是按照slot顺序解析，所以这里可以直接补数据
-		kLine, err := model.QuerySwapCountKLine(ctx,
+		kLines, err := model.QuerySwapCountKLines(ctx, 1, 0,
 			model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
 			model.NewFilter("date < ?", swapCountKLine.Date),
-			model.NewFilter("date_type = ?", swapCountKLine.DateType))
+			model.NewFilter("date_type = ?", swapCountKLine.DateType),
+			model.OrderFilter("date desc"))
 		if err != nil && !errors.Is(err, errors.RecordNotFound) {
 			return errors.Wrap(err)
 		}
 
-		if kLine != nil {
+		if len(kLines) != 0 {
 			var kLineList []*domain.SwapCountKLine
-			beginTime := kLine.Date.Add(time.Minute)
+			beginTime := kLines[0].Date.Add(time.Minute)
 			for ; !beginTime.Equal(*swapCountKLine.Date); beginTime = beginTime.Add(time.Minute) {
+				date := beginTime
 				kLineList = append(kLineList, &domain.SwapCountKLine{
-					LastSwapTransactionID: kLine.LastSwapTransactionID,
-					SwapAddress:           kLine.SwapAddress,
-					TokenAAddress:         kLine.TokenAAddress,
-					TokenBAddress:         kLine.TokenBAddress,
+					LastSwapTransactionID: kLines[0].LastSwapTransactionID,
+					SwapAddress:           kLines[0].SwapAddress,
+					TokenAAddress:         kLines[0].TokenAAddress,
+					TokenBAddress:         kLines[0].TokenBAddress,
 					TokenAVolume:          decimal.Decimal{},
 					TokenBVolume:          decimal.Decimal{},
-					TokenABalance:         kLine.TokenABalance,
-					TokenBBalance:         kLine.TokenBBalance,
-					Date:                  &beginTime,
+					TokenABalance:         kLines[0].TokenABalance,
+					TokenBBalance:         kLines[0].TokenBBalance,
+					Date:                  &date,
 					TxNum:                 0,
 					DateType:              domain.DateMin,
-					Open:                  kLine.Settle,
-					High:                  kLine.Settle,
-					Low:                   kLine.Settle,
-					Settle:                kLine.Settle,
-					Avg:                   kLine.Settle,
-					TokenAUSD:             kLine.TokenAUSD,
-					TokenBUSD:             kLine.TokenBUSD,
-					TvlInUsd:              kLine.TvlInUsd,
+					Open:                  kLines[0].Settle,
+					High:                  kLines[0].Settle,
+					Low:                   kLines[0].Settle,
+					Settle:                kLines[0].Settle,
+					Avg:                   kLines[0].Settle,
+					TokenAUSD:             kLines[0].TokenAUSD,
+					TokenBUSD:             kLines[0].TokenBUSD,
+					TvlInUsd:              kLines[0].TvlInUsd,
 					VolInUsd:              decimal.Decimal{},
 				})
 			}
 
 			if kLineList != nil {
-				//if err = model.CreateSwapCountKLines(ctx, kLineList); err != nil {
-				//	return errors.Wrap(err) // 不能出现unique 错误
-				//}
+				if err = model.CreateSwapCountKLines(ctx, kLineList); err != nil {
+					return errors.Wrap(err) // 不能出现unique 错误
+				}
 			}
 		}
 	}
