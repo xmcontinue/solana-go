@@ -216,7 +216,14 @@ func (t *Tx) calculate(k int, txCount *TxCount, config *SwapConfig) {
 	}
 
 	accounts := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
-	for _, v := range t.LiquidityRecords[k].InnerInstructions {
+	var innerInstructions []solana.CompiledInstruction
+	if len(t.LiquidityRecords) > 0 {
+		innerInstructions = t.LiquidityRecords[k].InnerInstructions
+	} else {
+		innerInstructions = t.SwapRecords[k].InnerInstructions
+	}
+	
+	for _, v := range innerInstructions {
 		if accounts[v.Accounts[0]].String() == config.TokenA.SwapTokenAccount ||
 			accounts[v.Accounts[1]].String() == config.TokenA.SwapTokenAccount {
 			TokenAPostVolume = TokenAPostVolume.Add(decimal.NewFromInt(int64(binary.LittleEndian.Uint64(v.Data[1:9]))))
