@@ -131,6 +131,13 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	return &after, nil
 }
 
+func CreateSwapCountKLines(ctx context.Context, swapCountKLine []*domain.SwapCountKLine) error {
+	if err := wDB(ctx).Create(swapCountKLine).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
 func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, blockDate *time.Time) (*domain.SwapCountKLine, error) {
 	var (
 		after   domain.SwapCountKLine

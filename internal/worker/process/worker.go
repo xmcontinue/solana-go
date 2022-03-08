@@ -63,7 +63,7 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncKLine)
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncKLineToRedis)
 	if err != nil {
 		panic(err)
 	}

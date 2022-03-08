@@ -176,7 +176,7 @@ func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount strin
 	for {
 		swapCountKlines, err := model.QuerySwapCountKLines(ctx, 1000, 0,
 			model.NewFilter("date_type = ?", klineTyp.DateType),
-			model.OrderFilter("id asc"),
+			model.OrderFilter("date asc"),
 			model.NewFilter("date >= ?", date),
 			model.SwapAddress(swapAccount),
 		)
@@ -216,12 +216,26 @@ func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount strin
 	return nil
 }
 
-// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部诗句，有则现获取已同步的数据的最后一条，然后同步新数据
-func syncKLine() error {
+// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据
+func syncKLineToRedis() error {
 	ctx := context.Background()
-	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
-		for _, swapConfig := range sol.SwapConfigList() {
-			if err := syncDateTypeKLine(ctx, v, swapConfig.SwapAccount); err != nil {
+	for _, swapConfig := range sol.SwapConfigList() {
+
+		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddress(swapConfig.SwapAccount))
+		if err != nil {
+			logger.Error("query swap_pair_bases err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
+		if swapPairBase == nil {
+			break
+		}
+
+		if swapPairBase.IsSync == false {
+			break
+		}
+
+		for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
+			if err = syncDateTypeKLine(ctx, v, swapConfig.SwapAccount); err != nil {
 				return errors.Wrap(err)
 			}
 		}

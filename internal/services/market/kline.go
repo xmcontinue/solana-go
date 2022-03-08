@@ -45,14 +45,14 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 	for _, v := range []process.KLineTyp{process.DateMin, process.DateTwelfth, process.DateQuarter, process.DateHalfAnHour, process.DateHour, process.DateDay, process.DateWek, process.DateMon} {
 		if v.DateType == args.DateType {
 			dateType = &v
-			dateType.Date = price.Date
+			dateType.Date = args.EndTime
 			dateType.InnerTimeInterval = v.InnerTimeInterval
 			break
 		}
 	}
 
 	// 要求时间大于存入redis的时间，则返回最后limit条数据
-	if price.Date.Before(args.EndTime) {
+	if price.Date.Before(*args.EndTime) {
 
 		if args.Offset == 0 {
 			offset = -1
@@ -103,7 +103,6 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 		return nil
 	}
 
-	// 要求时间比最后一个时间要早
 	// ZSet 中第一个数据的score
 	scoreWithScores := &redis.ZRangeBy{
 		Min:    "",
@@ -121,7 +120,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 	}
 
 	endTime := dateType.GetDate()
-	beginTime := dateType.GetDate().Add(dateType.TimeInterval * (-time.Duration(args.Limit + args.Offset + 1)))
+	beginTime := dateType.SkipIntervalTime(args.Limit + args.Offset + 1)
 
 	opt := &redis.ZRangeBy{
 		Min:    strconv.FormatInt(beginTime.Unix(), 10),
@@ -147,7 +146,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 			break
 		}
 
-		beginTime = beginTime.Add(dateType.TimeInterval * (-time.Duration(args.Limit + args.Offset + 1)))
+		//beginTime = beginTime.Add(dateType.TimeInterval * (-time.Duration(args.Limit + args.Offset + 1))) todo quxiao
 		opt.Min = strconv.FormatInt(beginTime.Add(dateType.TimeInterval*(-time.Duration(args.Limit+args.Offset+1))).Unix(), 10)
 
 	}
@@ -157,9 +156,9 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 	}
 
 	for i := range list {
-		date := dateType.GetDate().Add(-dateType.TimeInterval * time.Duration(i))
+		date := dateType.SkipIntervalTime(i)
 		list[len(list)-(i+1)] = &process.Price{
-			Date: &date,
+			Date: date,
 		}
 	}
 
@@ -183,3 +182,5 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 
 	return nil
 }
+
+// todo  查询接口里面 当为时间类型wek,mon时，应该怎么处理

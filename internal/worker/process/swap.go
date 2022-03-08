@@ -19,16 +19,18 @@ type SwapAndUserCount struct {
 	ID                 int64
 	LastTransactionID  int64
 	BeginTransactionID int64
+	Slot               uint64
 	SwapAccount        string
 	SwapRecords        []*sol.SwapRecord
 	BlockDate          *time.Time
 	spec               string
 }
 
+// ParserDate 按照区块时间顺序解析
 func (s *SwapAndUserCount) ParserDate() error {
 	for {
 		filters := []model.Filter{
-			model.NewFilter("id > ?", s.BeginTransactionID),
+			model.NewFilter("slot >= ?", s.Slot),
 			model.NewFilter("id <= ?", s.LastTransactionID),
 			model.OrderFilter("slot asc,id asc"),
 		}
@@ -44,12 +46,18 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		for _, transaction := range swapTransactions {
-			tx := sol.NewTx(transaction.TxData)
+			// 防止重复统计
+			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
+				continue
+			}
 
+			tx := sol.NewTx(transaction.TxData)
 			err = tx.ParseTxToSwap()
 			if err != nil {
+				if errors.Is(err, errors.RecordNotFound) {
+					continue
+				}
 				logger.Error("sync transaction id err", logger.Errorv(err))
-				continue
 			}
 
 			s.ID = transaction.ID
@@ -62,13 +70,13 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		s.BeginTransactionID = swapTransactions[len(swapTransactions)-1].ID
-
+		s.Slot = swapTransactions[len(swapTransactions)-1].Slot
 	}
 
 	return nil
 }
 
-func (s *SwapAndUserCount) GetBeginTransactionID() error {
+func (s *SwapAndUserCount) GetSyncPoint() error {
 	swapCount, err := model.GetLastSwapCountByGroup(context.TODO(), model.SwapAddress(swapAccount))
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Error("get last transaction id err", logger.Errorv(err))
@@ -77,6 +85,11 @@ func (s *SwapAndUserCount) GetBeginTransactionID() error {
 		s.BeginTransactionID = 0
 	} else {
 		s.BeginTransactionID = swapCount.LastSwapTransactionID
+		tx, err := model.QuerySwapTransaction(context.TODO(), model.NewFilter("id = ?", swapCount.LastSwapTransactionID))
+		if err != nil {
+			return errors.Wrap(err)
+		}
+		s.Slot = tx.Slot
 	}
 
 	return nil
@@ -99,13 +112,23 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				return errors.Wrap(err)
 			}
 
+			var (
+				tokenAVolume decimal.Decimal
+				tokenBVolume decimal.Decimal
+			)
+			if swapRecord.Direction == 0 {
+				tokenAVolume = swapRecord.TokenCount.TokenAVolume
+			} else {
+				tokenBVolume = swapRecord.TokenCount.TokenBVolume
+			}
+
 			swapCountKLine := &domain.SwapCountKLine{
 				LastSwapTransactionID: s.ID,
 				SwapAddress:           swapRecord.SwapConfig.SwapAccount,
 				TokenAAddress:         swapRecord.SwapConfig.TokenA.SwapTokenAccount,
 				TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
-				TokenAVolume:          swapRecord.TokenCount.TokenAVolume,
-				TokenBVolume:          swapRecord.TokenCount.TokenBVolume,
+				TokenAVolume:          tokenAVolume,
+				TokenBVolume:          tokenBVolume,
 				TokenABalance:         swapRecord.TokenCount.TokenABalance,
 				TokenBBalance:         swapRecord.TokenCount.TokenBBalance,
 				DateType:              domain.DateMin,
@@ -151,7 +174,7 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapCountKLine) error {
 	swapCountKLine.Date = m.GetDate()
 	swapCountKLine.DateType = m.DateType
-	lastSwapCountKLine, err := model.QuerySwapCountKLine(ctx,
+	currentSwapCountKLine, err := model.QuerySwapCountKLine(ctx,
 		model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
 		model.NewFilter("date = ?", swapCountKLine.Date),
 		model.NewFilter("date_type = ?", swapCountKLine.DateType))
@@ -160,12 +183,12 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 		return errors.Wrap(err)
 	}
 
-	if lastSwapCountKLine != nil {
-		if lastSwapCountKLine.High.GreaterThan(swapCountKLine.High) {
-			swapCountKLine.High = lastSwapCountKLine.High
+	if currentSwapCountKLine != nil {
+		if currentSwapCountKLine.High.GreaterThan(swapCountKLine.High) {
+			swapCountKLine.High = currentSwapCountKLine.High
 		}
-		if lastSwapCountKLine.Low.LessThan(swapCountKLine.Low) {
-			swapCountKLine.Low = lastSwapCountKLine.Low
+		if currentSwapCountKLine.Low.LessThan(swapCountKLine.Low) {
+			swapCountKLine.Low = currentSwapCountKLine.Low
 		}
 	}
 
@@ -176,6 +199,50 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 		}
 
 		swapCountKLine.Avg = avg
+	} else {
+		// 时间类型是domain.DateMin，因为是按照slot顺序解析，所以这里可以直接补数据
+		kLine, err := model.QuerySwapCountKLine(ctx,
+			model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
+			model.NewFilter("date < ?", swapCountKLine.Date),
+			model.NewFilter("date_type = ?", swapCountKLine.DateType))
+		if err != nil && !errors.Is(err, errors.RecordNotFound) {
+			return errors.Wrap(err)
+		}
+
+		if kLine != nil {
+			var kLineList []*domain.SwapCountKLine
+			beginTime := kLine.Date.Add(time.Minute)
+			for ; !beginTime.Equal(*swapCountKLine.Date); beginTime = beginTime.Add(time.Minute) {
+				kLineList = append(kLineList, &domain.SwapCountKLine{
+					LastSwapTransactionID: kLine.LastSwapTransactionID,
+					SwapAddress:           kLine.SwapAddress,
+					TokenAAddress:         kLine.TokenAAddress,
+					TokenBAddress:         kLine.TokenBAddress,
+					TokenAVolume:          decimal.Decimal{},
+					TokenBVolume:          decimal.Decimal{},
+					TokenABalance:         kLine.TokenABalance,
+					TokenBBalance:         kLine.TokenBBalance,
+					Date:                  &beginTime,
+					TxNum:                 0,
+					DateType:              domain.DateMin,
+					Open:                  kLine.Settle,
+					High:                  kLine.Settle,
+					Low:                   kLine.Settle,
+					Settle:                kLine.Settle,
+					Avg:                   kLine.Settle,
+					TokenAUSD:             kLine.TokenAUSD,
+					TokenBUSD:             kLine.TokenBUSD,
+					TvlInUsd:              kLine.TvlInUsd,
+					VolInUsd:              decimal.Decimal{},
+				})
+			}
+
+			if kLineList != nil {
+				//if err = model.CreateSwapCountKLines(ctx, kLineList); err != nil {
+				//	return errors.Wrap(err) // 不能出现unique 错误
+				//}
+			}
+		}
 	}
 
 	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, swapCountKLine.Date)
