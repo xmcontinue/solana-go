@@ -42,6 +42,8 @@ var (
 	tokenConfigMap  map[string]*Token
 	once            sync.Once
 	wg              sync.WaitGroup
+	isInit          bool
+	configLock      sync.Mutex
 )
 
 func Init(config *config.Config) error {
@@ -58,7 +60,6 @@ func Init(config *config.Config) error {
 		wg.Add(1)
 		go watchSwapPairsConfig(resChan)
 		wg.Wait()
-		time.Sleep(time.Second) // todo
 
 		// 加载网络配置
 		err = config.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
@@ -98,6 +99,8 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 	for {
 		select {
 		case res := <-swapConfigChan:
+			configLock.Lock()
+
 			err := json.Unmarshal(res.Value, &swapConfigList)
 			if err != nil {
 				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
@@ -120,7 +123,11 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 			swapConfigMap = swapMap
 			tokenConfigMap = tokenMap
-			wg.Done()
+			if !isInit {
+				wg.Done()
+			}
+
+			configLock.Unlock()
 		}
 	}
 }
@@ -176,6 +183,8 @@ func watchBlockHeight() {
 // watchBalance 监听钱包余额变动
 func watchBalance() {
 	for {
+		configLock.Lock()
+
 		for _, v := range tokenConfigMap {
 			resp, err := GetRpcClient().GetAccountInfo(
 				context.TODO(),
@@ -196,8 +205,12 @@ func watchBalance() {
 			v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
 			v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
 		}
-		wg.Done()
+		if !isInit {
+			isInit = true
+			wg.Done()
+		}
 
+		configLock.Unlock()
 		time.Sleep(time.Second * 10)
 	}
 }
