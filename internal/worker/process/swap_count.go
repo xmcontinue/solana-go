@@ -60,17 +60,17 @@ func SwapTotalCount() error {
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newSwapCount.TokenBUSD.Div(newSwapCount.TokenAUSD).Round(6), beforeSwapCount.TokenBUSD.Div(beforeSwapCount.TokenAUSD).Round(6)
 		swapCountToApiPool := &domain.SwapCountToApiPool{
-			Name:          v.Name,
-			SwapAccount:   v.SwapAccount,
-			VolInUsd24h:   volInUsd24h.String(),
-			TxNum24h:      swapCount24h.TxNum,
-			VolInUsd:      volInUsd.String(),
-			TxNum:         swapCountTotal.TxNum,
-			Apr:           apr,
-			TvlInUsd:      tvlInUsd.String(),
-			TickIntervals: []*domain.TickInterval{}, // TODO
-			Price:         newSwapPrice.String(),
-			PriceRate24h:  newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Round(2).String() + "%",
+			Name:           v.Name,
+			SwapAccount:    v.SwapAccount,
+			VolInUsd24h:    volInUsd24h.String(),
+			TxNum24h:       swapCount24h.TxNum,
+			VolInUsd:       volInUsd.String(),
+			TxNum:          swapCountTotal.TxNum,
+			Apr:            apr,
+			TvlInUsd:       tvlInUsd.String(),
+			PriceIntervals: v.PriceIntervals,
+			Price:          newSwapPrice.String(),
+			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Round(2).String() + "%",
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
