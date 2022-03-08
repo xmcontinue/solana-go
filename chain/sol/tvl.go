@@ -34,12 +34,13 @@ type TVL struct {
 }
 
 type SwapConfig struct {
-	Name          string `json:"name" mapstructure:"name"`
-	Fee           string `json:"fee" mapstructure:"fee"`
-	SwapAccount   string `json:"swap_account" mapstructure:"swap_account"`
-	SwapPublicKey solana.PublicKey
-	TokenA        Token `json:"token_a" mapstructure:"token_a"`
-	TokenB        Token `json:"token_b" mapstructure:"token_b"`
+	Name           string `json:"name" mapstructure:"name"`
+	Fee            string `json:"fee" mapstructure:"fee"`
+	SwapAccount    string `json:"swap_account" mapstructure:"swap_account"`
+	SwapPublicKey  solana.PublicKey
+	TokenA         Token                   `json:"token_a" mapstructure:"token_a"`
+	TokenB         Token                   `json:"token_b" mapstructure:"token_b"`
+	PriceIntervals []*domain.PriceInterval `json:"price_intervals" mapstructure:"price_intervals"`
 }
 
 type Token struct {
