@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -25,11 +26,11 @@ func SwapTotalCount() error {
 
 	for _, v := range sol.SwapConfigList() {
 		// 获取币价
-		newSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = 1min"), model.OrderFilter("id desc"))
+		newSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		if err != nil {
 			continue
 		}
-		beforeSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = 1min"))
+		beforeSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.NewFilter("date > ?", newSwapCount.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 		if err != nil {
 			continue
 		}
@@ -37,17 +38,11 @@ func SwapTotalCount() error {
 			continue
 		}
 
-		// 获取24h交易额，交易笔数
-		swapCount24h, err := model.SumSwapCountVolForKLines(context.Background(), model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = 1min"))
-		if err != nil {
-			continue
-		}
+		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
+		swapCount24h, _ := model.SumSwapCountVolForKLines(context.Background(), model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
-		// 获取总交易额，交易笔数
-		swapCountTotal, err := model.SumSwapCountVolForKLines(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = mon"))
-		if err != nil {
-			continue
-		}
+		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
+		swapCountTotal, _ := model.SumSwapCountVolForKLines(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
 
 		// 计算vol,tvl
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newSwapCount.TokenAUSD), v.TokenB.Balance.Mul(newSwapCount.TokenBUSD)
@@ -126,8 +121,13 @@ func SwapTotalCount() error {
 	swapCountToApi.TxNum = totalTxNum
 
 	// 缓存至redis
+	data, err := json.Marshal(swapCountToApi)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	swapCountKey := domain.SwapTotalCountKey()
-	if err := redisClient.Set(context.Background(), swapCountKey.Key, swapCountToApi, swapCountKey.Timeout).Err(); err != nil {
+	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}
 

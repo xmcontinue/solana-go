@@ -41,6 +41,7 @@ var (
 	swapConfigMap   map[string]*SwapConfig
 	tokenConfigMap  map[string]*Token
 	once            sync.Once
+	wg              sync.WaitGroup
 )
 
 func Init(config *config.Config) error {
@@ -54,7 +55,9 @@ func Init(config *config.Config) error {
 			return
 		}
 
+		wg.Add(1)
 		go watchSwapPairsConfig(resChan)
+		wg.Wait()
 		time.Sleep(time.Second) // todo
 
 		// 加载网络配置
@@ -80,7 +83,9 @@ func Init(config *config.Config) error {
 		chainNet = chainNets[0]
 
 		// Watch Balance
+		wg.Add(1)
 		go watchBalance()
+		wg.Wait()
 
 		// watchNet 监测网络
 		go watchNet()
@@ -115,6 +120,7 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 			swapConfigMap = swapMap
 			tokenConfigMap = tokenMap
+			wg.Done()
 		}
 	}
 }
@@ -169,25 +175,30 @@ func watchBlockHeight() {
 
 // watchBalance 监听钱包余额变动
 func watchBalance() {
-	for _, v := range tokenConfigMap {
-		resp, err := GetRpcClient().GetAccountInfo(
-			context.TODO(),
-			v.SwapTokenPublicKey,
-		)
-		if err != nil {
-			return
+	for {
+		for _, v := range tokenConfigMap {
+			resp, err := GetRpcClient().GetAccountInfo(
+				context.TODO(),
+				v.SwapTokenPublicKey,
+			)
+			if err != nil {
+				return
+			}
+			var tokenA token.Account
+			err = bin.NewBinDecoder(resp.Value.Data.GetBinary()).Decode(&tokenA)
+			if err != nil {
+				return
+			}
+			v.Balance = precisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
-		var tokenA token.Account
-		err = bin.NewBinDecoder(resp.Value.Data.GetBinary()).Decode(&tokenA)
-		if err != nil {
-			return
-		}
-		v.Balance = decimal.NewFromInt(int64(tokenA.Amount))
-	}
 
-	for _, v := range swapConfigList {
-		v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
-		v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
+		for _, v := range swapConfigList {
+			v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
+			v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
+		}
+		wg.Done()
+
+		time.Sleep(time.Second * 10)
 	}
 }
 
