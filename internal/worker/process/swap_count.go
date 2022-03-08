@@ -45,9 +45,9 @@ func SwapTotalCount() error {
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
 
 		// 计算vol,tvl
-		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newSwapCount.TokenAUSD), v.TokenB.Balance.Mul(newSwapCount.TokenBUSD)
-		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newSwapCount.TokenAUSD), swapCount24h.TokenBVolume.Mul(newSwapCount.TokenBUSD)
-		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newSwapCount.TokenAUSD), swapCountTotal.TokenBVolume.Mul(newSwapCount.TokenBUSD)
+		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newSwapCount.TokenAUSD).Round(6), v.TokenB.Balance.Mul(newSwapCount.TokenBUSD).Round(6)
+		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCount24h.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
+		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCountTotal.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
 		tvlInUsd, volInUsd24h, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol.Add(tokenBVol)
 
 		// 计算apr
