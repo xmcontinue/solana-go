@@ -17,6 +17,7 @@ type SwapConfig struct {
 	Name           string `json:"name" mapstructure:"name"`
 	Fee            string `json:"fee" mapstructure:"fee"`
 	SwapAccount    string `json:"swap_account" mapstructure:"swap_account"`
+	PoolAddress    string `json:"pool_address" mapstructure:"pool_address"`
 	SwapPublicKey  solana.PublicKey
 	TokenA         Token            `json:"token_a" mapstructure:"token_a"`
 	TokenB         Token            `json:"token_b" mapstructure:"token_b"`

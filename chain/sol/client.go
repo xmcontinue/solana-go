@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/rpcxio/libkv/store"
 
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -100,6 +100,8 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 			swapConfigMap = swapMap
 			tokenConfigMap = tokenMap
+			parse.SetSwapConfig(swapConfigMap)
+
 			if !isInit {
 				wg.Done()
 			}
@@ -200,7 +202,7 @@ func watchBalance() {
 			if err != nil {
 				return
 			}
-			v.Balance = PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
+			v.Balance = parse.PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
 
 		for _, v := range swapConfigList {
@@ -228,11 +230,6 @@ func GetRpcClient() *rpc.Client {
 func abs(n int64) int64 {
 	y := n >> 63
 	return (n ^ y) - y
-}
-
-// PrecisionConversion 精度转换
-func PrecisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
-	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
 
 // GetTokenForTokenAccount 根据token account获取token配置

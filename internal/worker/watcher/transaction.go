@@ -14,6 +14,7 @@ import (
 	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -247,7 +248,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
 				Signature:      v.Transaction.GetParsedTransaction().Signatures[0].String(),
-				Fee:            sol.PrecisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
+				Fee:            parse.PrecisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
 				BlockTime:      &blockTime,
 				Slot:           v.Slot,
 				UserAddress:    "",
@@ -339,10 +340,10 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 
 	tokenADeltaVolume, tokenBDeltaVolume := tokenAPostBalance.Sub(tokenAPreBalance), tokenBPostBalance.Sub(tokenBPreBalance)
 
-	return sol.PrecisionConversion(tokenADeltaVolume, int(s.swapConfig.TokenA.Decimal)),
-		sol.PrecisionConversion(tokenBDeltaVolume, int(s.swapConfig.TokenB.Decimal)),
-		sol.PrecisionConversion(tokenAPostBalance, int(s.swapConfig.TokenA.Decimal)),
-		sol.PrecisionConversion(tokenBPostBalance, int(s.swapConfig.TokenB.Decimal))
+	return parse.PrecisionConversion(tokenADeltaVolume, int(s.swapConfig.TokenA.Decimal)),
+		parse.PrecisionConversion(tokenBDeltaVolume, int(s.swapConfig.TokenB.Decimal)),
+		parse.PrecisionConversion(tokenAPostBalance, int(s.swapConfig.TokenA.Decimal)),
+		parse.PrecisionConversion(tokenBPostBalance, int(s.swapConfig.TokenB.Decimal))
 }
 
 // getInstructionLen 获取第一个Instruction data长度

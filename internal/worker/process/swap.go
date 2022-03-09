@@ -9,7 +9,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"gorm.io/gorm"
 
-	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -21,7 +21,7 @@ type SwapAndUserCount struct {
 	BeginTransactionID int64
 	Slot               uint64
 	SwapAccount        string
-	SwapRecords        []*sol.SwapRecord
+	SwapRecords        []*parse.SwapRecord
 	BlockDate          *time.Time
 	spec               string
 }
@@ -52,7 +52,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 				continue
 			}
 
-			tx := sol.NewTx(transaction.TxData)
+			tx := parse.NewTx(transaction.TxData)
 			err = tx.ParseTxToSwap()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
@@ -296,7 +296,7 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 		for _, v := range swapCountKLines {
 			for _, avg := range avgList {
 				if v.Date.Equal(avg.Date) || v.Date.Before(avg.Date) {
-					avg.avg = v.Settle //以上一个时间区间的结束值作为新的时间区间的平均值
+					avg.avg = v.Settle // 以上一个时间区间的结束值作为新的时间区间的平均值
 				}
 			}
 		}
@@ -312,7 +312,7 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 	return sum.Div(decimal.NewFromInt32(count)), nil
 }
 
-func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *sol.SwapRecord) error {
+func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapRecord) error {
 	swapCount := &domain.SwapCount{
 		LastSwapTransactionID: s.ID,
 		SwapAddress:           swapRecord.SwapConfig.SwapAccount,
@@ -333,7 +333,7 @@ func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *sol.
 }
 
 // userSwapCount 写入user_counts 表
-func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *sol.SwapRecord, tx *domain.SwapTransaction) error {
+func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *parse.SwapRecord, tx *domain.SwapTransaction) error {
 	userSwapCount := &domain.UserSwapCount{
 		LastSwapTransactionID: s.ID,
 		UserAddress:           swapRecord.UserTokenBAddress,
@@ -358,7 +358,7 @@ func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *sol.Sw
 }
 
 // userSwapCountDay 写入user_count_days 表
-func (s *SwapAndUserCount) userSwapCountDay(ctx context.Context, swapRecord *sol.SwapRecord, tx *domain.SwapTransaction) error {
+func (s *SwapAndUserCount) userSwapCountDay(ctx context.Context, swapRecord *parse.SwapRecord, tx *domain.SwapTransaction) error {
 	userSwapCountDate := time.Date(s.BlockDate.Year(), s.BlockDate.Month(), s.BlockDate.Day(), 0, 0, 0, 0, s.BlockDate.Location())
 	// 统计用户每日swap count
 	userSwapCountDay := &domain.UserSwapCountDay{

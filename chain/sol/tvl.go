@@ -13,6 +13,7 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -85,10 +86,10 @@ func (tvl *TVL) Start() error {
 	tokenBBalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBBalance, 10))
 
 	swapPairCount := &domain.SwapPairCount{
-		TokenAVolume:      PrecisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
-		TokenBVolume:      PrecisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
-		TokenABalance:     PrecisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
-		TokenBBalance:     PrecisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
+		TokenAVolume:      parse.PrecisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
+		TokenBVolume:      parse.PrecisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
+		TokenABalance:     parse.PrecisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
+		TokenBBalance:     parse.PrecisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,

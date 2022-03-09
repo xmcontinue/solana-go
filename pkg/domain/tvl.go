@@ -123,6 +123,7 @@ type SwapCountToApiPool struct {
 	TxNum24h       uint64           `json:"tx_num_24h"`
 	Apr            string           `json:"apr"`
 	SwapAccount    string           `json:"swap_account"`
+	PoolAddress    string           `json:"pool_address"`
 	TxNum          uint64           `json:"tx_num"`
 	VolInUsd       string           `json:"vol_in_usd"`
 	PriceIntervals []*PriceInterval `json:"price_intervals"`
@@ -142,8 +143,8 @@ type SwapCountToApiToken struct {
 }
 
 type PriceInterval struct {
-	HighPrice string `json:"high_price" mapstructure:"high_price"`
-	LowPrice  string `json:"low_price" mapstructure:"low_price"`
+	UpperPrice string `json:"upper_price" mapstructure:"upper_price"`
+	LowerPrice string `json:"lower_price" mapstructure:"lower_price"`
 }
 
 func (pt *PairTvlList) Value() (driver.Value, error) {

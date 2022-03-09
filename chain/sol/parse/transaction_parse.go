@@ -1,4 +1,4 @@
-package sol
+package parse
 
 import (
 	"encoding/binary"
@@ -11,12 +11,6 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-type Tx struct {
-	Data             rpc.GetTransactionResult
-	SwapRecords      []*SwapRecord
-	LiquidityRecords []*LiquidityRecord
-}
-
 // SwapRecord 解析后的swap数据
 type SwapRecord struct {
 	UserOwnerAddress  string
@@ -25,27 +19,10 @@ type SwapRecord struct {
 	ProgramAddress    string
 	Direction         int8 // 0为A->B,1为B->A
 	Price             decimal.Decimal
-	UserCount         *TxCount
-	TokenCount        *TxCount
+	UserCount         *AmountCount
+	TokenCount        *AmountCount
 	SwapConfig        *domain.SwapConfig
 	InnerInstructions []solana.CompiledInstruction
-}
-
-type TxCount struct {
-	TokenAIndex   int64
-	TokenBIndex   int64
-	TokenAVolume  decimal.Decimal
-	TokenBVolume  decimal.Decimal
-	TokenABalance decimal.Decimal
-	TokenBBalance decimal.Decimal
-}
-
-type TxIndex struct {
-	SwapAddressIndex int64
-	UserTokenAIndex  int64
-	UserTokenBIndex  int64
-	TokenAIndex      int64
-	TokenBIndex      int64
 }
 
 // LiquidityRecord 解析后的liquidity数据
@@ -55,21 +32,28 @@ type LiquidityRecord struct {
 	UserTokenBAddress     string
 	ProgramAddress        string
 	Direction             int8 // 0为取出,1为质押
-	UserCount             *TxCount
-	TokenCount            *TxCount
+	UserCount             *AmountCount
+	TokenCount            *AmountCount
 	SwapConfig            *domain.SwapConfig
 	InnerInstructions     []solana.CompiledInstruction
 	InnerInstructionIndex int64
 }
 
-const cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
+type AmountCount struct {
+	TokenAIndex   int64
+	TokenBIndex   int64
+	TokenAVolume  decimal.Decimal
+	TokenBVolume  decimal.Decimal
+	TokenABalance decimal.Decimal
+	TokenBBalance decimal.Decimal
+}
 
-func NewTx(txData *domain.TxData) *Tx {
-	return &Tx{
-		Data:             rpc.GetTransactionResult(*txData),
-		SwapRecords:      make([]*SwapRecord, 0),
-		LiquidityRecords: make([]*LiquidityRecord, 0),
-	}
+type Index struct {
+	SwapAddressIndex int64
+	UserTokenAIndex  int64
+	UserTokenBIndex  int64
+	TokenAIndex      int64
+	TokenBIndex      int64
 }
 
 // ParseTxToSwap 解析TX到swap
@@ -147,7 +131,7 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 
 	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
 
-	cremaSwapIndex := &TxIndex{0, 3, 4, 5, 6}
+	cremaSwapIndex := &Index{0, 3, 4, 5, 6}
 
 	swapConfig, ok := swapConfigMap[accountKeys[instructionAccounts[cremaSwapIndex.SwapAddressIndex]].String()]
 	if !ok {
@@ -156,7 +140,7 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 
 	direction := int8(0)
 	if swapConfig.TokenA.SwapTokenAccount != accountKeys[instructionAccounts[cremaSwapIndex.TokenAIndex]].String() {
-		cremaSwapIndex = &TxIndex{0, 4, 3, 6, 5}
+		cremaSwapIndex = &Index{0, 4, 3, 6, 5}
 		direction = 1
 	}
 
@@ -167,11 +151,11 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 		UserTokenBAddress: accountKeys[instructionAccounts[cremaSwapIndex.UserTokenBIndex]].String(),
 		ProgramAddress:    programAddress,
 		Direction:         direction,
-		UserCount: &TxCount{
+		UserCount: &AmountCount{
 			TokenAIndex: instructionAccounts[cremaSwapIndex.UserTokenAIndex],
 			TokenBIndex: instructionAccounts[cremaSwapIndex.UserTokenBIndex],
 		},
-		TokenCount: &TxCount{
+		TokenCount: &AmountCount{
 			TokenAIndex: instructionAccounts[cremaSwapIndex.TokenAIndex],
 			TokenBIndex: instructionAccounts[cremaSwapIndex.TokenBIndex],
 		},
@@ -198,18 +182,18 @@ func (t *Tx) calculateSwap() error {
 	return nil
 }
 
-func (t *Tx) calculate(k int, txCount *TxCount, config *domain.SwapConfig) {
+func (t *Tx) calculate(k int, amountCount *AmountCount, config *domain.SwapConfig) {
 	var (
 		TokenAPostVolume, TokenBPostVolume, TokenAPostBalance, TokenBPostBalance decimal.Decimal
 	)
 
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
-		if txCount.TokenAIndex == int64(postVal.AccountIndex) {
+		if amountCount.TokenAIndex == int64(postVal.AccountIndex) {
 			TokenAPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
 
-		if txCount.TokenBIndex == int64(postVal.AccountIndex) {
+		if amountCount.TokenBIndex == int64(postVal.AccountIndex) {
 			TokenBPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
@@ -232,10 +216,10 @@ func (t *Tx) calculate(k int, txCount *TxCount, config *domain.SwapConfig) {
 		}
 	}
 
-	txCount.TokenAVolume = PrecisionConversion(TokenAPostVolume, int(config.TokenA.Decimal))
-	txCount.TokenBVolume = PrecisionConversion(TokenBPostVolume, int(config.TokenB.Decimal))
-	txCount.TokenABalance = PrecisionConversion(TokenAPostBalance, int(config.TokenA.Decimal))
-	txCount.TokenBBalance = PrecisionConversion(TokenBPostBalance, int(config.TokenB.Decimal))
+	amountCount.TokenAVolume = PrecisionConversion(TokenAPostVolume, int(config.TokenA.Decimal))
+	amountCount.TokenBVolume = PrecisionConversion(TokenBPostVolume, int(config.TokenB.Decimal))
+	amountCount.TokenABalance = PrecisionConversion(TokenAPostBalance, int(config.TokenA.Decimal))
+	amountCount.TokenBBalance = PrecisionConversion(TokenBPostBalance, int(config.TokenB.Decimal))
 }
 
 func (sr *SwapRecord) GetVol() decimal.Decimal {
@@ -332,15 +316,15 @@ func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byt
 	}
 
 	var (
-		cremaLiquidityIndex *TxIndex
+		cremaLiquidityIndex *Index
 		direction           int8
 	)
 
 	if data[0] == 2 {
-		cremaLiquidityIndex = &TxIndex{0, 3, 4, 5, 6}
+		cremaLiquidityIndex = &Index{0, 3, 4, 5, 6}
 		direction = 1
 	} else if data[0] == 3 {
-		cremaLiquidityIndex = &TxIndex{0, 7, 8, 5, 6}
+		cremaLiquidityIndex = &Index{0, 7, 8, 5, 6}
 		direction = 0
 	} else {
 		return nil, errors.New("not liquidity instruction")
@@ -360,11 +344,11 @@ func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byt
 		UserTokenBAddress: accountKeys[instructionAccounts[cremaLiquidityIndex.UserTokenBIndex]].String(),
 		ProgramAddress:    programAddress,
 		Direction:         direction,
-		UserCount: &TxCount{
+		UserCount: &AmountCount{
 			TokenAIndex: instructionAccounts[cremaLiquidityIndex.UserTokenAIndex],
 			TokenBIndex: instructionAccounts[cremaLiquidityIndex.UserTokenBIndex],
 		},
-		TokenCount: &TxCount{
+		TokenCount: &AmountCount{
 			TokenAIndex: instructionAccounts[cremaLiquidityIndex.TokenAIndex],
 			TokenBIndex: instructionAccounts[cremaLiquidityIndex.TokenBIndex],
 		},
