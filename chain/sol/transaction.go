@@ -8,7 +8,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func (tvl *TVL) PullSignatures(before *solana.Signature, until *solana.Signature, limit int) ([]*rpc.TransactionSignature, error) {
+func (s *SwapConfig) PullSignatures(before *solana.Signature, until *solana.Signature, limit int) ([]*rpc.TransactionSignature, error) {
 	opts := &rpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: rpc.CommitmentFinalized,
@@ -24,7 +24,7 @@ func (tvl *TVL) PullSignatures(before *solana.Signature, until *solana.Signature
 
 	out, err := GetRpcClient().GetSignaturesForAddressWithOpts(
 		context.TODO(),
-		tvl.SwapPublicKey,
+		s.SwapPublicKey,
 		opts,
 	)
 
@@ -35,7 +35,7 @@ func (tvl *TVL) PullSignatures(before *solana.Signature, until *solana.Signature
 	return out, nil
 }
 
-func (tvl *TVL) GetTransactionsForSignature(signatures []*rpc.TransactionSignature) ([]*rpc.GetTransactionResult, error) {
+func GetTransactionsForSignature(signatures []*rpc.TransactionSignature) ([]*rpc.GetTransactionResult, error) {
 	transactions := make([]*rpc.GetTransactionResult, 0, len(signatures))
 
 	opts := rpc.GetTransactionOpts{
