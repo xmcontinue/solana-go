@@ -140,7 +140,7 @@ type GetKlineResp struct {
 type GetHistogramReq struct {
 	Typ         string          `json:"typ"               binding:"required,oneof=tvl vol"`
 	SwapAccount string          `json:"swap_account"      binding:"required"`
-	DateType    domain.DateType `json:"date_type"         binding:"required"`
+	DateType    domain.DateType `json:"date_type"         binding:"required,oneof=1min 5min 15min 30min hour day wek mon "`
 	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
 	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
 }
