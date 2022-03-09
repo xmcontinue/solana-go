@@ -44,10 +44,6 @@ func parserUserCountAndSwapCount() error {
 			SwapAccount:       swapConfig.SwapAccount,
 		}
 
-		if err = swapAndUserCount.GetSyncPoint(); err != nil {
-			return errors.Wrap(err)
-		}
-
 		if err = swapAndUserCount.ParserDate(); err != nil {
 			return errors.Wrap(err)
 		}

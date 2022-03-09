@@ -128,7 +128,7 @@ type QueryUserSwapTvlCountDayResp struct {
 type GetKlineReq struct {
 	SwapAccount string          `json:"swap_account"      binding:"required"`
 	DateType    domain.DateType `json:"date_type"         binding:"required"`
-	EndTime     *time.Time      `json:"end_time"          binding:"omitempty"`                 // 获取数据的结束时间
+	EndTime     *time.Time      `json:"end_time"          binding:"omitempty"`                 // 获取数据的结束时间  暂时没有使用
 	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
 	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
 }

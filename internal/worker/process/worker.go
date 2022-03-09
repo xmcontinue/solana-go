@@ -16,10 +16,6 @@ var (
 	contractAccountMap = make(map[string]bool)
 )
 
-var (
-	swapAccount = "8J3avAjuRfL2CYFKKDwhhceiRoajhrHv9kN5nUiEnuBG"
-)
-
 // Init 定时任务
 func Init(viperConf *config.Config) error {
 	conf = viperConf
@@ -58,10 +54,10 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
-	if err != nil {
-		panic(err)
-	}
+	//_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncKLineToRedis)
 	if err != nil {
@@ -69,11 +65,6 @@ func Init(viperConf *config.Config) error {
 	}
 
 	_, err = cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
-	if err != nil {
-		panic(err)
-	}
-
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), userAddressLast24hVol)
 	if err != nil {
 		panic(err)
 	}
