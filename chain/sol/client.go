@@ -19,6 +19,7 @@ import (
 	"github.com/rpcxio/libkv/store"
 
 	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const (
@@ -26,34 +27,25 @@ const (
 	chainNetRpcKey   = "chain_net_rpc"
 )
 
-type ChainNet struct {
-	Address string
-	Client  *rpc.Client
-	Height  uint64
-	Status  uint64
-}
-
 var (
-	chainNet        *ChainNet
-	chainNets       []*ChainNet
-	chainNetsConfig []string
-	swapConfigList  []*SwapConfig
-	swapConfigMap   map[string]*SwapConfig
-	tokenConfigMap  map[string]*Token
-	once            sync.Once
-	wg              sync.WaitGroup
-	isInit          bool
-	configLock      sync.Mutex
+	chainNet       *domain.ChainNet
+	chainNets      []*domain.ChainNet
+	swapConfigList []*domain.SwapConfig
+	swapConfigMap  map[string]*domain.SwapConfig
+	tokenConfigMap map[string]*domain.Token
+	once           sync.Once
+	wg             sync.WaitGroup
+	isInit         bool
+	configLock     sync.Mutex
 )
 
-func Init(config *config.Config) error {
-	var rErr error
+func Init(conf *config.Config) error {
+	var err error
 	once.Do(func() {
 		// 加载swap pairs配置
 		stopChan := make(chan struct{})
 		resChan, err := etcd.Watch(etcdSwapPairsKey, stopChan)
 		if err != nil {
-			rErr = errors.Wrap(err)
 			return
 		}
 
@@ -62,26 +54,10 @@ func Init(config *config.Config) error {
 		wg.Wait()
 
 		// 加载网络配置
-		err = config.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
+		err = initNet(conf)
 		if err != nil {
-			rErr = errors.Wrap(err)
 			return
 		}
-
-		if len(chainNetsConfig) == 0 {
-			rErr = errors.New("chain net rpc address is not found!")
-			return
-		}
-
-		for _, v := range chainNetsConfig {
-			chainNets = append(chainNets, &ChainNet{
-				Client:  rpc.New(v),
-				Address: v,
-			})
-		}
-
-		// 默认使用第一个网络
-		chainNet = chainNets[0]
 
 		// Watch Balance
 		wg.Add(1)
@@ -91,7 +67,8 @@ func Init(config *config.Config) error {
 		// watchNet 监测网络
 		go watchNet()
 	})
-	return rErr
+
+	return errors.Wrap(err)
 }
 
 // watchSwapPairsConfig 监听swap pairs配置变动
@@ -106,8 +83,8 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
 			}
 
-			swapMap := make(map[string]*SwapConfig, len(swapConfigList))
-			tokenMap := make(map[string]*Token, 0)
+			swapMap := make(map[string]*domain.SwapConfig, len(swapConfigList))
+			tokenMap := make(map[string]*domain.Token, 0)
 
 			// 加载配置
 			for _, v := range swapConfigList {
@@ -132,7 +109,32 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 	}
 }
 
-// WatchNet 监测网络
+// initNet 初始化网络
+func initNet(conf *config.Config) error {
+	chainNetsConfig := make([]string, 0)
+	err := conf.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if len(chainNetsConfig) == 0 {
+		return errors.New("chain net rpc address is not found!")
+	}
+
+	for _, v := range chainNetsConfig {
+		chainNets = append(chainNets, &domain.ChainNet{
+			Client:  rpc.New(v),
+			Address: v,
+		})
+	}
+
+	// 默认使用第一个网络
+	chainNet = chainNets[0]
+
+	return nil
+}
+
+// watchNet 监测网络
 func watchNet() {
 	for {
 		// watchBlockHeight 监测区块高度,若落后则切换
@@ -198,7 +200,7 @@ func watchBalance() {
 			if err != nil {
 				return
 			}
-			v.Balance = precisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
+			v.Balance = PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
 
 		for _, v := range swapConfigList {
@@ -228,12 +230,12 @@ func abs(n int64) int64 {
 	return (n ^ y) - y
 }
 
-// precisionConversion 精度转换
-func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
+// PrecisionConversion 精度转换
+func PrecisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
 	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
 
 // GetTokenForTokenAccount 根据token account获取token配置
-func GetTokenForTokenAccount(account string) *Token {
+func GetTokenForTokenAccount(account string) *domain.Token {
 	return tokenConfigMap[account]
 }
