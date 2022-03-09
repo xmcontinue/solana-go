@@ -195,6 +195,11 @@ type SwapHistogram struct {
 	Date *time.Time
 }
 
+type SwapHistogramPrice struct {
+	Price decimal.Decimal
+	Date  *time.Time
+}
+
 func (s *SwapHistogram) MarshalBinary() ([]byte, error) {
 	return json.Marshal(s)
 }

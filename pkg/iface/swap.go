@@ -138,6 +138,7 @@ type GetKlineResp struct {
 	List   []*process.Price `json:"list"`
 }
 type GetHistogramReq struct {
+	Typ         string          `json:"typ"               binding:"required,oneof=tvl vol"`
 	SwapAccount string          `json:"swap_account"      binding:"required"`
 	DateType    domain.DateType `json:"date_type"         binding:"required"`
 	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
@@ -145,8 +146,8 @@ type GetHistogramReq struct {
 }
 
 type GetHistogramResp struct {
-	Total  int64                    `json:"total"`
-	Limit  int                      `json:"limit"`
-	Offset int                      `json:"offset"`
-	List   []*process.SwapHistogram `json:"list"`
+	Total  int64                         `json:"total"`
+	Limit  int                           `json:"limit"`
+	Offset int                           `json:"offset"`
+	List   []*process.SwapHistogramPrice `json:"list"`
 }

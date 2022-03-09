@@ -109,7 +109,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		key           = domain.HistogramKey(args.DateType, args.SwapAccount)
 		dateType      = &process.KLineTyp{}
 		offset        = int64(0)
-		list          = make([]*process.SwapHistogram, args.Limit, args.Limit)
+		list          = make([]*process.SwapHistogramPrice, 0, args.Limit)
 		swapHistogram = &process.SwapHistogram{}
 	)
 
@@ -152,21 +152,20 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 
 	_ = json.Unmarshal([]byte(values[len(values)-1]), swapHistogram)
 
-	for i := range list {
-		date := dateType.GetDate().Add(-dateType.TimeInterval * time.Duration(i))
-		list[len(list)-(i+1)] = &process.SwapHistogram{
-			Date: &date,
-		}
-	}
+	for i := range values {
+		innerSwapHistogram := &process.SwapHistogram{}
+		_ = json.Unmarshal([]byte(values[i]), innerSwapHistogram)
 
-	for _, v := range values {
-
-		_ = json.Unmarshal([]byte(v), swapHistogram)
-		for i, l := range list {
-			if l.Date.After(*swapHistogram.Date) || l.Date.Equal(*swapHistogram.Date) {
-				list[i].Tvl = swapHistogram.Tvl
-				list[i].Vol = swapHistogram.Vol
-			}
+		if args.Typ == "vol" {
+			list = append(list, &process.SwapHistogramPrice{
+				Price: innerSwapHistogram.Vol,
+				Date:  innerSwapHistogram.Date,
+			})
+		} else {
+			list = append(list, &process.SwapHistogramPrice{
+				Price: swapHistogram.Vol,
+				Date:  swapHistogram.Date,
+			})
 		}
 	}
 
