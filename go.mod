@@ -5,7 +5,7 @@ go 1.17
 require (
 	git.cplus.link/go/akit v0.5.3
 	github.com/Masterminds/squirrel v1.5.1
-	github.com/gagliardetto/binary v0.5.2
+	github.com/gagliardetto/binary v0.6.1
 	github.com/gagliardetto/solana-go v1.0.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
@@ -50,8 +50,8 @@ require (
 	github.com/go-ping/ping v0.0.0-20201115131931-3300c582a663 // indirect
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
-	github.com/go-redis/redis/v8 v8.8.2 // indirect
-	github.com/go-resty/resty/v2 v2.6.0 // indirect
+	github.com/go-redis/redis/v8 v8.8.2
+	github.com/go-resty/resty/v2 v2.6.0
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

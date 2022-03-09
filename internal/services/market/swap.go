@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
@@ -15,13 +16,30 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
-// SwapCount ...
-func (t *MarketService) SwapCount(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountResp) error {
+// SwapCountOld ...
+func (t *MarketService) SwapCountOld(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountOldResp) error {
 	defer rpcx.Recover(ctx)
 
 	reply.SwapPairCount = market.GetSwapCountCache(args.TokenSwapAddress)
 
 	if reply.SwapPairCount == nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	return nil
+}
+
+// SwapCount ...
+func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
+	defer rpcx.Recover(ctx)
+
+	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKey().Key).Result()
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	err = json.Unmarshal([]byte(res), reply)
+	if err != nil {
 		return errors.Wrap(errors.RecordNotFound)
 	}
 
@@ -59,7 +77,7 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 	}
 
 	for _, swapAddress := range swapAddressList {
-		tvl, err := t.redisClient.Get(ctx, domain.SwapTvlCountKey(swapAddress).Key).Result()
+		tvl, err := t.redisClient.Get(ctx, domain.SwapCountKey(swapAddress).Key).Result()
 		if err != nil && !t.redisClient.ErrIsNil(err) {
 			return errors.Wrap(err)
 		} else if err != nil && !t.redisClient.ErrIsNil(err) {
@@ -75,14 +93,20 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 		reply.List = append(reply.List, swapAddressTvl)
 	}
 
-	//swapTvl, err := model.GetLastSwapTvlCount(ctx, gquery.ParseQuery(args))
-	//if err != nil {
-	//	return errors.Wrap(err)
-	//}
+	// 直接查询数据库
 
-	//reply.SwapTvlCount = swapTvl
+	swapTvl, err := model.GetLastMaxTvls(ctx, gquery.ParseQuery(args))
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
-	// gateway 获取数据
+	for _, tvl := range swapTvl {
+
+		reply.List = append(reply.List, &iface.SwapAddressTvl{
+			SwapAccount: tvl.SwapAddress,
+			Tvl:         tvl.TokenABalance.Add(tvl.TokenBBalance),
+		})
+	}
 
 	return nil
 }
@@ -114,7 +138,31 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	vol, err := t.redisClient.Get(ctx, domain.SwapVolCountLast24HKey(args.SwapAddress).Key).Result()
+	vol, err := t.redisClient.Get(ctx, domain.SwapVolCountLast24HKey(args.AccountAddress).Key).Result()
+	if err != nil && !t.redisClient.ErrIsNil(err) {
+		return errors.Wrap(err)
+	} else if err == nil {
+
+		aa := &model.SwapVol{}
+		_ = json.Unmarshal([]byte(vol), aa)
+		reply.SwapVol = aa
+
+		return nil
+	}
+
+	// 未在redis中找到，直接返回空数据
+
+	return nil
+}
+
+// GetVolV2 获取swap account 或者user account 的总交易额
+func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, reply *iface.GetVolV2Resp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress, "").Key).Result()
 	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	} else if err == nil {
@@ -125,16 +173,12 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return nil
 	}
 
-	// 在数据库里面找，并且同步到redis里
-
-	tvlDecimal, _ := decimal.NewFromString(vol)
-
-	reply.Vol = tvlDecimal
+	// 在数据库里面找，直接返回空数据
 
 	return nil
 }
 
-func (t *MarketService) QueryUserSwapTvlCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
+func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)

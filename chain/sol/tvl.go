@@ -2,7 +2,6 @@ package sol
 
 import (
 	"context"
-	"math"
 	"strconv"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -26,81 +26,14 @@ type TVL struct {
 	signatureList    []*rpc.TransactionSignature
 	tokenAVolume     uint64
 	tokenBVolume     uint64
-	// client           *rpc.Client
-	tokenABalance uint64
-	tokenBBalance uint64
-	txNum         uint64
-	util          *solana.Signature
-	*SwapConfig
+	tokenABalance    uint64
+	tokenBBalance    uint64
+	txNum            uint64
+	util             *solana.Signature
+	*domain.SwapConfig
 }
 
-type SwapConfig struct {
-	Name          string `json:"name" mapstructure:"name"`
-	Fee           string `json:"fee" mapstructure:"fee"`
-	SwapAccount   string `json:"swap_account" mapstructure:"swap_account"`
-	SwapPublicKey solana.PublicKey
-	TokenA        Token `json:"token_a" mapstructure:"token_a"`
-	TokenB        Token `json:"token_b" mapstructure:"token_b"`
-}
-
-type Token struct {
-	Symbol             string `json:"symbol" mapstructure:"symbol"`
-	TokenMint          string `json:"token_mint" mapstructure:"token_mint"`
-	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
-	SwapTokenPublicKey solana.PublicKey
-	Decimal            uint8 `json:"decimal" mapstructure:"decimal"`
-}
-
-// func Init(config *config.Config) error {
-// 	var rErr error
-// 	once.Do(func() {
-// 		stopChan := make(chan struct{})
-// 		resChan, err := etcd.Watch("/crema/swap-pairs", stopChan)
-// 		if err != nil {
-// 			rErr = errors.Wrap(err)
-// 			return
-// 		}
-//
-// 		go func() {
-// 			for {
-// 				select {
-// 				case res := <-resChan:
-// 					err = json.Unmarshal(res.Value, &swapConfigList)
-// 					if err != nil {
-// 						rErr = errors.Wrap(err)
-// 						return
-// 					}
-//
-// 					// 加载配置
-// 					for _, v := range swapConfigList {
-// 						v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-// 						v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-// 						v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
-// 					}
-// 				}
-// 			}
-// 		}()
-//
-// 		time.Sleep(time.Second) // todo
-//
-// 		err = config.UnmarshalKey("chain_net_rpc", &chainNetRpc)
-// 		if err != nil {
-// 			rErr = errors.Wrap(err)
-// 			return
-// 		}
-//
-// 	})
-// 	return rErr
-// }
-
-func NewTVL(swapConfig *SwapConfig) *TVL {
-	// TODO 若重启时是否由数据库中读取last transaction至 tvl中
-	// net := rpc.MainNetBeta_RPC
-	// if chainNet == "dev" {
-	//	//net = rpc.DevNet_RPC
-	// }
-
-	// chainNetRpc := "https://connect.runnode.com/?apikey=PMkQIG6CxY0ybWmaHRHJ"
+func NewTVL(swapConfig *domain.SwapConfig) *TVL {
 
 	return &TVL{
 		transactionCache: make(map[string]*rpc.TransactionWithMeta),
@@ -147,31 +80,25 @@ func (tvl *TVL) Start() error {
 		return errors.Wrap(err)
 	}
 
-	// 存入数据库
-	// transactionsByte, _ := json.Marshal(tvl.transactionCache)
-	// signaturesByte, _ := json.Marshal(tvl.signatureList)
-
 	tokenAVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenAVolume, 10))
 	tokenBVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBVolume, 10))
 	tokenABalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenABalance, 10))
 	tokenBBalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBBalance, 10))
 
 	swapPairCount := &domain.SwapPairCount{
-		TokenAVolume:      precisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
-		TokenBVolume:      precisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
-		TokenABalance:     precisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
-		TokenBBalance:     precisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
+		TokenAVolume:      parse.PrecisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
+		TokenBVolume:      parse.PrecisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
+		TokenABalance:     parse.PrecisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
+		TokenBBalance:     parse.PrecisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,
-		// LastTransaction:   string(transactionsByte),
-		// Signature:     string(signaturesByte),
-		TxNum:         tvl.txNum,
-		PairName:      tvl.Name,
-		TokenASymbol:  tvl.TokenA.Symbol,
-		TokenBSymbol:  tvl.TokenB.Symbol,
-		TokenADecimal: int(tvl.TokenA.Decimal),
-		TokenBDecimal: int(tvl.TokenB.Decimal),
+		TxNum:             tvl.txNum,
+		PairName:          tvl.Name,
+		TokenASymbol:      tvl.TokenA.Symbol,
+		TokenBSymbol:      tvl.TokenB.Symbol,
+		TokenADecimal:     int(tvl.TokenA.Decimal),
+		TokenBDecimal:     int(tvl.TokenB.Decimal),
 	}
 
 	err = model.CreateSwapPairCount(context.Background(), swapPairCount)
@@ -274,7 +201,7 @@ func (tvl *TVL) pullLastSignature() {
 		if instructionLen == 9 || instructionLen == 41 || instructionLen == 50 || instructionLen == 52 {
 			continue
 		}
-		
+
 		tvl.transactionCache[key] = out
 		finalResult = append(finalResult, value)
 	}
@@ -314,22 +241,6 @@ func (tvl *TVL) calculate() {
 			tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
 		}
 	}
-
-	// for _, meta := range tvl.transactionCache {
-	// 	tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
-	// 	tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
-	// 	tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
-	// }
-}
-
-func abs(n int64) int64 {
-	y := n >> 63
-	return (n ^ y) - y
-}
-
-// precisionConversion 精度转换
-func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
-	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
 
 func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int64, int64) {
@@ -408,7 +319,7 @@ func (tvl *TVL) getTvl() error {
 	return nil
 }
 
-func SwapConfigList() []*SwapConfig {
+func SwapConfigList() []*domain.SwapConfig {
 	return swapConfigList
 }
 

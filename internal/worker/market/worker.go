@@ -9,14 +9,14 @@ import (
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
 
-	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 var (
 	cronConf       *xcron.Config
 	cron           *xcron.Cron
-	swapConfigList []sol.SwapConfig
+	swapConfigList []domain.SwapConfig
 	conf           *config.Config
 )
 

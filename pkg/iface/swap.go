@@ -2,19 +2,22 @@ package iface
 
 import (
 	"context"
+	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
 	"git.cplus.link/go/akit/util/gquery"
 
+	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/internal/worker/process"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const MarketServiceName = "CremaMarketService"
 
 type MarketService interface {
-	SwapCount(context.Context, *SwapCountReq, *SwapCountResp) error
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
+	SwapCount(context.Context, *NilReq, *SwapCountResp) error
 }
 
 type SwapCountReq struct {
@@ -22,6 +25,10 @@ type SwapCountReq struct {
 }
 
 type SwapCountResp struct {
+	*domain.SwapCountToApi
+}
+
+type SwapCountOldResp struct {
 	*domain.SwapPairCount `json:"swap_pair_count"`
 }
 
@@ -40,6 +47,8 @@ func (j *JsonString) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type NilReq struct {
+}
 type GetTvlReq struct {
 }
 
@@ -60,10 +69,18 @@ type GetTvlRespV2 struct {
 }
 
 type Get24hVolV2Req struct {
-	SwapAddress string `json:"swap_address"           binding:"required"`
+	AccountAddress string `json:"account_address"           binding:"required"`
 }
 
 type Get24hVolV2Resp struct {
+	*model.SwapVol
+}
+
+type GetVolV2Req struct {
+	SwapAddress string `json:"swap_address"           binding:"required"`
+}
+
+type GetVolV2Resp struct {
 	Vol decimal.Decimal `json:"vol"`
 }
 
@@ -106,4 +123,19 @@ type QueryUserSwapTvlCountDayResp struct {
 	Limit  int                        `json:"limit"`
 	Offset int                        `json:"offset"`
 	List   []*domain.UserSwapCountDay `json:"list"`
+}
+
+type GetKlineReq struct {
+	SwapAccount string          `json:"swap_account"      binding:"required"`
+	DateType    domain.DateType `json:"date_type"         binding:"required"`
+	EndTime     *time.Time      `json:"end_time"          binding:"omitempty"`                 // 获取数据的结束时间  暂时没有使用
+	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+}
+
+type GetKlineResp struct {
+	Total  int64            `json:"total"`
+	Limit  int              `json:"limit"`
+	Offset int              `json:"offset"`
+	List   []*process.Price `json:"list"`
 }

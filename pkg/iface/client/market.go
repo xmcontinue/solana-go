@@ -14,7 +14,7 @@ type CremaMarketClient struct {
 	*rpcx.Client
 }
 
-func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountResp) error {
+func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.NilReq, reply *iface.SwapCountResp) error {
 	return c.Call(ctx, "SwapCount", args, reply)
 }
 
@@ -24,6 +24,10 @@ func (c *CremaMarketClient) GetConfig(ctx context.Context, args *iface.GetConfig
 
 func (c *CremaMarketClient) GetTvl(ctx context.Context, args *iface.GetTvlReq, reply *iface.GetTvlResp) error {
 	return c.Call(ctx, "GetTvl", args, reply)
+}
+
+func (c *CremaMarketClient) GetKline(ctx context.Context, args *iface.GetKlineReq, reply *iface.GetKlineResp) error {
+	return c.Call(ctx, "GetKline", args, reply)
 }
 
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
