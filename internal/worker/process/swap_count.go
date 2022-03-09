@@ -170,7 +170,7 @@ func appendTokensToSwapCount(swapCountToApi *domain.SwapCountToApi, tokens ...*d
 	}
 }
 
-func removeDuplicate(nums []sol.Token) []sol.Token {
+func removeDuplicate(nums []domain.Token) []domain.Token {
 	var numLen = len(nums) - 1
 	for ; numLen > 0; numLen-- {
 		for i := numLen - 1; i >= 0; i-- {

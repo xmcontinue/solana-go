@@ -3,7 +3,6 @@ package watcher
 import (
 	"context"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -24,7 +23,7 @@ import (
 type SyncTransaction struct {
 	name       string
 	spec       string
-	swapConfig *sol.SwapConfig
+	swapConfig *domain.SwapConfig
 }
 
 func (s *SyncTransaction) Name() string {
@@ -51,7 +50,7 @@ func CreateSyncTransaction() error {
 		return &SyncTransaction{
 			name:       "sync_transaction",
 			spec:       getSpec("sync_transaction"),
-			swapConfig: value.(*sol.SwapConfig),
+			swapConfig: value.(*domain.SwapConfig),
 		}
 	})
 	if err != nil {
@@ -145,7 +144,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, complete *bool) ([]*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
 	limit := 100
-	signatures, err := s.swapConfig.PullSignatures(before, until, limit)
+	signatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, before, until, limit)
 	if err != nil {
 		return signatures, errors.Wrap(err)
 	}
@@ -177,7 +176,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 		for !isComplete {
 
-			newSignatures, err := s.swapConfig.PullSignatures(&afterBefore, until, limit)
+			newSignatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, &afterBefore, until, limit)
 			if err != nil {
 				return signatures, errors.Wrap(err)
 			}
@@ -248,7 +247,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
 				Signature:      v.Transaction.GetParsedTransaction().Signatures[0].String(),
-				Fee:            precisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
+				Fee:            sol.PrecisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
 				BlockTime:      &blockTime,
 				Slot:           v.Slot,
 				UserAddress:    "",
@@ -340,15 +339,10 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 
 	tokenADeltaVolume, tokenBDeltaVolume := tokenAPostBalance.Sub(tokenAPreBalance), tokenBPostBalance.Sub(tokenBPreBalance)
 
-	return precisionConversion(tokenADeltaVolume, int(s.swapConfig.TokenA.Decimal)),
-		precisionConversion(tokenBDeltaVolume, int(s.swapConfig.TokenB.Decimal)),
-		precisionConversion(tokenAPostBalance, int(s.swapConfig.TokenA.Decimal)),
-		precisionConversion(tokenBPostBalance, int(s.swapConfig.TokenB.Decimal))
-}
-
-// precisionConversion 精度转换
-func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
-	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
+	return sol.PrecisionConversion(tokenADeltaVolume, int(s.swapConfig.TokenA.Decimal)),
+		sol.PrecisionConversion(tokenBDeltaVolume, int(s.swapConfig.TokenB.Decimal)),
+		sol.PrecisionConversion(tokenAPostBalance, int(s.swapConfig.TokenA.Decimal)),
+		sol.PrecisionConversion(tokenBPostBalance, int(s.swapConfig.TokenB.Decimal))
 }
 
 // getInstructionLen 获取第一个Instruction data长度

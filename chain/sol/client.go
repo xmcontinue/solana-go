@@ -19,6 +19,7 @@ import (
 	"github.com/rpcxio/libkv/store"
 
 	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const (
@@ -26,19 +27,12 @@ const (
 	chainNetRpcKey   = "chain_net_rpc"
 )
 
-type ChainNet struct {
-	Address string
-	Client  *rpc.Client
-	Height  uint64
-	Status  uint64
-}
-
 var (
-	chainNet       *ChainNet
-	chainNets      []*ChainNet
-	swapConfigList []*SwapConfig
-	swapConfigMap  map[string]*SwapConfig
-	tokenConfigMap map[string]*Token
+	chainNet       *domain.ChainNet
+	chainNets      []*domain.ChainNet
+	swapConfigList []*domain.SwapConfig
+	swapConfigMap  map[string]*domain.SwapConfig
+	tokenConfigMap map[string]*domain.Token
 	once           sync.Once
 	wg             sync.WaitGroup
 	isInit         bool
@@ -89,8 +83,8 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
 			}
 
-			swapMap := make(map[string]*SwapConfig, len(swapConfigList))
-			tokenMap := make(map[string]*Token, 0)
+			swapMap := make(map[string]*domain.SwapConfig, len(swapConfigList))
+			tokenMap := make(map[string]*domain.Token, 0)
 
 			// 加载配置
 			for _, v := range swapConfigList {
@@ -128,7 +122,7 @@ func initNet(conf *config.Config) error {
 	}
 
 	for _, v := range chainNetsConfig {
-		chainNets = append(chainNets, &ChainNet{
+		chainNets = append(chainNets, &domain.ChainNet{
 			Client:  rpc.New(v),
 			Address: v,
 		})
@@ -206,7 +200,7 @@ func watchBalance() {
 			if err != nil {
 				return
 			}
-			v.Balance = precisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
+			v.Balance = PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
 
 		for _, v := range swapConfigList {
@@ -236,12 +230,12 @@ func abs(n int64) int64 {
 	return (n ^ y) - y
 }
 
-// precisionConversion 精度转换
-func precisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
+// PrecisionConversion 精度转换
+func PrecisionConversion(num decimal.Decimal, precision int) decimal.Decimal {
 	return num.Div(decimal.NewFromFloat(math.Pow10(precision)))
 }
 
 // GetTokenForTokenAccount 根据token account获取token配置
-func GetTokenForTokenAccount(account string) *Token {
+func GetTokenForTokenAccount(account string) *domain.Token {
 	return tokenConfigMap[account]
 }

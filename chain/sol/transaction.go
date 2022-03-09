@@ -8,7 +8,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 )
 
-func (s *SwapConfig) PullSignatures(before *solana.Signature, until *solana.Signature, limit int) ([]*rpc.TransactionSignature, error) {
+func PullSignatures(key solana.PublicKey, before *solana.Signature, until *solana.Signature, limit int) ([]*rpc.TransactionSignature, error) {
 	opts := &rpc.GetSignaturesForAddressOpts{
 		Limit:      &limit,
 		Commitment: rpc.CommitmentFinalized,
@@ -24,7 +24,7 @@ func (s *SwapConfig) PullSignatures(before *solana.Signature, until *solana.Sign
 
 	out, err := GetRpcClient().GetSignaturesForAddressWithOpts(
 		context.TODO(),
-		s.SwapPublicKey,
+		key,
 		opts,
 	)
 

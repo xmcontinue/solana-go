@@ -27,7 +27,7 @@ type SwapRecord struct {
 	Price             decimal.Decimal
 	UserCount         *TxCount
 	TokenCount        *TxCount
-	SwapConfig        *SwapConfig
+	SwapConfig        *domain.SwapConfig
 	InnerInstructions []solana.CompiledInstruction
 }
 
@@ -57,7 +57,7 @@ type LiquidityRecord struct {
 	Direction             int8 // 0为取出,1为质押
 	UserCount             *TxCount
 	TokenCount            *TxCount
-	SwapConfig            *SwapConfig
+	SwapConfig            *domain.SwapConfig
 	InnerInstructions     []solana.CompiledInstruction
 	InnerInstructionIndex int64
 }
@@ -198,7 +198,7 @@ func (t *Tx) calculateSwap() error {
 	return nil
 }
 
-func (t *Tx) calculate(k int, txCount *TxCount, config *SwapConfig) {
+func (t *Tx) calculate(k int, txCount *TxCount, config *domain.SwapConfig) {
 	var (
 		TokenAPostVolume, TokenBPostVolume, TokenAPostBalance, TokenBPostBalance decimal.Decimal
 	)
@@ -222,7 +222,7 @@ func (t *Tx) calculate(k int, txCount *TxCount, config *SwapConfig) {
 	} else {
 		innerInstructions = t.SwapRecords[k].InnerInstructions
 	}
-	
+
 	for _, v := range innerInstructions {
 		if accounts[v.Accounts[0]].String() == config.TokenA.SwapTokenAccount ||
 			accounts[v.Accounts[1]].String() == config.TokenA.SwapTokenAccount {
@@ -232,10 +232,10 @@ func (t *Tx) calculate(k int, txCount *TxCount, config *SwapConfig) {
 		}
 	}
 
-	txCount.TokenAVolume = precisionConversion(TokenAPostVolume, int(config.TokenA.Decimal))
-	txCount.TokenBVolume = precisionConversion(TokenBPostVolume, int(config.TokenB.Decimal))
-	txCount.TokenABalance = precisionConversion(TokenAPostBalance, int(config.TokenA.Decimal))
-	txCount.TokenBBalance = precisionConversion(TokenBPostBalance, int(config.TokenB.Decimal))
+	txCount.TokenAVolume = PrecisionConversion(TokenAPostVolume, int(config.TokenA.Decimal))
+	txCount.TokenBVolume = PrecisionConversion(TokenBPostVolume, int(config.TokenB.Decimal))
+	txCount.TokenABalance = PrecisionConversion(TokenAPostBalance, int(config.TokenA.Decimal))
+	txCount.TokenBBalance = PrecisionConversion(TokenBPostBalance, int(config.TokenB.Decimal))
 }
 
 func (sr *SwapRecord) GetVol() decimal.Decimal {
