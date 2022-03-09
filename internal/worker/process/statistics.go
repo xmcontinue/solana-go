@@ -3,12 +3,10 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
-	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-redis/redis/v8"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -31,6 +29,7 @@ func swapAddressLast24HVol() error {
 	swapVols, err := model.SumSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime), model.NewFilter("id <= ?", lastSwapTransactionID))
 	if err != nil {
 		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
+		return nil
 	}
 
 	if len(swapVols) == 0 {
@@ -43,42 +42,6 @@ func swapAddressLast24HVol() error {
 		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
 		swapVolMap[domain.SwapVolCountLast24HKey(v.SwapAddress).Key] = string(volCount)
-	}
-
-	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
-		logger.Error("sync swap account last 24h vol to redis err")
-		return errors.Wrap(err)
-	}
-	return nil
-}
-
-// userAddressLast24hVol 普通用户最近24小时的总交易量
-func userAddressLast24hVol() error {
-	var (
-		endTime   = time.Now()
-		beginTime = endTime.Add(-24 * time.Hour)
-	)
-	lastSwapTransactionID, err := getTransactionID()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	swapVols, err := model.SumUserSwapAccountLast24Vol(context.TODO(), model.SwapTransferFilter(), model.NewFilter("block_time > ?", beginTime), model.NewFilter("block_time < ?", endTime), model.NewFilter("id <= ?", lastSwapTransactionID))
-	if err != nil {
-		logger.Error("sum swap account from db last 24h vol err", logger.Errorv(err))
-	}
-
-	if len(swapVols) == 0 {
-		return nil
-	}
-
-	swapVolMap := make(map[string]string)
-
-	for _, v := range swapVols {
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenAAddress), coingecko.GetPriceForTokenAccount(v.TokenBAddress)
-		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
-		volCount, _ := json.Marshal(v)
-		swapVolMap[domain.SwapVolCountLast24HKey(v.UserAddress).Key] = string(volCount)
 	}
 
 	if err = redisClient.MSet(context.TODO(), swapVolMap).Err(); err != nil {
@@ -138,90 +101,114 @@ func syncTORedis() error {
 	return nil
 }
 
-type Price struct {
-	Open   decimal.Decimal
-	High   decimal.Decimal
-	Low    decimal.Decimal
-	Settle decimal.Decimal
-	Avg    decimal.Decimal
-	Date   *time.Time
-}
-
 func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount string) error {
 	var (
-		key  = domain.KLineKey(klineTyp.DateType, swapAccount)
-		date = &time.Time{}
+		key            = domain.KLineKey(klineTyp.DateType, swapAccount)
+		date           = &time.Time{}
+		isDelete       = false
+		lastValuePrice = &Price{}
+		lastValue      []string
+		err            error
 	)
 
-	lastValue, err := redisClient.ZRange(ctx, key, -1, -1).Result() // 返回最后一个元素
+	lastValue, err = redisClient.ZRange(ctx, key, -1, -1).Result() // 返回最后一个元素
 	if err != nil && !redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	}
 
 	if len(lastValue) != 0 {
-		pri := &Price{}
-		if err = json.Unmarshal([]byte(lastValue[0]), pri); err != nil {
+		isDelete = true
+
+		if err = json.Unmarshal([]byte(lastValue[0]), lastValuePrice); err != nil {
 			return errors.Wrap(err)
 		}
-		date = pri.Date
+		date = lastValuePrice.Date
 
-		// 最后一个数据会重复，提前删除，以便于更新
-		if lastValue != nil {
-			if err = redisClient.ZRemRangeByScore(ctx, key, strconv.FormatInt(date.Unix(), 10), strconv.FormatInt(date.Unix(), 10)).Err(); err != nil {
-				return errors.Wrap(err)
+	}
+
+	swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineTyp.DataCount, 0,
+		model.NewFilter("date_type = ?", klineTyp.DateType),
+		model.NewFilter("date >= ?", date),
+		model.OrderFilter("date desc"),
+		model.SwapAddress(swapAccount),
+	)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if len(swapCountKlines) == 0 {
+		return nil
+	}
+
+	klineTyp.Date = swapCountKlines[0].Date
+
+	prices := make([]*redis.Z, klineTyp.DataCount, klineTyp.DataCount)
+	for index := range prices {
+		prices[index] = &redis.Z{
+			Score:  float64(klineTyp.SkipIntervalTime(-(klineTyp.DataCount - (index + 1))).Unix()),
+			Member: nil,
+		}
+	}
+
+	swapCountKlineMap := make(map[int64]*Price, klineTyp.DataCount)
+	for _, v := range swapCountKlines {
+		swapCountKlineMap[v.Date.Unix()] = &Price{
+			Open:   v.Open,
+			High:   v.High,
+			Low:    v.Low,
+			Settle: v.Settle,
+			Avg:    v.Avg,
+			Date:   v.Date,
+		}
+	}
+
+	lastPrice := &Price{}
+	for index, v := range prices {
+		price, ok := swapCountKlineMap[int64(v.Score)]
+		if ok {
+			lastPrice = price
+			prices[index].Score = v.Score
+			prices[index].Member = price
+		} else if lastPrice.Date != nil {
+			prices[index].Score = v.Score
+			prices[index].Member = &Price{
+				Open:   lastPrice.Settle,
+				High:   lastPrice.Settle,
+				Low:    lastPrice.Settle,
+				Settle: lastPrice.Settle,
+				Avg:    lastPrice.Settle,
+				Date:   klineTyp.SkipIntervalTime(-(klineTyp.DataCount - (index + 1))),
 			}
 		}
 	}
 
-	for {
-		swapCountKlines, err := model.QuerySwapCountKLines(ctx, 1000, 0,
-			model.NewFilter("date_type = ?", klineTyp.DateType),
-			model.OrderFilter("date asc"),
-			model.NewFilter("date >= ?", date),
-			model.SwapAddress(swapAccount),
-		)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-
-		if len(swapCountKlines) == 0 {
-			break
-		}
-
-		prices := make([]*redis.Z, 0, len(swapCountKlines))
-		for _, v := range swapCountKlines {
-			p, _ := json.Marshal(Price{
-				Open:   v.Open,
-				High:   v.High,
-				Low:    v.Low,
-				Settle: v.Settle,
-				Avg:    v.Avg,
-				Date:   v.Date,
-			})
-
-			prices = append(prices, &redis.Z{
-				Score:  float64(v.Date.Unix()),
-				Member: string(p),
-			})
-		}
-
-		if len(prices) == 0 {
-			continue
-		}
-
-		if err = redisClient.ZAdd(context.TODO(), key, prices...).Err(); err != nil {
-			logger.Error("sync swap account last 24h vol to redis err", logger.Errorv(err))
-			return errors.Wrap(err)
-		}
-
-		date = swapCountKlines[len(swapCountKlines)-1].Date
-		// 退出条件
-		if len(swapCountKlines) == 1 {
+	for i, v := range prices {
+		if v.Member != nil {
+			prices = prices[i:]
 			break
 		}
 	}
 
+	if isDelete {
+		if len(prices) == 1 {
+			// 如果没有数据改变则减少redis io
+			if prices[0].Member.(*Price).Settle.Equal(lastValuePrice.Settle) && prices[0].Member.(*Price).Avg.Equal(lastValuePrice.Avg) {
+				return nil
+			}
+		}
+		// 最后一个数据会重复，提前删除，以便于更新
+		if err = redisClient.ZRem(ctx, key, lastValue).Err(); err != nil {
+			return errors.Wrap(err)
+		}
+	}
+
+	if err = redisClient.ZAdd(context.TODO(), key, prices...).Err(); err != nil {
+		logger.Error("sync swap account last 24h vol to redis err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
 	return nil
+
 }
 
 // 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据
@@ -244,6 +231,7 @@ func syncKLineToRedis() error {
 
 		for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
 			if err = syncDateTypeKLine(ctx, v, swapConfig.SwapAccount); err != nil {
+				logger.Error("sync k line to redis err", logger.Errorv(err))
 				return errors.Wrap(err)
 			}
 		}

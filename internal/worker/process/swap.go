@@ -7,7 +7,6 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
-	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -29,24 +28,34 @@ type SwapAndUserCount struct {
 // ParserDate 按照区块时间顺序解析
 func (s *SwapAndUserCount) ParserDate() error {
 	for {
-		filters := []model.Filter{
-			model.NewFilter("slot >= ?", s.Slot),
-			model.NewFilter("id <= ?", s.LastTransactionID),
-			model.OrderFilter("slot asc,id asc"),
+
+		kline, err := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("last_swap_transaction_id desc"))
+		if err != nil && !errors.Is(err, errors.RecordNotFound) {
+			return errors.Wrap(err)
 		}
 
-		swapTransactions, err := model.QuerySwapTransactions(context.TODO(), 10, 0, filters...)
+		if kline != nil {
+			s.ID = kline.LastSwapTransactionID
+		}
+
+		filters := []model.Filter{
+			model.NewFilter("id <= ?", s.LastTransactionID),
+			model.SwapAddress(s.SwapAccount),
+			model.OrderFilter("id asc"),
+			model.NewFilter("id > ?", s.ID),
+		}
+
+		swapTransactions, err := model.QuerySwapTransactions(context.TODO(), 100, 0, filters...)
 		if err != nil {
 			logger.Error("get single transaction err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
 
-		if len(swapTransactions) == 1 && swapTransactions[0].ID <= s.BeginTransactionID {
+		if len(swapTransactions) == 0 {
 			break
 		}
 
 		for _, transaction := range swapTransactions {
-			// 防止重复统计
 
 			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
 				continue
@@ -69,28 +78,6 @@ func (s *SwapAndUserCount) ParserDate() error {
 				return errors.Wrap(err)
 			}
 		}
-
-		s.BeginTransactionID = swapTransactions[len(swapTransactions)-1].ID
-		s.Slot = swapTransactions[len(swapTransactions)-1].Slot
-	}
-
-	return nil
-}
-
-func (s *SwapAndUserCount) GetSyncPoint() error {
-	swapCount, err := model.GetLastSwapCountByGroup(context.TODO(), model.SwapAddress(swapAccount))
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		logger.Error("get last transaction id err", logger.Errorv(err))
-		return errors.Wrap(err)
-	} else if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-		s.BeginTransactionID = 0
-	} else {
-		s.BeginTransactionID = swapCount.LastSwapTransactionID
-		tx, err := model.QuerySwapTransaction(context.TODO(), model.NewFilter("id = ?", swapCount.LastSwapTransactionID))
-		if err != nil {
-			return errors.Wrap(err)
-		}
-		s.Slot = tx.Slot
 	}
 
 	return nil
@@ -200,52 +187,6 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 		}
 
 		swapCountKLine.Avg = avg
-	} else {
-		// 时间类型是domain.DateMin，因为是按照slot顺序解析，所以这里可以直接补数据
-		kLines, err := model.QuerySwapCountKLines(ctx, 1, 0,
-			model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
-			model.NewFilter("date < ?", swapCountKLine.Date),
-			model.NewFilter("date_type = ?", swapCountKLine.DateType),
-			model.OrderFilter("date desc"))
-		if err != nil && !errors.Is(err, errors.RecordNotFound) {
-			return errors.Wrap(err)
-		}
-
-		if len(kLines) != 0 {
-			var kLineList []*domain.SwapCountKLine
-			beginTime := kLines[0].Date.Add(time.Minute)
-			for ; !beginTime.Equal(*swapCountKLine.Date); beginTime = beginTime.Add(time.Minute) {
-				date := beginTime
-				kLineList = append(kLineList, &domain.SwapCountKLine{
-					LastSwapTransactionID: kLines[0].LastSwapTransactionID,
-					SwapAddress:           kLines[0].SwapAddress,
-					TokenAAddress:         kLines[0].TokenAAddress,
-					TokenBAddress:         kLines[0].TokenBAddress,
-					TokenAVolume:          decimal.Decimal{},
-					TokenBVolume:          decimal.Decimal{},
-					TokenABalance:         kLines[0].TokenABalance,
-					TokenBBalance:         kLines[0].TokenBBalance,
-					Date:                  &date,
-					TxNum:                 0,
-					DateType:              domain.DateMin,
-					Open:                  kLines[0].Settle,
-					High:                  kLines[0].Settle,
-					Low:                   kLines[0].Settle,
-					Settle:                kLines[0].Settle,
-					Avg:                   kLines[0].Settle,
-					TokenAUSD:             kLines[0].TokenAUSD,
-					TokenBUSD:             kLines[0].TokenBUSD,
-					TvlInUsd:              kLines[0].TvlInUsd,
-					VolInUsd:              decimal.Decimal{},
-				})
-			}
-
-			if kLineList != nil {
-				if err = model.CreateSwapCountKLines(ctx, kLineList); err != nil {
-					return errors.Wrap(err) // 不能出现unique 错误
-				}
-			}
-		}
 	}
 
 	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, swapCountKLine.Date)
