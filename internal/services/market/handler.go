@@ -44,13 +44,12 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		}
 
 		// etcd初始化
-		if err := etcd.Init(conf); err != nil {
-			panic(err)
+		if rErr = etcd.Init(conf); rErr != nil {
+			return
 		}
 
 		// 数据库初始化
-		if err := model.Init(conf); err != nil {
-			rErr = errors.Wrap(err)
+		if rErr = model.Init(conf); rErr != nil {
 			return
 		}
 
@@ -60,15 +59,14 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := market.Init(conf); err != nil {
-			panic(err)
+		if rErr = market.Init(conf); rErr != nil {
+			return
 		}
-		// var err error
-		// instance.redisClient, err = initRedis(conf)
-		// if err != nil {
-		// 	rErr = errors.Wrap(err)
-		// 	return
-		// }
+
+		instance.redisClient, rErr = initRedis(conf)
+		if rErr != nil {
+			return
+		}
 
 	})
 	return instance, rErr
