@@ -9,6 +9,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
 
+	dbPool "git.cplus.link/go/akit/client/psql"
+
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -369,6 +371,15 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, e
 
 }
 
+func UpdateSwapCount(ctx context.Context, id int64, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, IDFilter(id))...).Updates(updates).Error; err != nil {
+		if dbPool.IsDuplicateKeyError(err) {
+			return errors.Wrap(errors.AlreadyExists)
+		}
+		return errors.Wrap(err)
+	}
+	return nil
+}
 func QuerySwapCountKLine(ctx context.Context, filter ...Filter) (*domain.SwapCountKLine, error) {
 	var (
 		db             = rDB(ctx)

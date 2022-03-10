@@ -28,14 +28,13 @@ type SwapAndUserCount struct {
 // ParserDate 按照区块时间顺序解析
 func (s *SwapAndUserCount) ParserDate() error {
 	for {
-
-		kline, err := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("last_swap_transaction_id desc"))
+		swapCount, err := model.QuerySwapCount(context.TODO(), model.SwapAddress(s.SwapAccount))
 		if err != nil && !errors.Is(err, errors.RecordNotFound) {
 			return errors.Wrap(err)
 		}
 
-		if kline != nil {
-			s.ID = kline.LastSwapTransactionID
+		if swapCount != nil {
+			s.ID = swapCount.LastSwapTransactionID
 		}
 
 		filters := []model.Filter{
@@ -77,6 +76,12 @@ func (s *SwapAndUserCount) ParserDate() error {
 				return errors.Wrap(err)
 			}
 		}
+
+		// 更新处理数据的位置
+		if err = model.UpdateSwapCount(context.TODO(), swapCount.ID, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
+			return errors.Wrap(err)
+		}
+
 	}
 
 	return nil
