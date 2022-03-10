@@ -139,6 +139,8 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 			"tx_num":                   1,
 			"token_a_usd":              swapCount.TokenAUSD,
 			"token_b_usd":              swapCount.TokenBUSD,
+			"token_a_symbol":           swapCount.TokenASymbol,
+			"token_b_symbol":           swapCount.TokenBSymbol,
 			"tvl_in_usd":               swapCount.TvlInUsd,
 			"vol_in_usd":               swapCount.VolInUsd,
 		}
@@ -369,16 +371,6 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, e
 	}
 	return swapCount, nil
 
-}
-
-func UpdateSwapCount(ctx context.Context, id int64, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, IDFilter(id))...).Updates(updates).Error; err != nil {
-		if dbPool.IsDuplicateKeyError(err) {
-			return errors.Wrap(errors.AlreadyExists)
-		}
-		return errors.Wrap(err)
-	}
-	return nil
 }
 
 func UpdateSwapCountBySwapAccount(ctx context.Context, swapAccount string, updates map[string]interface{}, filter ...Filter) error {
