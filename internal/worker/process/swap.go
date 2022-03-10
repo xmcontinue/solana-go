@@ -92,6 +92,7 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
 
+			// 仅当前swapAccount  可以插入
 			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
 				continue
 			}
@@ -137,6 +138,8 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				TxNum:                 1,
 				TokenAUSD:             tx.TokenAUSD,
 				TokenBUSD:             tx.TokenBUSD,
+				TokenASymbol:          swapRecord.SwapConfig.TokenA.Symbol,
+				TokenBSymbol:          swapRecord.SwapConfig.TokenB.Symbol,
 				TvlInUsd:              swapRecord.TokenCount.TokenABalance.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBBalance.Mul(tx.TokenBUSD)),
 				VolInUsd:              tokenAVolume.Mul(tx.TokenAUSD).Abs().Add(tokenBVolume.Mul(tx.TokenBUSD)).Abs(),
 			}
