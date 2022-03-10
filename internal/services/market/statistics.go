@@ -24,7 +24,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 		key = domain.KLineKey(args.DateType, args.SwapAccount)
 		//dateType = &process.KLineTyp{}
 		offset = int64(0)
-		list   = make([]*process.Price, 0, args.Limit)
+		list   = make([]*process.Price, 0, limit(args.Limit))
 		//price    = &process.Price{}
 	)
 
@@ -76,7 +76,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 		offset = -int64(args.Offset)
 	}
 
-	values, err := t.redisClient.ZRange(ctx, key, -int64(args.Limit)+offset, offset).Result()
+	values, err := t.redisClient.ZRange(ctx, key, -int64(limit(args.Limit))+offset, offset).Result()
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -119,7 +119,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	var (
 		key    string
 		offset = int64(0)
-		list   = make([]*process.SwapHistogramPrice, 0, args.Limit)
+		list   = make([]*process.SwapHistogramPrice, 0, limit(args.Limit))
 	)
 
 	if args.SwapAccount == "" {
@@ -134,7 +134,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		offset = -int64(args.Offset)
 	}
 
-	values, err := t.redisClient.ZRange(ctx, key, -int64(args.Limit)+offset, offset).Result()
+	values, err := t.redisClient.ZRange(ctx, key, -int64(limit(args.Limit))+offset, offset).Result()
 	if err != nil {
 		return errors.Wrap(err)
 	}
