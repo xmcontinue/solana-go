@@ -125,7 +125,7 @@ func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decim
 		apr = "0%"
 	} else {
 		fee, _ := decimal.NewFromString(feeStr)
-		apr = volInUsd.Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 36500为365天*百分比转化100得出
+		apr = volInUsd.Mul(fee).Mul(decimal.NewFromInt(36500)).Mul(decimal.NewFromFloat(0.8)).Div(tvlInUsd).Round(2).String() + "%" // 36500为365天*百分比转化100得出  0.8为manager拿走20%
 	}
 
 	return tvlInUsd, volInUsd, apr
