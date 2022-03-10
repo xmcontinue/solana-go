@@ -78,7 +78,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		// 更新处理数据的位置
-		if err = model.UpdateSwapCount(context.TODO(), swapCount.ID, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
+		if err = model.UpdateSwapCountBySwapAccount(context.TODO(), s.SwapAccount, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
 			return errors.Wrap(err)
 		}
 
@@ -91,6 +91,10 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 	var err error
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
+
+			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
+				continue
+			}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
