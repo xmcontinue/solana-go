@@ -90,7 +90,7 @@ func SyncTotalVol() error {
 			continue
 		}
 
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForCache(v.TokenA.SwapTokenAccount), coingecko.GetPriceForCache(v.TokenB.SwapTokenAccount)
+		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenA.SwapTokenAccount), coingecko.GetPriceForTokenAccount(v.TokenB.SwapTokenAccount)
 		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{"total_tx_num": vol.TxNum, "total_vol": vol.TokenATotalVol.Mul(tokenAPrice).Add(vol.TokenBTotalVol.Mul(tokenBPrice))}, model.SwapAddress(v.SwapAccount))
 		if err != nil {
 			continue
@@ -108,8 +108,8 @@ func SyncTotalVol() error {
 func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
 	tvlInUsd, volInUsd, apr := decimal.Decimal{}, decimal.Decimal{}, ""
 	// token 价格
-	tokenAPrice := coingecko.GetPriceForCache(count.TokenAPoolAddress)
-	tokenBPrice := coingecko.GetPriceForCache(count.TokenBPoolAddress)
+	tokenAPrice := coingecko.GetPriceForTokenAccount(count.TokenAPoolAddress)
+	tokenBPrice := coingecko.GetPriceForTokenAccount(count.TokenBPoolAddress)
 
 	// token 余额
 	tokenABalance := count.TokenABalance.Mul(tokenAPrice)

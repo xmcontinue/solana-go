@@ -1,18 +1,19 @@
 package process
 
 import (
+	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
-
-	redisV8 "git.cplus.link/go/akit/client/redis/v8"
+	"git.cplus.link/go/akit/pkg/xlog"
 )
 
 var (
-	cronConf    *xcron.Config
-	cron        *xcron.Cron
-	redisClient *redisV8.Client
-	conf        *config.Config
+	cronConf           *xcron.Config
+	cron               *xcron.Cron
+	redisClient        *redisV8.Client
+	conf               *config.Config
+	contractAccountMap = make(map[string]bool)
 )
 
 // Init 定时任务
@@ -29,9 +30,36 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	contractAccounts := make([]string, 0, 2)
+	err = conf.UnmarshalKey("contract_account", &contractAccounts)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	for _, v := range contractAccounts {
+		contractAccountMap[v] = true
+	}
+
+	cronConf.WithLogger(xlog.Config{}.Build())
 	cron = cronConf.Build()
 
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncData)
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), transactionIDCache)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), parserUserCountAndSwapCount)
+	if err != nil {
+		panic(err)
+	}
+
+	//_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), syncKLineToRedis)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +68,8 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		panic(err)
 	}
-	_, err = cron.AddFunc(getSpec("sync_swap_cache"), userAddressLast24hVol)
+
+	_, err = cron.AddFunc(getSpec("sync_swap_cache"), SwapTotalCount)
 	if err != nil {
 		panic(err)
 	}

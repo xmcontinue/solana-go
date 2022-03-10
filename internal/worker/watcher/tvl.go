@@ -6,6 +6,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 // SyncTvl 同步Tvl
@@ -52,7 +53,7 @@ func CreateSyncTvl() error {
 		return &SyncTvl{
 			name: "sync_tvl",
 			spec: getSpec("sync_tvl"),
-			tvl:  sol.NewTVL(value.(*sol.SwapConfig)),
+			tvl:  sol.NewTVL(value.(*domain.SwapConfig)),
 		}
 	})
 	if err != nil {
