@@ -13,6 +13,18 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+type pairPrice struct {
+	TokenASymbol string
+	TokenBSymbol string
+	newPrice     decimal.Decimal
+	beforePrice  decimal.Decimal
+}
+
+type tokenPrice struct {
+	newPrice    decimal.Decimal
+	beforePrice decimal.Decimal
+}
+
 // SwapTotalCount 汇总统计
 func SwapTotalCount() error {
 	// 将要统计的数据
@@ -20,6 +32,8 @@ func SwapTotalCount() error {
 		Pools:  make([]*domain.SwapCountToApiPool, 0),
 		Tokens: make([]*domain.SwapCountToApiToken, 0),
 	}
+
+	pairPriceList, tokenPriceMap := make([]*pairPrice, 0), map[string]*tokenPrice{"USDC": {decimal.NewFromInt(1), decimal.NewFromInt(1)}}
 
 	// 获取swap pair 24h 内交易统计
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, date := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour)
@@ -58,7 +72,7 @@ func SwapTotalCount() error {
 		}
 
 		// pool统计
-		newSwapPrice, beforeSwapPrice := newSwapCount.TokenBUSD.Div(newSwapCount.TokenAUSD).Round(6), beforeSwapCount.TokenBUSD.Div(beforeSwapCount.TokenAUSD).Round(6)
+		newSwapPrice, beforeSwapPrice := newSwapCount.Settle.Round(6), beforeSwapCount.Open.Round(6)
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:           v.Name,
 			SwapAccount:    v.SwapAccount,
@@ -79,26 +93,24 @@ func SwapTotalCount() error {
 		appendTokensToSwapCount(
 			swapCountToApi,
 			&domain.SwapCountToApiToken{
-				Name:         v.TokenA.Symbol,
-				VolInUsd24h:  tokenAVol24h.String(),
-				TxNum24h:     swapCount24h.TxNum,
-				VolInUsd:     tokenAVol.String(),
-				TxNum:        swapCountTotal.TxNum,
-				TvlInUsd:     tokenATvl.String(),
-				Price:        newSwapCount.TokenAUSD.String(),
-				PriceRate24h: newSwapCount.TokenAUSD.Sub(beforeSwapCount.TokenAUSD).Div(beforeSwapCount.TokenAUSD).Round(2).String() + "%",
+				Name:        v.TokenA.Symbol,
+				VolInUsd24h: tokenAVol24h.String(),
+				TxNum24h:    swapCount24h.TxNum,
+				VolInUsd:    tokenAVol.String(),
+				TxNum:       swapCountTotal.TxNum,
+				TvlInUsd:    tokenATvl.String(),
 			},
 			&domain.SwapCountToApiToken{
-				Name:         v.TokenB.Symbol,
-				VolInUsd24h:  tokenBVol24h.String(),
-				TxNum24h:     swapCount24h.TxNum,
-				VolInUsd:     tokenBVol.String(),
-				TxNum:        swapCountTotal.TxNum,
-				TvlInUsd:     tokenBTvl.String(),
-				Price:        newSwapCount.TokenBUSD.String(),
-				PriceRate24h: newSwapCount.TokenBUSD.Sub(beforeSwapCount.TokenBUSD).Div(beforeSwapCount.TokenBUSD).Round(2).String() + "%",
+				Name:        v.TokenB.Symbol,
+				VolInUsd24h: tokenBVol24h.String(),
+				TxNum24h:    swapCount24h.TxNum,
+				VolInUsd:    tokenBVol.String(),
+				TxNum:       swapCountTotal.TxNum,
+				TvlInUsd:    tokenBTvl.String(),
 			},
 		)
+
+		pairPriceList = append(pairPriceList, &pairPrice{v.TokenA.Symbol, v.TokenB.Symbol, newSwapPrice, beforeSwapPrice})
 
 		// 汇总处理
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
@@ -106,6 +118,20 @@ func SwapTotalCount() error {
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
+	}
+
+	// 获取token价格
+	pairPriceToTokenPrice(pairPriceList, tokenPriceMap)
+	for _, v := range swapCountToApi.Tokens {
+
+		if price, ok := tokenPriceMap[v.Name]; ok {
+			v.Price = price.newPrice.String()
+			v.PriceRate24h = price.newPrice.Sub(price.beforePrice).Div(price.beforePrice).Round(2).String() + "%"
+		} else {
+			v.Price = "0.00"
+			v.PriceRate24h = "0%"
+		}
+
 	}
 
 	// token数量
@@ -169,6 +195,37 @@ func appendTokensToSwapCount(swapCountToApi *domain.SwapCountToApi, tokens ...*d
 		}
 
 	}
+}
+
+func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string]*tokenPrice) {
+	beforLen := len(tokenPriceList)
+
+	for _, v := range pairPriceList {
+		tokenAPrice, tokenAHas := tokenPriceList[v.TokenASymbol]
+		tokenBPrice, tokenBHas := tokenPriceList[v.TokenBSymbol]
+
+		if tokenAHas && !tokenBHas {
+			tokenPriceList[v.TokenBSymbol] = &tokenPrice{
+				newPrice:    tokenAPrice.newPrice.Mul(decimal.NewFromInt(1).Div(v.newPrice)).Round(6),
+				beforePrice: tokenAPrice.beforePrice.Mul(decimal.NewFromInt(1).Div(v.beforePrice)).Round(6),
+			}
+			continue
+		}
+
+		if tokenBHas && !tokenAHas {
+			tokenPriceList[v.TokenASymbol] = &tokenPrice{
+				newPrice:    tokenBPrice.newPrice.Mul(v.newPrice).Round(6),
+				beforePrice: tokenBPrice.beforePrice.Mul(v.beforePrice).Round(6),
+			}
+			continue
+		}
+	}
+
+	if beforLen == len(tokenPriceList) {
+		return
+	}
+
+	pairPriceToTokenPrice(pairPriceList, tokenPriceList)
 }
 
 func removeDuplicate(nums []domain.Token) []domain.Token {
