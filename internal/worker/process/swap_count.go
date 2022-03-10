@@ -33,7 +33,7 @@ func SwapTotalCount() error {
 		Tokens: make([]*domain.SwapCountToApiToken, 0),
 	}
 
-	pairPriceList, tokenPriceMap := make([]*pairPrice, 0), map[string]*tokenPrice{"UST": {decimal.NewFromInt(7), decimal.NewFromInt(1)}}
+	pairPriceList, tokenPriceMap := make([]*pairPrice, 0), map[string]*tokenPrice{"USDC": {decimal.NewFromInt(1), decimal.NewFromInt(1)}}
 
 	// 获取swap pair 24h 内交易统计
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, date := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour)
