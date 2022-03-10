@@ -31,7 +31,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.POST("/v2/vol/24h", handler.Get24hVolV2)
 	engine.POST("/v2/vol", handler.GetVolV2)
 	engine.POST("/v2/kline", handler.GetKline)
-	engine.POST("/v2/histogram", handler.GetHistogram)
+	engine.GET("/v2/histogram", handler.GetHistogram)
 
 	return nil
 }

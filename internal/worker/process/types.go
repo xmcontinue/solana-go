@@ -2,6 +2,7 @@ package process
 
 import (
 	"encoding/json"
+	"reflect"
 	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
@@ -14,7 +15,7 @@ var (
 		BeforeIntervalDateType: domain.DateNone,
 		DateType:               domain.DateMin,
 		TimeInterval:           time.Minute,
-		DataCount:              60 * 24,
+		DataCount:              60 * 5,
 	}
 
 	DateTwelfth = KLineTyp{
@@ -136,6 +137,9 @@ func (m *KLineTyp) GetDate() *time.Time {
 // if skip >0 向后跳，skip<0 向前跳
 func (m *KLineTyp) SkipIntervalTime(skip int) *time.Time {
 	var date time.Time
+	if m.Date.IsZero() {
+		return &time.Time{}
+	}
 	if m.DateType == domain.DateMin {
 		date = time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), m.Date.Hour(), m.Date.Minute(), 0, 0, m.Date.Location()).Add(m.TimeInterval * time.Duration(skip))
 	} else if m.DateType == domain.DateTwelfth {
@@ -206,4 +210,8 @@ func (s *SwapHistogram) MarshalBinary() ([]byte, error) {
 
 func (s *SwapHistogram) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, s)
+}
+
+func (s *SwapHistogram) IsEmpty() bool {
+	return reflect.DeepEqual(s, SwapHistogram{})
 }
