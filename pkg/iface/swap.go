@@ -138,11 +138,11 @@ type GetKlineResp struct {
 	List   []*process.Price `json:"list"`
 }
 type GetHistogramReq struct {
-	Typ         string          `json:"typ"               binding:"required,oneof=tvl vol"`
-	SwapAccount string          `json:"swap_account"      binding:"required"`
-	DateType    domain.DateType `json:"date_type"         binding:"required,oneof=1min 5min 15min 30min hour day wek mon "`
-	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
-	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+	Typ         string          `form:"typ"               binding:"required,oneof=tvl vol"`
+	SwapAccount string          `form:"swap_account"      binding:"omitempty"`
+	DateType    domain.DateType `form:"date_type"         binding:"required,oneof=1min 5min 15min 30min hour day wek mon "`
+	Limit       int             `form:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset      int             `form:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
 }
 
 type GetHistogramResp struct {

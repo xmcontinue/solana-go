@@ -117,10 +117,16 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	}
 
 	var (
-		key    = domain.HistogramKey(args.DateType, args.SwapAccount)
+		key    string
 		offset = int64(0)
 		list   = make([]*process.SwapHistogramPrice, 0, args.Limit)
 	)
+
+	if args.SwapAccount == "" {
+		key = domain.TotalHistogramKey(args.DateType)
+	} else {
+		key = domain.HistogramKey(args.DateType, args.SwapAccount)
+	}
 
 	if args.Offset == 0 {
 		offset = -1

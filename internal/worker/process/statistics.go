@@ -8,6 +8,7 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-redis/redis/v8"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -317,7 +318,6 @@ func syncDateTypeHistogram(ctx context.Context, klineTyp KLineTyp, swapAccount s
 			swapHistograms[index].Score = v.Score
 			swapHistograms[index].Member = &SwapHistogram{
 				Tvl:  lastHistogram.Tvl,
-				Vol:  lastHistogram.Vol,
 				Date: klineTyp.SkipIntervalTime(-(klineTyp.DataCount - (index + 1))),
 			}
 		}
@@ -361,7 +361,7 @@ func syncDateTypeHistogram(ctx context.Context, klineTyp KLineTyp, swapAccount s
 
 }
 
-// 采用redis list 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据
+// 采用redis zset 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据 todo 已不使用
 func syncKLineToRedis() error {
 	ctx := context.Background()
 	for _, swapConfig := range sol.SwapConfigList() {
@@ -387,4 +387,142 @@ func syncKLineToRedis() error {
 		}
 	}
 	return nil
+}
+
+func sumTotalSwapAccount() error {
+	var (
+		ctx = context.Background()
+		now = time.Now()
+	)
+	// 获取时间类型
+	kLines, err := model.QuerySwapCountKLines(ctx, 1, 0, model.IDDESCFilter())
+	if err != nil {
+		logger.Error("query swap_transactions err", logger.Errorv(err))
+		return err
+	}
+
+	if len(kLines) == 0 {
+		return nil
+	}
+
+	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
+		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, kLines[0].Date.Location())
+		v.Date = &date
+		if err := sumDateTypeSwapAccount(ctx, v); err != nil {
+			logger.Error("sync k line to redis err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
+	}
+
+	return nil
+}
+
+func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
+
+	var (
+		key = domain.TotalHistogramKey(klineT.DateType)
+		err error
+	)
+
+	// 构造初始零值数据
+	swapHistogramZ := make([]*HistogramZ, klineT.DataCount, klineT.DataCount)
+	for index := range swapHistogramZ {
+		swapHistogramZ[index] = &HistogramZ{
+			Score: klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1))).Unix(),
+			Member: &SwapHistogram{
+				Tvl:  decimal.Decimal{},
+				Vol:  decimal.Decimal{},
+				Date: klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1))),
+			},
+		}
+	}
+
+	for _, swapConfig := range sol.SwapConfigList() {
+
+		swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
+			model.NewFilter("date_type = ?", klineT.DateType),
+			model.OrderFilter("date desc"),
+			model.SwapAddress(swapConfig.SwapAccount),
+		)
+
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if len(swapCountKlines) == 0 {
+			return nil
+		}
+
+		// 转换成map，减少for循环
+		swapHistogramMap := make(map[int64]*SwapHistogram, klineT.DataCount)
+		for _, v := range swapCountKlines {
+			swapHistogramMap[v.Date.Unix()] = &SwapHistogram{
+				Tvl:  v.TvlInUsd,
+				Vol:  v.VolInUsd,
+				Date: v.Date,
+			}
+		}
+
+		// 找到第一个数据
+		lastHistogram := &SwapHistogram{}
+		for _, v := range swapCountKlines {
+			if v.Date.After(*swapHistogramZ[0].Member.Date) {
+				break
+			}
+			lastHistogram = &SwapHistogram{
+				Tvl:  v.TvlInUsd,
+				Vol:  v.VolInUsd,
+				Date: v.Date,
+			}
+		}
+
+		for index, v := range swapHistogramZ {
+			price, ok := swapHistogramMap[v.Score]
+			if ok {
+				lastHistogram = price
+				swapHistogramZ[index].Score = v.Score
+				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(price.Tvl)
+				swapHistogramZ[index].Member.Vol = swapHistogramZ[index].Member.Vol.Add(price.Vol)
+			} else {
+				swapHistogramZ[index].Score = v.Score
+				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(lastHistogram.Tvl)
+			}
+		}
+
+	}
+
+	// 去掉列表前面的零值
+	for i, v := range swapHistogramZ {
+		if !v.Member.Tvl.IsZero() {
+			swapHistogramZ = swapHistogramZ[i:]
+			break
+		}
+	}
+
+	// 类型装换
+	swapHistograms := make([]*redis.Z, len(swapHistogramZ), len(swapHistogramZ))
+	for index := range swapHistogramZ {
+		swapHistograms[index] = &redis.Z{
+			Score:  float64(swapHistogramZ[index].Score),
+			Member: swapHistogramZ[index].Member,
+		}
+	}
+
+	// 先删除，再添加
+	if err = redisClient.ZRemRangeByRank(ctx, key, 0, -1).Err(); err != nil {
+		logger.Errorf("remove old key:%s,err:%s", key, logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
+	if err = redisClient.ZAdd(ctx, key, swapHistograms...).Err(); err != nil {
+		logger.Error("sync swap count histogram about bol and tvl to redis err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+type HistogramZ struct {
+	Score  int64
+	Member *SwapHistogram
 }
