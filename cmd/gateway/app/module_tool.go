@@ -26,12 +26,12 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("/config", handler.GetConfig)
 	engine.GET("/tvl/24hour", handler.GetTvl)
 
-	engine.GET("/v2/swap/count", handler.SwapCount)
-	engine.POST("/v2/tvl", handler.GetTvlV2)
-	engine.POST("/v2/vol/24h", handler.Get24hVolV2)
-	engine.POST("/v2/vol", handler.GetVolV2)
-	engine.POST("/v2/kline", handler.GetKline)
-	engine.GET("/v2/histogram", handler.GetHistogram)
+	engine.GET("/v1/swap/count", handler.SwapCount)
+	engine.POST("/v1/tvl", handler.GetTvlV2)
+	engine.POST("/v1/vol/24h", handler.Get24hVolV2)
+	engine.POST("/v1/vol", handler.GetVolV2)
+	engine.POST("/v1/kline", handler.GetKline)
+	engine.GET("/v1/histogram", handler.GetHistogram)
 
 	return nil
 }
