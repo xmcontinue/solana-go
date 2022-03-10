@@ -56,7 +56,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		for _, transaction := range swapTransactions {
-
+			s.ID = transaction.ID
 			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
 				continue
 			}
@@ -70,7 +70,6 @@ func (s *SwapAndUserCount) ParserDate() error {
 				logger.Error("sync transaction id err", logger.Errorv(err))
 			}
 
-			s.ID = transaction.ID
 			s.SwapRecords = tx.SwapRecords
 			s.BlockDate = transaction.BlockTime
 

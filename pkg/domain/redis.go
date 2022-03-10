@@ -43,3 +43,7 @@ func KLineKey(dateType DateType, swapAccount string) string {
 func HistogramKey(dateType DateType, swapAccount string) string {
 	return fmt.Sprintf("crema:histogram:swap:count:%s:%s", dateType, swapAccount)
 }
+
+func TotalHistogramKey(dateType DateType) string {
+	return fmt.Sprintf("crema:histogram:total:swap:count:%s", dateType)
+}
