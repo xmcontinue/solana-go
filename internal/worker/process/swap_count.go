@@ -85,7 +85,7 @@ func SwapTotalCount() error {
 			TvlInUsd:       tvlInUsd.String(),
 			PriceIntervals: v.PriceIntervals,
 			Price:          newSwapPrice.String(),
-			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Round(2).String() + "%",
+			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
@@ -126,7 +126,7 @@ func SwapTotalCount() error {
 
 		if price, ok := tokenPriceMap[v.Name]; ok {
 			v.Price = price.newPrice.String()
-			v.PriceRate24h = price.newPrice.Sub(price.beforePrice).Div(price.beforePrice).Round(2).String() + "%"
+			v.PriceRate24h = price.newPrice.Sub(price.beforePrice).Div(price.beforePrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%"
 		} else {
 			v.Price = "0.00"
 			v.PriceRate24h = "0%"
