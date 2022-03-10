@@ -30,6 +30,10 @@ func (c *CremaMarketClient) GetKline(ctx context.Context, args *iface.GetKlineRe
 	return c.Call(ctx, "GetKline", args, reply)
 }
 
+func (c *CremaMarketClient) GetHistogram(ctx context.Context, args *iface.GetHistogramReq, reply *iface.GetHistogramResp) error {
+	return c.Call(ctx, "GetHistogram", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

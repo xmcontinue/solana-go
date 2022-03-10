@@ -56,7 +56,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		for _, transaction := range swapTransactions {
-
+			s.ID = transaction.ID
 			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
 				continue
 			}
@@ -70,7 +70,6 @@ func (s *SwapAndUserCount) ParserDate() error {
 				logger.Error("sync transaction id err", logger.Errorv(err))
 			}
 
-			s.ID = transaction.ID
 			s.SwapRecords = tx.SwapRecords
 			s.BlockDate = transaction.BlockTime
 
@@ -130,7 +129,7 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				TokenAUSD:             tx.TokenAUSD,
 				TokenBUSD:             tx.TokenBUSD,
 				TvlInUsd:              swapRecord.TokenCount.TokenABalance.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBBalance.Mul(tx.TokenBUSD)),
-				VolInUsd:              swapRecord.TokenCount.TokenAVolume.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBVolume.Mul(tx.TokenBUSD)),
+				VolInUsd:              tokenAVolume.Mul(tx.TokenAUSD).Abs().Add(tokenBVolume.Mul(tx.TokenBUSD)).Abs(),
 			}
 
 			for _, dateType := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {

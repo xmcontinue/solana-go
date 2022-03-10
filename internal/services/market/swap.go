@@ -77,7 +77,7 @@ func (t *MarketService) GetTvlV2(ctx context.Context, args *iface.GetTvlReqV2, r
 	}
 
 	for _, swapAddress := range swapAddressList {
-		tvl, err := t.redisClient.Get(ctx, domain.SwapCountKey(swapAddress).Key).Result()
+		tvl, err := t.redisClient.Get(ctx, domain.SwapTvlCountKey(swapAddress).Key).Result()
 		if err != nil && !t.redisClient.ErrIsNil(err) {
 			return errors.Wrap(err)
 		} else if err != nil && !t.redisClient.ErrIsNil(err) {
@@ -155,21 +155,20 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 	return nil
 }
 
-// GetVolV2 获取swap account 或者user account 的总交易额
+// GetVolV2 获取swap account 的总交易额
 func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, reply *iface.GetVolV2Resp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
 
-	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress, "").Key).Result()
+	vol, err := t.redisClient.Get(ctx, domain.AccountSwapVolCountKey(args.SwapAddress).Key).Result()
 	if err != nil && !t.redisClient.ErrIsNil(err) {
 		return errors.Wrap(err)
 	} else if err == nil {
 		tvlDecimal, _ := decimal.NewFromString(vol)
 
 		reply.Vol = tvlDecimal
-
 		return nil
 	}
 

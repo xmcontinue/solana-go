@@ -188,3 +188,22 @@ func (s *Price) MarshalBinary() ([]byte, error) {
 func (s *Price) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, s)
 }
+
+type SwapHistogram struct {
+	Tvl  decimal.Decimal
+	Vol  decimal.Decimal
+	Date *time.Time
+}
+
+type SwapHistogramPrice struct {
+	Price decimal.Decimal
+	Date  *time.Time
+}
+
+func (s *SwapHistogram) MarshalBinary() ([]byte, error) {
+	return json.Marshal(s)
+}
+
+func (s *SwapHistogram) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, s)
+}
