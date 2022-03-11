@@ -61,7 +61,8 @@ func (s *SwapAndUserCount) ParserDate() error {
 			}
 
 			tx := parse.NewTx(transaction.TxData)
-			err = tx.ParseTxToSwap()
+			//err = tx.ParseTxToSwap()
+			err = tx.ParseTxToLiquidity()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
 					continue
