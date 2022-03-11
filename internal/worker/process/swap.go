@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -61,7 +62,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 			}
 
 			tx := parse.NewTx(transaction.TxData)
-			//err = tx.ParseTxToSwap()
+			// err = tx.ParseTxToSwap()
 			err = tx.ParseTxToLiquidity()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
@@ -82,6 +83,8 @@ func (s *SwapAndUserCount) ParserDate() error {
 		if err = model.UpdateSwapCountBySwapAccount(context.TODO(), s.SwapAccount, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
 			return errors.Wrap(err)
 		}
+
+		logger.Info(fmt.Sprintf("parse swap,start id is %d, current id is %d, target id is %d", s.BeginTransactionID, s.ID, s.LastTransactionID))
 
 	}
 
