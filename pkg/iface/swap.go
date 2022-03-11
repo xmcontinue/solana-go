@@ -146,8 +146,8 @@ type GetHistogramReq struct {
 }
 
 type GetHistogramResp struct {
-	Total  int64                         `json:"total"`
-	Limit  int                           `json:"limit"`
-	Offset int                           `json:"offset"`
-	List   []*process.SwapHistogramPrice `json:"list"`
+	Total  int64                          `json:"total"`
+	Limit  int                            `json:"limit"`
+	Offset int                            `json:"offset"`
+	List   []*process.SwapHistogramNumber `json:"list"`
 }
