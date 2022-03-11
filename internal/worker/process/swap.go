@@ -91,16 +91,9 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 	var err error
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
-
 			// 仅当前swapAccount  可以插入
 			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
 				continue
-			}
-
-			// 如果价格为0 TODO 取消
-			if swapRecord.Price.IsZero() {
-				logger.Errorf("price is ont allow zero,:%v", tx)
-				logger.Fatal("price is ont allow zero")
 			}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
@@ -197,7 +190,7 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 	}
 
 	if m.DateType != domain.DateMin {
-		avg, err := m.calculateAvg(ctx)
+		avg, err := m.calculateAvg(ctx, swapCountKLine.SwapAddress)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -214,7 +207,7 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 }
 
 // 按照上一个周期计算平均值，month除外（按照天计算）
-func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
+func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decimal.Decimal, error) {
 	type interTime struct {
 		Date time.Time
 		avg  decimal.Decimal
@@ -232,14 +225,18 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 		beginTime = *m.GetDate()
 		if m.DateType == domain.DateMon {
 			lastDateTime := m.Date.AddDate(0, 1, -m.Date.Day())
-			endTime = time.Date(lastDateTime.Year(), lastDateTime.Month(), lastDateTime.Day(), 0, 0, 0, 0, m.Date.Location())
+			endTime = time.Date(lastDateTime.Year(), lastDateTime.Month(), lastDateTime.Day(), 0, 0, 0, 0, m.Date.Location()).Add(time.Hour * 24)
 		} else {
 			endTime = beginTime.Add(m.InnerTimeInterval * time.Duration(m.Interval))
 		}
 
 		swapCountKLines, err := model.QuerySwapCountKLines(ctx, m.Interval, 0,
 			model.NewFilter("date_type = ?", m.BeforeIntervalDateType),
-			model.NewFilter("date < ?", endTime))
+			model.SwapAddress(swapAccount),
+			model.NewFilter("date < ?", endTime),
+			model.OrderFilter("date desc"),
+		)
+
 		if err != nil {
 			return decimal.Zero, errors.Wrap(err)
 		}
@@ -250,10 +247,10 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 			}
 		}
 
-		for _, v := range swapCountKLines {
+		for index := range swapCountKLines {
 			for _, avg := range avgList {
-				if v.Date.Equal(avg.Date) || v.Date.Before(avg.Date) {
-					avg.avg = v.Settle // 以上一个时间区间的结束值作为新的时间区间的平均值
+				if swapCountKLines[len(swapCountKLines)-1-index].Date.Equal(avg.Date) || swapCountKLines[len(swapCountKLines)-1-index].Date.Before(avg.Date) {
+					avg.avg = swapCountKLines[len(swapCountKLines)-1-index].Avg // 以上一个时间区间的平均值作为新的时间区间的平均值
 				}
 			}
 		}
@@ -266,14 +263,8 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 			}
 		}
 
-		if count == 0 {
-			fmt.Printf("swapCountKLines:%v,avgList:%v,sum:%v", swapCountKLines, avgList, sum)
-			logger.Fatal("fatal err")
-		}
-	}
-
-	if count == 0 {
-		logger.Fatal("fatal err:out cal")
+	} else {
+		return decimal.Zero, errors.New("error date_type")
 	}
 
 	return sum.Div(decimal.NewFromInt32(count)), nil
