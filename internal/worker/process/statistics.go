@@ -482,11 +482,11 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 			if ok {
 				lastHistogram = price
 				swapHistogramZ[index].Score = v.Score
-				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(price.Tvl)
-				swapHistogramZ[index].Member.Vol = swapHistogramZ[index].Member.Vol.Add(price.Vol)
+				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(price.Tvl).Round(6)
+				swapHistogramZ[index].Member.Vol = swapHistogramZ[index].Member.Vol.Add(price.Vol).Round(6)
 			} else {
 				swapHistogramZ[index].Score = v.Score
-				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(lastHistogram.Tvl)
+				swapHistogramZ[index].Member.Tvl = swapHistogramZ[index].Member.Tvl.Add(lastHistogram.Tvl).Round(6)
 			}
 		}
 

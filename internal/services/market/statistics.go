@@ -25,7 +25,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 		//dateType = &process.KLineTyp{}
 		offset = int64(0)
 		list   = make([]*process.Price, 0, limit(args.Limit))
-		//price    = &process.Price{}
+		//price    = &process.Num{}
 	)
 
 	//// 最后一个数据和前端给的时间比较
@@ -52,7 +52,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 
 	//for i := range list {
 	//	date := dateType.GetDate().Add(-dateType.TimeInterval * time.Duration(i))
-	//	list[len(list)-(i+1)] = &process.Price{
+	//	list[len(list)-(i+1)] = &process.Num{
 	//		Date: &date,
 	//	}
 	//}
@@ -119,7 +119,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	var (
 		key    string
 		offset = int64(0)
-		list   = make([]*process.SwapHistogramPrice, 0, histogramLimit(args.Limit))
+		list   = make([]*process.SwapHistogramNumber, 0, histogramLimit(args.Limit))
 	)
 
 	if args.SwapAccount == "" {
@@ -148,14 +148,14 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		_ = json.Unmarshal([]byte(values[i]), innerSwapHistogram)
 
 		if args.Typ == "vol" {
-			list = append(list, &process.SwapHistogramPrice{
-				Price: innerSwapHistogram.Vol,
-				Date:  innerSwapHistogram.Date,
+			list = append(list, &process.SwapHistogramNumber{
+				Num:  innerSwapHistogram.Vol,
+				Date: innerSwapHistogram.Date,
 			})
 		} else {
-			list = append(list, &process.SwapHistogramPrice{
-				Price: innerSwapHistogram.Tvl,
-				Date:  innerSwapHistogram.Date,
+			list = append(list, &process.SwapHistogramNumber{
+				Num:  innerSwapHistogram.Tvl,
+				Date: innerSwapHistogram.Date,
 			})
 		}
 	}
