@@ -52,6 +52,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		if len(swapTransactions) == 0 {
+			logger.Info(fmt.Sprintf("parse swap, swap address: %s ,start id is %d, current id is %d, target id is %d", s.SwapAccount, s.BeginTransactionID, s.ID, s.LastTransactionID))
 			break
 		}
 
