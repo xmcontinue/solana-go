@@ -64,6 +64,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 					continue
 				}
 				logger.Error("sync transaction id err", logger.Errorv(err))
+				return errors.Wrap(err)
 			}
 
 			s.SwapRecords = tx.SwapRecords
@@ -94,6 +95,12 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 			// 仅当前swapAccount  可以插入
 			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
 				continue
+			}
+
+			// 如果价格为0 TODO 取消
+			if swapRecord.Price.IsZero() {
+				logger.Errorf("price is ont allow zero,:%v", tx)
+				logger.Fatal("price is ont allow zero")
 			}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
@@ -156,7 +163,6 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 					return errors.Wrap(err)
 				}
 			}
-
 			return nil
 		}
 		return nil
@@ -259,7 +265,17 @@ func (m *KLineTyp) calculateAvg(ctx context.Context) (decimal.Decimal, error) {
 				count++
 			}
 		}
+
+		if count == 0 {
+			fmt.Printf("swapCountKLines:%v,avgList:%v,sum:%v", swapCountKLines, avgList, sum)
+			logger.Fatal("fatal err")
+		}
 	}
+
+	if count == 0 {
+		logger.Fatal("fatal err:out cal")
+	}
+
 	return sum.Div(decimal.NewFromInt32(count)), nil
 }
 

@@ -95,7 +95,7 @@ func (m *KLineTyp) Name() domain.DateType {
 	return m.DateType
 }
 
-// 最近一个时间点，并替换原来的值
+// GetDate 最近一个时间点，并替换原来的值
 func (m *KLineTyp) GetDate() *time.Time {
 	var date time.Time
 	if m.DateType == domain.DateMin {
@@ -134,7 +134,7 @@ func (m *KLineTyp) GetDate() *time.Time {
 	return &date
 }
 
-// if skip >0 向后跳，skip<0 向前跳
+// SkipIntervalTime if skip >0 向后跳，skip<0 向前跳
 func (m *KLineTyp) SkipIntervalTime(skip int) *time.Time {
 	var date time.Time
 	if m.Date.IsZero() {
