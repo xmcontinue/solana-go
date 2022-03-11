@@ -119,7 +119,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	var (
 		key    string
 		offset = int64(0)
-		list   = make([]*process.SwapHistogramPrice, 0, limit(args.Limit))
+		list   = make([]*process.SwapHistogramPrice, 0, histogramLimit(args.Limit))
 	)
 
 	if args.SwapAccount == "" {
@@ -134,7 +134,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		offset = -int64(args.Offset)
 	}
 
-	values, err := t.redisClient.ZRange(ctx, key, -int64(limit(args.Limit))+offset, offset).Result()
+	values, err := t.redisClient.ZRange(ctx, key, -int64(histogramLimit(args.Limit))+offset, offset).Result()
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -165,7 +165,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		return errors.Wrap(err)
 	}
 
-	reply.Limit = limit(args.Limit)
+	reply.Limit = histogramLimit(args.Limit)
 	reply.Offset = args.Offset
 	reply.List = list
 	reply.Total = total - int64(args.Offset)

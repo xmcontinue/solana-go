@@ -427,12 +427,13 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 	// 构造初始零值数据
 	swapHistogramZ := make([]*HistogramZ, klineT.DataCount, klineT.DataCount)
 	for index := range swapHistogramZ {
+		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
 		swapHistogramZ[index] = &HistogramZ{
-			Score: klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1))).Unix(),
+			Score: date.Unix(),
 			Member: &SwapHistogram{
 				Tvl:  decimal.Decimal{},
 				Vol:  decimal.Decimal{},
-				Date: klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1))),
+				Date: date,
 			},
 		}
 	}
@@ -450,7 +451,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 		}
 
 		if len(swapCountKlines) == 0 {
-			return nil
+			continue
 		}
 
 		// 转换成map，减少for循环
