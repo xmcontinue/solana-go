@@ -34,7 +34,10 @@ func SwapTotalCount() error {
 		Tokens: make([]*domain.SwapCountToApiToken, 0),
 	}
 
-	pairPriceList, tokenPriceMap := make([]*pairPrice, 0), map[string]*tokenPrice{"USDC": {decimal.NewFromInt(1), decimal.NewFromInt(1)}}
+	pairPriceList, tokenPriceMap := make([]*pairPrice, 0), map[string]*tokenPrice{
+		"USDC":  {decimal.NewFromInt(1), decimal.NewFromInt(1)},
+		"pUSDC": {decimal.NewFromInt(1), decimal.NewFromInt(1)},
+	}
 
 	// 获取swap pair 24h 内交易统计
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, date := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour)
@@ -77,14 +80,15 @@ func SwapTotalCount() error {
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:           v.Name,
 			SwapAccount:    v.SwapAccount,
-			PoolAddress:    v.PoolAddress,
+			TokenAReserves: v.TokenA.SwapTokenAccount,
+			TokenBReserves: v.TokenB.SwapTokenAccount,
 			VolInUsd24h:    volInUsd24h.String(),
 			TxNum24h:       swapCount24h.TxNum,
 			VolInUsd:       volInUsd.String(),
 			TxNum:          swapCountTotal.TxNum,
 			Apr:            apr,
 			TvlInUsd:       tvlInUsd.String(),
-			PriceIntervals: v.PriceIntervals,
+			PriceInterval:  v.PriceInterval,
 			Price:          newSwapPrice.String(),
 			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
