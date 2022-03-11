@@ -28,14 +28,13 @@ type SwapAndUserCount struct {
 // ParserDate 按照区块时间顺序解析
 func (s *SwapAndUserCount) ParserDate() error {
 	for {
-
-		kline, err := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("last_swap_transaction_id desc"))
+		swapCount, err := model.QuerySwapCount(context.TODO(), model.SwapAddress(s.SwapAccount))
 		if err != nil && !errors.Is(err, errors.RecordNotFound) {
 			return errors.Wrap(err)
 		}
 
-		if kline != nil {
-			s.ID = kline.LastSwapTransactionID
+		if swapCount != nil {
+			s.ID = swapCount.LastSwapTransactionID
 		}
 
 		filters := []model.Filter{
@@ -56,13 +55,14 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		for _, transaction := range swapTransactions {
-
+			s.ID = transaction.ID
 			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
 				continue
 			}
 
 			tx := parse.NewTx(transaction.TxData)
-			err = tx.ParseTxToSwap()
+			//err = tx.ParseTxToSwap()
+			err = tx.ParseTxToLiquidity()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
 					continue
@@ -70,7 +70,6 @@ func (s *SwapAndUserCount) ParserDate() error {
 				logger.Error("sync transaction id err", logger.Errorv(err))
 			}
 
-			s.ID = transaction.ID
 			s.SwapRecords = tx.SwapRecords
 			s.BlockDate = transaction.BlockTime
 
@@ -78,6 +77,12 @@ func (s *SwapAndUserCount) ParserDate() error {
 				return errors.Wrap(err)
 			}
 		}
+
+		// 更新处理数据的位置
+		if err = model.UpdateSwapCountBySwapAccount(context.TODO(), s.SwapAccount, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
+			return errors.Wrap(err)
+		}
+
 	}
 
 	return nil
@@ -87,6 +92,11 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 	var err error
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
+
+			// 仅当前swapAccount  可以插入
+			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
+				continue
+			}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
@@ -129,8 +139,10 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				TxNum:                 1,
 				TokenAUSD:             tx.TokenAUSD,
 				TokenBUSD:             tx.TokenBUSD,
+				TokenASymbol:          swapRecord.SwapConfig.TokenA.Symbol,
+				TokenBSymbol:          swapRecord.SwapConfig.TokenB.Symbol,
 				TvlInUsd:              swapRecord.TokenCount.TokenABalance.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBBalance.Mul(tx.TokenBUSD)),
-				VolInUsd:              swapRecord.TokenCount.TokenAVolume.Mul(tx.TokenAUSD).Add(swapRecord.TokenCount.TokenBVolume.Mul(tx.TokenBUSD)),
+				VolInUsd:              tokenAVolume.Mul(tx.TokenAUSD).Abs().Add(tokenBVolume.Mul(tx.TokenBUSD)).Abs(),
 			}
 
 			for _, dateType := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {

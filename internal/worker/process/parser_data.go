@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"sync"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -17,36 +18,74 @@ type ParserTransaction interface {
 	ParserDate() error
 }
 
-func parserUserCountAndSwapCount() error {
+// SyncKline sync transaction
+type SyncKline struct {
+	name       string
+	spec       string
+	swapConfig *domain.SwapConfig
+}
+
+func (s *SyncKline) Name() string {
+	return s.name
+}
+
+func (s *SyncKline) GetSpecFunc() string {
+	return s.spec
+}
+
+func (s *SyncKline) DeleteJobFunc(_ *JobInfo) error {
+	return nil
+}
+
+func (s *SyncKline) Run() error {
+	var err error
+	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddress(s.swapConfig.SwapAccount))
+	if err != nil {
+		logger.Error("query swap_pair_bases err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+	if swapPairBase == nil {
+		return nil
+	}
+
+	if swapPairBase.IsSync == false {
+		return nil
+	}
 
 	lastSwapTransactionID, err := getTransactionID()
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	for _, swapConfig := range sol.SwapConfigList() {
+	swapAndUserCount := &SwapAndUserCount{
+		LastTransactionID: lastSwapTransactionID,
+		SwapAccount:       s.swapConfig.SwapAccount,
+	}
 
-		swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddress(swapConfig.SwapAccount))
-		if err != nil {
-			logger.Error("query swap_pair_bases err", logger.Errorv(err))
-			return errors.Wrap(err)
-		}
-		if swapPairBase == nil {
-			break
-		}
+	if err = swapAndUserCount.ParserDate(); err != nil {
+		return errors.Wrap(err)
+	}
 
-		if swapPairBase.IsSync == false {
-			break
-		}
+	return nil
+}
 
-		swapAndUserCount := &SwapAndUserCount{
-			LastTransactionID: lastSwapTransactionID,
-			SwapAccount:       swapConfig.SwapAccount,
-		}
+func CreateSyncKLine() error {
+	m := sync.Map{}
 
-		if err = swapAndUserCount.ParserDate(); err != nil {
-			return errors.Wrap(err)
+	keys := sol.SwapConfigList()
+	for _, v := range keys {
+		m.Store(v.SwapAccount, v)
+	}
+
+	err := job.WatchJobForMap("SyncKline", &m, func(value interface{}) JobInterface {
+		return &SyncKline{
+			name:       "sync_kline",
+			spec:       getSpec("sync_kline"),
+			swapConfig: value.(*domain.SwapConfig),
 		}
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil

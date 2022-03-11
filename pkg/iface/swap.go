@@ -2,7 +2,6 @@ package iface
 
 import (
 	"context"
-	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
 	"git.cplus.link/go/akit/util/gquery"
@@ -128,7 +127,6 @@ type QueryUserSwapTvlCountDayResp struct {
 type GetKlineReq struct {
 	SwapAccount string          `json:"swap_account"      binding:"required"`
 	DateType    domain.DateType `json:"date_type"         binding:"required"`
-	EndTime     *time.Time      `json:"end_time"          binding:"omitempty"`                 // 获取数据的结束时间  暂时没有使用
 	Limit       int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
 	Offset      int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
 }
@@ -138,4 +136,15 @@ type GetKlineResp struct {
 	Limit  int              `json:"limit"`
 	Offset int              `json:"offset"`
 	List   []*process.Price `json:"list"`
+}
+type GetHistogramReq struct {
+	Typ         string          `form:"typ"               binding:"required,oneof=tvl vol"`
+	SwapAccount string          `form:"swap_account"      binding:"omitempty"`
+	DateType    domain.DateType `form:"date_type"         binding:"required,oneof=1min 5min 15min 30min hour day wek mon "`
+	Limit       int             `form:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset      int             `form:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+}
+
+type GetHistogramResp struct {
+	List []*process.SwapHistogramNumber `json:"list"`
 }

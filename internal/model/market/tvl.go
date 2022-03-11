@@ -9,6 +9,8 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
 
+	dbPool "git.cplus.link/go/akit/client/psql"
+
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -68,26 +70,6 @@ type UserSwapVol struct {
 	Num           int             `json:"num"`
 }
 
-// SumUserSwapAccountLast24Vol 最近24小时 user account 的总交易额
-func SumUserSwapAccountLast24Vol(ctx context.Context, filter ...Filter) ([]*UserSwapVol, error) {
-	var (
-		err     error
-		db      = rDB(ctx)
-		swapVol []*UserSwapVol
-	)
-
-	if err = db.Model(&domain.SwapTransaction{}).Scopes(filter...).
-		Select("sum(token_a_volume) as token_a_volume,sum(token_b_volume) as token_b_volume,count(*) as num,user_address,swap_address,token_a_address,token_b_address").
-		Group("user_address,swap_address,token_a_address,token_b_address").Find(&swapVol).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.Wrap(errors.RecordNotFound)
-		}
-		return nil, errors.Wrap(err)
-	}
-
-	return swapVol, nil
-}
-
 func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.SwapCount, error) {
 	var (
 		after   domain.SwapCount
@@ -131,13 +113,6 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	return &after, nil
 }
 
-func CreateSwapCountKLines(ctx context.Context, swapCountKLine []*domain.SwapCountKLine) error {
-	if err := wDB(ctx).Create(swapCountKLine).Error; err != nil {
-		return errors.Wrap(err)
-	}
-	return nil
-}
-
 func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, blockDate *time.Time) (*domain.SwapCountKLine, error) {
 	var (
 		after   domain.SwapCountKLine
@@ -164,6 +139,8 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 			"tx_num":                   1,
 			"token_a_usd":              swapCount.TokenAUSD,
 			"token_b_usd":              swapCount.TokenBUSD,
+			"token_a_symbol":           swapCount.TokenASymbol,
+			"token_b_symbol":           swapCount.TokenBSymbol,
 			"tvl_in_usd":               swapCount.TvlInUsd,
 			"vol_in_usd":               swapCount.VolInUsd,
 		}
@@ -320,14 +297,6 @@ func QueryUserSwapCountDay(ctx context.Context, limit, offset int, filter ...Fil
 
 }
 
-func GetLastSwapCountByGroup(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
-	var swapCount *domain.SwapCount
-	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Order("id desc").First(&swapCount).Error; err != nil {
-		return nil, errors.Wrap(err)
-	}
-	return swapCount, nil
-}
-
 func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount, error) {
 	var ids []int64
 	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
@@ -395,10 +364,23 @@ func QueryUserSwapCounts(ctx context.Context, limit, offset int, filter ...Filte
 func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
 	var swapCount = &domain.SwapCount{}
 	if err := rDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Take(swapCount).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.Wrap(errors.RecordNotFound)
+		}
 		return nil, errors.Wrap(err)
 	}
 	return swapCount, nil
 
+}
+
+func UpdateSwapCountBySwapAccount(ctx context.Context, swapAccount string, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, SwapAddress(swapAccount))...).Updates(updates).Error; err != nil {
+		if dbPool.IsDuplicateKeyError(err) {
+			return errors.Wrap(errors.AlreadyExists)
+		}
+		return errors.Wrap(err)
+	}
+	return nil
 }
 
 func QuerySwapCountKLine(ctx context.Context, filter ...Filter) (*domain.SwapCountKLine, error) {

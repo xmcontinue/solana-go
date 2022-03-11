@@ -34,6 +34,12 @@ const (
 
 	// DefaultLimit  列表查询默认Limit
 	DefaultLimit = 10
+
+	// 柱状图默认返回300
+	histogramDefaultLen = 300
+
+	// 最大值
+	histogramMaxLen = 500
 )
 
 func NewMarketService(conf *config.Config) (iface.MarketService, error) {
@@ -44,13 +50,12 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		}
 
 		// etcd初始化
-		if err := etcd.Init(conf); err != nil {
-			panic(err)
+		if rErr = etcd.Init(conf); rErr != nil {
+			return
 		}
 
 		// 数据库初始化
-		if err := model.Init(conf); err != nil {
-			rErr = errors.Wrap(err)
+		if rErr = model.Init(conf); rErr != nil {
 			return
 		}
 
@@ -60,13 +65,12 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := market.Init(conf); err != nil {
-			panic(err)
+		if rErr = market.Init(conf); rErr != nil {
+			return
 		}
-		var err error
-		instance.redisClient, err = initRedis(conf)
-		if err != nil {
-			rErr = errors.Wrap(err)
+
+		instance.redisClient, rErr = initRedis(conf)
+		if rErr != nil {
 			return
 		}
 
@@ -99,4 +103,14 @@ func initRedis(conf *config.Config) (*redisV8.Client, error) {
 		return nil, errors.Wrap(err)
 	}
 	return redisV8.NewClient(c)
+}
+
+func histogramLimit(histogramLimit int) int {
+	if histogramLimit == 0 {
+		return histogramDefaultLen
+	}
+	if histogramLimit >= histogramMaxLen {
+		return histogramMaxLen
+	}
+	return histogramLimit
 }
