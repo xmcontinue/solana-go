@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"sort"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -147,6 +148,31 @@ func SwapTotalCount() error {
 	swapCountToApi.TxNum24h = totalTxNum24h
 	swapCountToApi.TxNum = totalTxNum
 
+	// 按tvl数量排序
+	sort.Slice(swapCountToApi.Pools, func(i, j int) bool {
+		tvl, _ := decimal.NewFromString(swapCountToApi.Pools[i].TvlInUsd)
+		nextTvl, _ := decimal.NewFromString(swapCountToApi.Pools[j].TvlInUsd)
+		if tvl.LessThan(nextTvl) {
+			return false
+		}
+		if tvl.GreaterThan(nextTvl) {
+			return true
+		}
+		return false
+	})
+
+	sort.Slice(swapCountToApi.Tokens, func(i, j int) bool {
+		tvl, _ := decimal.NewFromString(swapCountToApi.Tokens[i].TvlInUsd)
+		nextTvl, _ := decimal.NewFromString(swapCountToApi.Tokens[j].TvlInUsd)
+		if tvl.LessThan(nextTvl) {
+			return false
+		}
+		if tvl.GreaterThan(nextTvl) {
+			return true
+		}
+		return false
+	})
+
 	// 缓存至redis
 	data, err := json.Marshal(swapCountToApi)
 	if err != nil {
@@ -226,17 +252,4 @@ func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string
 	}
 
 	pairPriceToTokenPrice(pairPriceList, tokenPriceList)
-}
-
-func removeDuplicate(nums []domain.Token) []domain.Token {
-	var numLen = len(nums) - 1
-	for ; numLen > 0; numLen-- {
-		for i := numLen - 1; i >= 0; i-- {
-			if nums[numLen].Symbol == nums[i].Symbol {
-				nums = append(nums[:numLen], nums[numLen+1:]...)
-				break
-			}
-		}
-	}
-	return nums
 }
