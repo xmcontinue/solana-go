@@ -50,7 +50,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		if len(swapTransactions) == 0 {
-			logger.Info(fmt.Sprintf("parse swap, swap address: %s ,start id is %d, current id is %d, target id is %d", s.SwapAccount, s.BeginTransactionID, s.ID, s.LastTransactionID))
+			logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d", s.SwapAccount, s.ID, s.LastTransactionID))
 			break
 		}
 
@@ -59,7 +59,6 @@ func (s *SwapAndUserCount) ParserDate() error {
 
 			tx := parse.NewTx(transaction.TxData)
 			err = tx.ParseTxToSwap()
-			//err = tx.ParseTxToLiquidity()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
 					continue
@@ -80,7 +79,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 			return errors.Wrap(err)
 		}
 
-		logger.Info(fmt.Sprintf("parse swap, swap address: %s ,start id is %d, current id is %d, target id is %d", s.SwapAccount, s.BeginTransactionID, s.ID, s.LastTransactionID))
+		logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d", s.SwapAccount, s.ID, s.LastTransactionID))
 
 	}
 
