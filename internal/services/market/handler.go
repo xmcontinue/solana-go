@@ -34,6 +34,12 @@ const (
 
 	// DefaultLimit  列表查询默认Limit
 	DefaultLimit = 10
+
+	// 柱状图默认返回300
+	histogramDefaultLen = 300
+
+	// 最大值
+	histogramMaxLen = 500
 )
 
 func NewMarketService(conf *config.Config) (iface.MarketService, error) {
@@ -97,4 +103,14 @@ func initRedis(conf *config.Config) (*redisV8.Client, error) {
 		return nil, errors.Wrap(err)
 	}
 	return redisV8.NewClient(c)
+}
+
+func histogramLimit(histogramLimit int) int {
+	if histogramLimit == 0 {
+		return histogramDefaultLen
+	}
+	if histogramLimit >= histogramMaxLen {
+		return histogramMaxLen
+	}
+	return histogramLimit
 }
