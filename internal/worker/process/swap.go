@@ -16,14 +16,12 @@ import (
 
 // SwapAndUserCount 同步更新swap_counts表和user_swap_counts表
 type SwapAndUserCount struct {
-	ID                 int64
-	LastTransactionID  int64
-	BeginTransactionID int64
-	Slot               uint64
-	SwapAccount        string
-	SwapRecords        []*parse.SwapRecord
-	BlockDate          *time.Time
-	spec               string
+	ID                int64
+	LastTransactionID int64
+	SwapAccount       string
+	SwapRecords       []*parse.SwapRecord
+	BlockDate         *time.Time
+	spec              string
 }
 
 // ParserDate 按照区块时间顺序解析
@@ -52,19 +50,15 @@ func (s *SwapAndUserCount) ParserDate() error {
 		}
 
 		if len(swapTransactions) == 0 {
-			logger.Info(fmt.Sprintf("parse swap, swap address: %s ,start id is %d, current id is %d, target id is %d", s.SwapAccount, s.BeginTransactionID, s.ID, s.LastTransactionID))
+			logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d", s.SwapAccount, s.ID, s.LastTransactionID))
 			break
 		}
 
 		for _, transaction := range swapTransactions {
 			s.ID = transaction.ID
-			if transaction.Slot == s.Slot && transaction.ID <= s.BeginTransactionID {
-				continue
-			}
 
 			tx := parse.NewTx(transaction.TxData)
-			// err = tx.ParseTxToSwap()
-			err = tx.ParseTxToLiquidity()
+			err = tx.ParseTxToSwap()
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
 					continue
@@ -85,7 +79,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 			return errors.Wrap(err)
 		}
 
-		logger.Info(fmt.Sprintf("parse swap, swap address: %s ,start id is %d, current id is %d, target id is %d", s.SwapAccount, s.BeginTransactionID, s.ID, s.LastTransactionID))
+		logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d", s.SwapAccount, s.ID, s.LastTransactionID))
 
 	}
 
