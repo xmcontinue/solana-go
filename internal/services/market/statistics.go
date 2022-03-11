@@ -160,14 +160,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		}
 	}
 
-	total, err := t.redisClient.ZCount(ctx, key, "", strconv.FormatInt(time.Now().Unix(), 10)).Result()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	reply.Limit = histogramLimit(args.Limit)
-	reply.Offset = args.Offset
 	reply.List = list
-	reply.Total = total - int64(args.Offset)
+
 	return nil
 }
