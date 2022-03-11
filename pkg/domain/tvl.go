@@ -51,28 +51,28 @@ type SwapCountKLine struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`                                                         // 最后同步的transaction id
-	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key"` // swap地址
-	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`                                                   // swap token a 地址
-	TokenBAddress         string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`                                                   // swap token b 地址
-	TokenAVolume          decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`                                                        // swap token a 总交易额
-	TokenBVolume          decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                                        // swap token b 总交易额
-	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                       // swap token a 余额
-	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                       // swap token b 余额
-	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_count_k_line_date_swap_address_unique_key"`          // 统计日期
-	TxNum                 int64           `json:"tx_num"`                                                                                                     // 交易笔数
-	DateType              DateType        `json:"date_type" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key"`    // 时间类型（min,quarter,hour,day,wek,mon）
-	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                  // 统计时间段累的第一个值
-	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                  // 最大值
-	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                  // 最小值
-	Settle                decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                // 结束值
-	Avg                   decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                   // 平均值
-	TokenASymbol          string          `json:"token_a_symbol"      gorm:"not null;type:varchar(64);  index"`                                               // token A 币种符号
-	TokenBSymbol          string          `json:"token_b_symbol"      gorm:"not null;type:varchar(64);  index"`                                               // token B 币种符号
-	TokenAUSD             decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"`                                        // swap token a usd价格 TODO
-	TokenBUSD             decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                        // swap token b usd价格 TODO
-	TvlInUsd              decimal.Decimal `json:"tvl_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总锁仓量，单位usd）TODO
-	VolInUsd              decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                     // tvl（总交易量，单位usd）TODO
+	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0; index"`                                                         // 最后同步的transaction id
+	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index"` // swap地址
+	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);"`                                                                 // swap token a 地址
+	TokenBAddress         string          `json:"token_b_address" gorm:"not null;type:varchar(64);"`                                                                 // swap token b 地址
+	TokenAVolume          decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`                                                               // swap token a 总交易额
+	TokenBVolume          decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                                               // swap token b 总交易额
+	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                              // swap token a 余额
+	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                              // swap token b 余额
+	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index"`          // 统计日期
+	TxNum                 int64           `json:"tx_num"`                                                                                                            // 交易笔数
+	DateType              DateType        `json:"date_type" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key"`           // 时间类型（min,quarter,hour,day,wek,mon）
+	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                         // 统计时间段累的第一个值
+	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                         // 最大值
+	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                         // 最小值
+	Settle                decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                       // 结束值
+	Avg                   decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                          // 平均值
+	TokenASymbol          string          `json:"token_a_symbol"      gorm:"not null;type:varchar(64);  index"`                                                      // token A 币种符号
+	TokenBSymbol          string          `json:"token_b_symbol"      gorm:"not null;type:varchar(64);  index"`                                                      // token B 币种符号
+	TokenAUSD             decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"`                                               // swap token a usd价格 TODO
+	TokenBUSD             decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                               // swap token b usd价格 TODO
+	TvlInUsd              decimal.Decimal `json:"tvl_in_usd" gorm:"type:decimal(36,18);"`                                                                            // tvl（总锁仓量，单位usd）TODO
+	VolInUsd              decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                            // tvl（总交易量，单位usd）TODO
 }
 
 type Tvl struct {
