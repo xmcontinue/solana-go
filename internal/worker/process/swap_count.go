@@ -80,14 +80,15 @@ func SwapTotalCount() error {
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:           v.Name,
 			SwapAccount:    v.SwapAccount,
-			PoolAddress:    v.PoolAddress,
+			TokenAReserves: v.TokenA.SwapTokenAccount,
+			TokenBReserves: v.TokenB.SwapTokenAccount,
 			VolInUsd24h:    volInUsd24h.String(),
 			TxNum24h:       swapCount24h.TxNum,
 			VolInUsd:       volInUsd.String(),
 			TxNum:          swapCountTotal.TxNum,
 			Apr:            apr,
 			TvlInUsd:       tvlInUsd.String(),
-			PriceIntervals: v.PriceIntervals,
+			PriceInterval:  v.PriceInterval,
 			Price:          newSwapPrice.String(),
 			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
