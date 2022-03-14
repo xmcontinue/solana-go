@@ -103,7 +103,7 @@ func syncTORedis() error {
 	return nil
 }
 
-func syncDateTypeKLine(ctx context.Context, klineTyp KLineTyp, swapAccount string) error {
+func syncKLineByDateType(ctx context.Context, klineTyp KLineTyp, swapAccount string) error {
 	var (
 		key            = domain.KLineKey(klineTyp.DateType, swapAccount)
 		date           = &time.Time{}
@@ -380,7 +380,7 @@ func syncKLineToRedis() error {
 		}
 
 		for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
-			if err = syncDateTypeKLine(ctx, v, swapConfig.SwapAccount); err != nil {
+			if err = syncKLineByDateType(ctx, v, swapConfig.SwapAccount); err != nil {
 				logger.Error("sync k line to redis err", logger.Errorv(err))
 				return errors.Wrap(err)
 			}
