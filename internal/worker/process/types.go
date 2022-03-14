@@ -95,7 +95,7 @@ func (m *KLineTyp) Name() domain.DateType {
 	return m.DateType
 }
 
-// GetDate 最近一个时间点，并替换原来的值
+// GetDate 获取最近的时间类型的时间点
 func (m *KLineTyp) GetDate() *time.Time {
 	var date time.Time
 	if m.DateType == domain.DateMin {

@@ -206,7 +206,7 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 	return nil
 }
 
-// 按照上一个周期计算平均值，month除外（按照天计算）
+// calculateAvg 按照上一个周期计算平均值，month除外（按照天计算）
 func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decimal.Decimal, error) {
 	type interTime struct {
 		Date time.Time

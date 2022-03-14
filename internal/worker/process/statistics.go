@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -103,37 +104,30 @@ func syncTORedis() error {
 	return nil
 }
 
-func syncKLineByDateType(ctx context.Context, klineTyp KLineTyp, swapAccount string) error {
+func syncKLineByDateType(ctx context.Context, klineT KLineTyp, swapAccount string) error {
 	var (
-		key            = domain.KLineKey(klineTyp.DateType, swapAccount)
-		date           = &time.Time{}
-		isDelete       = false
-		lastValuePrice = &Price{}
-		lastValue      []string
-		err            error
+		key = domain.KLineKey(klineT.DateType, swapAccount)
+		err error
 	)
 
-	lastValue, err = redisClient.ZRange(ctx, key, -1, -1).Result() // 返回最后一个元素
-	if err != nil && !redisClient.ErrIsNil(err) {
-		return errors.Wrap(err)
-	}
-
-	if len(lastValue) != 0 {
-		isDelete = true
-
-		if err = json.Unmarshal([]byte(lastValue[0]), lastValuePrice); err != nil {
-			return errors.Wrap(err)
+	// 构造初始零值数据
+	priceZ := make([]*PriceZ, klineT.DataCount, klineT.DataCount)
+	for index := range priceZ {
+		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
+		priceZ[index] = &PriceZ{
+			Score: date.Unix(),
+			Member: &Price{
+				Date: date,
+			},
 		}
-		date = lastValuePrice.Date
-
 	}
 
-	swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineTyp.DataCount, 0,
-		model.NewFilter("date_type = ?", klineTyp.DateType),
-		model.NewFilter("date >= ?", date),
+	swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
+		model.NewFilter("date_type = ?", klineT.DateType),
 		model.OrderFilter("date desc"),
 		model.SwapAddress(swapAccount),
 	)
+
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -142,83 +136,106 @@ func syncKLineByDateType(ctx context.Context, klineTyp KLineTyp, swapAccount str
 		return nil
 	}
 
-	klineTyp.Date = swapCountKlines[0].Date
-
-	prices := make([]*redis.Z, klineTyp.DataCount, klineTyp.DataCount)
-	for index := range prices {
-		prices[index] = &redis.Z{
-			Score:  float64(klineTyp.SkipIntervalTime(-(klineTyp.DataCount - (index + 1))).Unix()),
-			Member: nil,
-		}
-	}
-
-	swapCountKlineMap := make(map[int64]*Price, klineTyp.DataCount)
+	// 转换成map，减少for循环
+	PriceMap := make(map[int64]*Price, klineT.DataCount)
 	for _, v := range swapCountKlines {
-		swapCountKlineMap[v.Date.Unix()] = &Price{
-			Open:   v.Open,
+		PriceMap[v.Date.Unix()] = &Price{
 			High:   v.High,
+			Open:   v.Open,
 			Low:    v.Low,
 			Settle: v.Settle,
-			Avg:    v.Avg,
 			Date:   v.Date,
 		}
 	}
 
+	// 找到第一个数据
 	lastPrice := &Price{}
-	for index, v := range prices {
-		price, ok := swapCountKlineMap[int64(v.Score)]
-		if ok {
-			lastPrice = price
-			prices[index].Score = v.Score
-			prices[index].Member = price
-		} else if lastPrice.Date != nil {
-			prices[index].Score = v.Score
-			prices[index].Member = &Price{
-				Open:   lastPrice.Settle,
-				High:   lastPrice.Settle,
-				Low:    lastPrice.Settle,
-				Settle: lastPrice.Settle,
-				Avg:    lastPrice.Settle,
-				Date:   klineTyp.SkipIntervalTime(-(klineTyp.DataCount - (index + 1))),
-			}
+	for _, v := range swapCountKlines {
+		if v.Date.After(*priceZ[0].Member.Date) {
+			break
+		}
+		lastPrice = &Price{
+			Settle: v.Settle,
+			Date:   v.Date,
 		}
 	}
 
-	for i, v := range prices {
-		if v.Member != nil {
-			prices = prices[i:]
+	for index, v := range priceZ {
+		price, ok := PriceMap[v.Score]
+		if ok {
+			lastPrice = price
+			priceZ[index].Score = v.Score
+			priceZ[index].Member.High = priceZ[index].Member.High.Add(price.High).Round(6)
+			priceZ[index].Member.Open = priceZ[index].Member.Open.Add(price.Open).Round(6)
+			priceZ[index].Member.Low = priceZ[index].Member.Low.Add(price.Low).Round(6)
+			priceZ[index].Member.Settle = priceZ[index].Member.Settle.Add(price.Settle).Round(6)
+			priceZ[index].Member.Avg = priceZ[index].Member.Avg.Add(price.Avg).Round(6)
+
+		} else {
+			priceZ[index].Score = v.Score
+			priceZ[index].Member.High = priceZ[index].Member.High.Add(lastPrice.Settle).Round(6)
+			priceZ[index].Member.Open = priceZ[index].Member.Open.Add(lastPrice.Settle).Round(6)
+			priceZ[index].Member.Low = priceZ[index].Member.Low.Add(lastPrice.Settle).Round(6)
+			priceZ[index].Member.Settle = priceZ[index].Member.Settle.Add(lastPrice.Settle).Round(6)
+			priceZ[index].Member.Avg = priceZ[index].Member.Avg.Add(lastPrice.Settle).Round(6)
+		}
+	}
+
+	// 去掉列表前面的零值
+	for i, v := range priceZ {
+		if !v.Member.Avg.IsZero() {
+			priceZ = priceZ[i:]
 			break
 		}
 	}
 
-	if isDelete {
-		if len(prices) == 1 {
-			// 如果没有数据改变则减少redis io
-			if prices[0].Member.(*Price).Settle.Equal(lastValuePrice.Settle) && prices[0].Member.(*Price).Avg.Equal(lastValuePrice.Avg) {
-				return nil
-			}
+	// 类型装换
+	prices := make([]*redis.Z, len(priceZ), len(priceZ))
+	for index := range priceZ {
+		prices[index] = &redis.Z{
+			Score:  float64(priceZ[index].Score),
+			Member: priceZ[index].Member,
 		}
-		// 最后一个数据会重复，提前删除，以便于更新
-		if err = redisClient.ZRem(ctx, key, lastValue).Err(); err != nil {
+	}
+
+	return asyncUpdateKey(ctx, key, prices...)
+}
+
+// asyncUpdateKey ,先添加，再删除
+func asyncUpdateKey(ctx context.Context, key string, z ...*redis.Z) error {
+	var (
+		part int
+		err  error
+	)
+	part, err = redisClient.Get(ctx, key).Int()
+	if err != nil {
+		if !redisClient.ErrIsNil(err) {
 			return errors.Wrap(err)
 		}
 	}
 
-	if err = redisClient.ZAdd(context.TODO(), key, prices...).Err(); err != nil {
-		logger.Error("sync swap account last 24h vol to redis err", logger.Errorv(err))
+	// 先添加
+	if err = redisClient.ZAdd(ctx, fmt.Sprintf("%s:%d", key, part+1), z...).Err(); err != nil {
+		logger.Errorf("sync [%s] to redis err:%s", fmt.Sprintf("%s:%d", key, part+1), logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
-	// 删除多余数据
-	klineTyp.Date = prices[len(prices)-1].Member.(*Price).Date
-	firstDate := klineTyp.SkipIntervalTime(-klineTyp.DataCount)
-	if err = redisClient.ZRemRangeByScore(ctx, key, "", strconv.FormatInt(firstDate.Unix(), 10)).Err(); err != nil {
-		logger.Error(" histogram about bol and tvl,deleting redundant data err", logger.Errorv(err))
+	// 更新 part key
+	if err = redisClient.Set(ctx, key, part+1, 0).Err(); err != nil {
+		return errors.Wrap(err)
+	}
+
+	if part == 0 {
+		return nil
+	}
+
+	// 再删除
+	if err = redisClient.ZRemRangeByRank(ctx, fmt.Sprintf("%s:%d", key, part), 0, -1).Err(); err != nil {
+		logger.Errorf("remove old [%s] to redis err:%s", fmt.Sprintf("%s:%d", key, part), logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
 	return nil
-
 }
 
 func syncVolAndTvlHistogram() error {
@@ -361,9 +378,12 @@ func syncDateTypeHistogram(ctx context.Context, klineTyp KLineTyp, swapAccount s
 
 }
 
-// 采用redis zset 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据 todo 已不使用
+// 采用redis zset 数据结构，先查询是否有数据存在，如果没有则同步全部数据，有则现获取已同步的数据的最后一条，然后同步新数据
 func syncKLineToRedis() error {
-	ctx := context.Background()
+	var (
+		ctx = context.Background()
+		now = time.Now()
+	)
 	for _, swapConfig := range sol.SwapConfigList() {
 
 		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddress(swapConfig.SwapAccount))
@@ -380,6 +400,7 @@ func syncKLineToRedis() error {
 		}
 
 		for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
+			v.Date = &now
 			if err = syncKLineByDateType(ctx, v, swapConfig.SwapAccount); err != nil {
 				logger.Error("sync k line to redis err", logger.Errorv(err))
 				return errors.Wrap(err)
@@ -421,7 +442,6 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 
 	var (
 		key = domain.TotalHistogramKey(klineT.DateType)
-		err error
 	)
 
 	// 构造初始零值数据
@@ -509,21 +529,15 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 		}
 	}
 
-	// 先删除，再添加
-	if err = redisClient.ZRemRangeByRank(ctx, key, 0, -1).Err(); err != nil {
-		logger.Errorf("remove old key:%s,err:%s", key, logger.Errorv(err))
-		return errors.Wrap(err)
-	}
-
-	if err = redisClient.ZAdd(ctx, key, swapHistograms...).Err(); err != nil {
-		logger.Error("sync swap count histogram about bol and tvl to redis err", logger.Errorv(err))
-		return errors.Wrap(err)
-	}
-
-	return nil
+	return asyncUpdateKey(ctx, key, swapHistograms...)
 }
 
 type HistogramZ struct {
 	Score  int64
 	Member *SwapHistogram
+}
+
+type PriceZ struct {
+	Score  int64
+	Member *Price
 }

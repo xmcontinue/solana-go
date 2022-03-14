@@ -43,9 +43,13 @@ func KLineKey(dateType DateType, swapAccount string) string {
 }
 
 func HistogramKey(dateType DateType, swapAccount string) string {
-	return fmt.Sprintf("%shistogram:swap:count:%s:%s", publicPrefix, dateType, swapAccount)
+	return fmt.Sprintf("%shistogram:swap:count:part:%s:%s", publicPrefix, dateType, swapAccount)
 }
 
 func TotalHistogramKey(dateType DateType) string {
-	return fmt.Sprintf("%shistogram:total:swap:count:%s", publicPrefix, dateType)
+	return fmt.Sprintf("%shistogram:total:swap:count:part:%s", publicPrefix, dateType)
+}
+
+func GetKeyWithPart(key string, part int) string {
+	return fmt.Sprintf("%s:%d", key, part)
 }
