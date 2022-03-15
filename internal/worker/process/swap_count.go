@@ -227,7 +227,7 @@ func appendTokensToSwapCount(swapCountToApi *domain.SwapCountToApi, tokens ...*d
 }
 
 func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string]*tokenPrice) {
-	beforLen := len(tokenPriceList)
+	beforeLen := len(tokenPriceList)
 
 	for _, v := range pairPriceList {
 		tokenAPrice, tokenAHas := tokenPriceList[v.TokenASymbol]
@@ -250,7 +250,7 @@ func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string
 		}
 	}
 
-	if beforLen == len(tokenPriceList) {
+	if beforeLen == len(tokenPriceList) {
 		return
 	}
 
