@@ -121,7 +121,6 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		offset = int64(0)
 		list   = make([]*process.SwapHistogramNumber, 0, histogramLimit(args.Limit))
 		err    error
-		part   int
 	)
 
 	if args.SwapAccount == "" {
@@ -129,18 +128,6 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	} else {
 		key = domain.HistogramKey(args.DateType, args.SwapAccount)
 	}
-
-	// 先判断是否有数据
-	part, err = t.redisClient.Get(ctx, key).Int()
-	if err != nil {
-		if t.redisClient.ErrIsNil(err) {
-			return nil
-		}
-		return errors.Wrap(err)
-	}
-
-	// 合成新的key
-	key = domain.GetKeyWithPart(key, part)
 
 	if args.Offset == 0 {
 		offset = -1

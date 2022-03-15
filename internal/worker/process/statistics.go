@@ -3,7 +3,6 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -189,49 +188,15 @@ func syncKLineByDateType(ctx context.Context, klineT KLineTyp, swapAccount strin
 		}
 	}
 
-	// 类型装换
-	prices := make([]*redis.Z, len(priceZ), len(priceZ))
-	for index := range priceZ {
-		prices[index] = &redis.Z{
-			Score:  float64(priceZ[index].Score),
-			Member: priceZ[index].Member,
-		}
+	// lua 通过脚本更新
+	newZ := make([]interface{}, 0, len(priceZ)+1)
+	for i := range priceZ {
+		newZ = append(newZ, priceZ[i].Score)
+		newZ = append(newZ, priceZ[i].Member)
 	}
 
-	return asyncUpdateKey(ctx, key, prices...)
-}
-
-// asyncUpdateKey ,先添加，再删除
-func asyncUpdateKey(ctx context.Context, key string, z ...*redis.Z) error {
-	var (
-		part int
-		err  error
-	)
-	part, err = redisClient.Get(ctx, key).Int()
+	_, err = delAndAddSZSet.Run(ctx, redisClient, []string{key}, newZ).Result()
 	if err != nil {
-		if !redisClient.ErrIsNil(err) {
-			return errors.Wrap(err)
-		}
-	}
-
-	// 先添加
-	if err = redisClient.ZAdd(ctx, fmt.Sprintf("%s:%d", key, part+1), z...).Err(); err != nil {
-		logger.Errorf("sync [%s] to redis err:%s", fmt.Sprintf("%s:%d", key, part+1), logger.Errorv(err))
-		return errors.Wrap(err)
-	}
-
-	// 更新 part key
-	if err = redisClient.Set(ctx, key, part+1, 0).Err(); err != nil {
-		return errors.Wrap(err)
-	}
-
-	if part == 0 {
-		return nil
-	}
-
-	// 再删除
-	if err = redisClient.ZRemRangeByRank(ctx, fmt.Sprintf("%s:%d", key, part), 0, -1).Err(); err != nil {
-		logger.Errorf("remove old [%s] to redis err:%s", fmt.Sprintf("%s:%d", key, part), logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
@@ -520,24 +485,17 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 		}
 	}
 
-	// 类型装换
-	swapHistograms := make([]*redis.Z, len(swapHistogramZ), len(swapHistogramZ))
-	for index := range swapHistogramZ {
-		swapHistograms[index] = &redis.Z{
-			Score:  float64(swapHistogramZ[index].Score),
-			Member: swapHistogramZ[index].Member,
-		}
+	// lua 通过脚本更新
+	newZ := make([]interface{}, 0, len(swapHistogramZ)+1)
+	for i := range swapHistogramZ {
+		newZ = append(newZ, swapHistogramZ[i].Score)
+		newZ = append(newZ, swapHistogramZ[i].Member)
 	}
 
-	return asyncUpdateKey(ctx, key, swapHistograms...)
-}
+	_, err := delAndAddSZSet.Run(ctx, redisClient, []string{key}, newZ).Result()
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
-type HistogramZ struct {
-	Score  int64
-	Member *SwapHistogram
-}
-
-type PriceZ struct {
-	Score  int64
-	Member *Price
+	return nil
 }

@@ -212,3 +212,13 @@ func (s *SwapHistogram) UnmarshalBinary(data []byte) error {
 func (s *SwapHistogram) IsEmpty() bool {
 	return reflect.DeepEqual(s, SwapHistogram{})
 }
+
+type HistogramZ struct {
+	Score  int64
+	Member *SwapHistogram
+}
+
+type PriceZ struct {
+	Score  int64
+	Member *Price
+}

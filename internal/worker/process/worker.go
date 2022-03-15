@@ -9,13 +9,15 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
+	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 )
 
 var (
-	redisClient *redisV8.Client
-	conf        *config.Config
-	job         *Job
+	redisClient    *redisV8.Client
+	conf           *config.Config
+	job            *Job
+	delAndAddSZSet *redis.Script
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -69,6 +71,8 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	delAndAddSZSet = redis.NewScript(DelAndAddSZSetScript)
 
 	// xCron init
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
@@ -209,3 +213,23 @@ func (j *Job) WatchJobForMap(name string, newMap *sync.Map, createFunc func(inte
 
 	return nil
 }
+
+const DelAndAddSZSetScript string = "redis.log(redis.LOG_NOTICE, \"key=\", KEYS[1])" +
+	"if redis.call('zcard', KEYS[1]) > 0 then\n" +
+	"   redis.call('del', KEYS[1])\n" +
+	"   for i, v in pairs(ARGV) do\n" +
+	"       if i > (table.getn(ARGV)) / 2 then\n" +
+	"           break\n" +
+	"       end\n" +
+	"       redis.call('zadd', KEYS[1], ARGV[2*i - 1], ARGV[2*i])\n" +
+	"   end\n" +
+	"   return 1\n" +
+	"else\n" +
+	"   for i, v in pairs(ARGV) do\n" +
+	"       if i > (table.getn(ARGV)) / 2 then\n" +
+	"           break\n" +
+	"       end\n" +
+	"       redis.call('zadd',KEYS[1], ARGV[2*i - 1], ARGV[2*i])\n" +
+	"   end\n" +
+	"   return 1\n" +
+	"end"
