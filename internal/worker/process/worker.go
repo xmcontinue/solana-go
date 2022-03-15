@@ -214,8 +214,7 @@ func (j *Job) WatchJobForMap(name string, newMap *sync.Map, createFunc func(inte
 	return nil
 }
 
-const DelAndAddSZSetScript string = "redis.log(redis.LOG_NOTICE, \"key=\", KEYS[1])" +
-	"if redis.call('zcard', KEYS[1]) > 0 then\n" +
+const DelAndAddSZSetScript string = "if redis.call('zcard', KEYS[1]) > 0 then\n" +
 	"   redis.call('del', KEYS[1])\n" +
 	"   for i, v in pairs(ARGV) do\n" +
 	"       if i > (table.getn(ARGV)) / 2 then\n" +
