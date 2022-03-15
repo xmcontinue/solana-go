@@ -78,6 +78,9 @@ func Init(viperConf *config.Config) error {
 	// 同步总vol
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalVol)
 
+	// 同步总vol
+	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncSwapPrice)
+
 	job.Cron.Start()
 
 	return nil
