@@ -279,9 +279,12 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		// transactionsLen := len(swapTransactions)
 
 		for _, v := range swapTransactions {
-			err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
-			if err != nil && !dbpool.IsDuplicateKeyError(err) {
-				return errors.Wrap(err)
+			_, err = model.QuerySwapTransaction(context.Background(), model.NewFilter("signature = ?", v.Signature))
+			if err != nil {
+				err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
+				if err != nil && !dbpool.IsDuplicateKeyError(err) {
+					return errors.Wrap(err)
+				}
 			}
 		}
 
