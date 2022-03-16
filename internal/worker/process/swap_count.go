@@ -69,7 +69,8 @@ func SwapTotalCount() error {
 		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCount24h.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCountTotal.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
 		tvlInUsd, volInUsd24h, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol.Add(tokenBVol)
-		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolume).Mul(newSwapCount.TokenAUSD).Round(6), tokenBVol.Add(swapCountTotal.TokenBQuoteVolume).Mul(newSwapCount.TokenBUSD).Round(6)
+		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolume.Mul(newSwapCount.TokenAUSD)).Round(6), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolume.Mul(newSwapCount.TokenBUSD)).Round(6)
+		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolume.Mul(newSwapCount.TokenAUSD)).Round(6), tokenBVol.Add(swapCountTotal.TokenBQuoteVolume.Mul(newSwapCount.TokenBUSD)).Round(6)
 
 		// 计算apr
 		apr := "0%"
@@ -114,7 +115,7 @@ func SwapTotalCount() error {
 			swapCountToApi,
 			&domain.SwapCountToApiToken{
 				Name:        v.TokenA.Symbol,
-				VolInUsd24h: tokenAVol24h.String(),
+				VolInUsd24h: tokenA24hVol.String(),
 				TxNum24h:    swapCount24h.TxNum,
 				VolInUsd:    tokenATotalVol.String(),
 				TxNum:       swapCountTotal.TxNum,
@@ -122,7 +123,7 @@ func SwapTotalCount() error {
 			},
 			&domain.SwapCountToApiToken{
 				Name:        v.TokenB.Symbol,
-				VolInUsd24h: tokenBVol24h.String(),
+				VolInUsd24h: tokenB24hVol.String(),
 				TxNum24h:    swapCount24h.TxNum,
 				VolInUsd:    tokenBTotalVol.String(),
 				TxNum:       swapCountTotal.TxNum,
