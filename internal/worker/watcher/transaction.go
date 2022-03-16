@@ -220,10 +220,6 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	tokenAUSD, tokenBUSD := coingecko.GetPriceForTokenAccount(s.swapConfig.TokenA.SwapTokenAccount), coingecko.GetPriceForTokenAccount(s.swapConfig.TokenB.SwapTokenAccount)
 	// open model transaction
 	txModelTransaction := func(mCtx context.Context) error {
-		if len(transactions) == 0 {
-			return nil
-		}
-
 		// update schedule
 		swapPairBaseMap := map[string]interface{}{}
 		if before == nil {
@@ -242,6 +238,10 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		err := model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.swapConfig.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
+		}
+
+		if len(transactions) == 0 {
+			return nil
 		}
 
 		// created transaction record
