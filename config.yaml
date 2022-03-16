@@ -1,4 +1,4 @@
 config_center:
   provider: etcd
-  host: http://0.0.0.0:2379
+  host: http://localhost:2379
   path: /crema/config.yaml
