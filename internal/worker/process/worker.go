@@ -14,10 +14,10 @@ import (
 )
 
 var (
-	redisClient    *redisV8.Client
-	conf           *config.Config
-	job            *Job
-	delAndAddSZSet *redis.Script
+	redisClient     *redisV8.Client
+	conf            *config.Config
+	job             *Job
+	delAndAddByZSet *redis.Script
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -72,7 +72,7 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
-	delAndAddSZSet = redis.NewScript(DelAndAddSZSetScript)
+	delAndAddByZSet = redis.NewScript(DelAndAddSZSetScript)
 
 	// xCron init
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
@@ -84,11 +84,6 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		panic(err)
 	}
-
-	//_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncTORedis)
-	//if err != nil {
-	//	panic(err)
-	//}
 
 	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncVolAndTvlHistogram)
 	if err != nil {
