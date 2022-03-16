@@ -38,17 +38,18 @@ func SwapTotalCount() error {
 		"USDC":  {decimal.NewFromInt(1), decimal.NewFromInt(1)},
 		"pUSDC": {decimal.NewFromInt(1), decimal.NewFromInt(1)},
 	}
+	ctx := context.Background()
 
 	// 获取swap pair 24h 内交易统计
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, date := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
-		// 获取币价
-		newSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
+		// 获取coingecko币价
+		newSwapCount, err := model.QuerySwapCountKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		if err != nil {
 			continue
 		}
-		beforeSwapCount, err := model.QuerySwapCountKLine(context.Background(), model.NewFilter("date > ?", newSwapCount.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		beforeSwapCount, err := model.QuerySwapCountKLine(ctx, model.NewFilter("date > ?", newSwapCount.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id asc"))
 		if err != nil {
 			continue
 		}
@@ -57,10 +58,10 @@ func SwapTotalCount() error {
 		}
 
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
-		swapCount24h, _ := model.SumSwapCountVolForKLines(context.Background(), model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
-		swapCountTotal, _ := model.SumSwapCountVolForKLines(context.Background(), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
+		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
 
 		// 计算vol,tvl
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newSwapCount.TokenAUSD).Round(6), v.TokenB.Balance.Mul(newSwapCount.TokenBUSD).Round(6)
@@ -75,8 +76,20 @@ func SwapTotalCount() error {
 			apr = volInUsd24h.Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 36500为365天*百分比转化100得出
 		}
 
+		// 查找合约内价格
+		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
+		if err != nil {
+			continue
+		}
+		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date > ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id asc"))
+		if err != nil {
+			continue
+		}
+		if newContractPrice.Settle.IsZero() || beforeContractPrice.Settle.IsZero() {
+			continue
+		}
 		// pool统计
-		newSwapPrice, beforeSwapPrice := newSwapCount.Settle.Round(6), beforeSwapCount.Open.Round(6)
+		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(6), beforeContractPrice.Open.Round(6)
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:           v.Name,
 			SwapAccount:    v.SwapAccount,

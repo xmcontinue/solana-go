@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	dbpool "git.cplus.link/go/akit/client/psql"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
@@ -282,7 +281,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			_, err = model.QuerySwapTransaction(context.Background(), model.NewFilter("signature = ?", v.Signature))
 			if err != nil {
 				err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
-				if err != nil && !dbpool.IsDuplicateKeyError(err) {
+				if err != nil {
 					return errors.Wrap(err)
 				}
 			}
