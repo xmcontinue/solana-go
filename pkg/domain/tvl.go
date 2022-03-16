@@ -61,9 +61,9 @@ type SwapCountKLine struct {
 	TokenBQuoteVolume     decimal.Decimal `json:"token_b_quote_volume" gorm:"type:decimal(36,18);default:0"`                                                         // swap token b 获得量
 	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                              // swap token a 余额
 	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                              // swap token b 余额
+	DateType              DateType        `json:"date_type" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index"`    // 时间类型（min,quarter,hour,day,wek,mon）
 	Date                  *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index"`          // 统计日期
 	TxNum                 int64           `json:"tx_num"`                                                                                                            // 交易笔数
-	DateType              DateType        `json:"date_type" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index"`    // 时间类型（min,quarter,hour,day,wek,mon）
 	Open                  decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                         // 统计时间段累的第一个值
 	High                  decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                         // 最大值
 	Low                   decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                         // 最小值
