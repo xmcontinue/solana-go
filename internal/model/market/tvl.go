@@ -125,6 +125,8 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 			"token_b_address":          swapCount.TokenBAddress,
 			"token_a_volume":           swapCount.TokenAVolume.Abs(),
 			"token_b_volume":           swapCount.TokenBVolume.Abs(),
+			"token_a_quote_volume":     swapCount.TokenAQuoteVolume.Abs(),
+			"token_b_quote_volume":     swapCount.TokenBQuoteVolume.Abs(),
 			"token_a_balance":          swapCount.TokenABalance,
 			"token_b_balance":          swapCount.TokenBBalance,
 			"date_type":                swapCount.DateType,
@@ -157,6 +159,8 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
+		Suffix("token_a_quote_volume = swap_count_k_lines.token_a_quote_volume + ?,", swapCount.TokenAQuoteVolume.Abs()).
+		Suffix("token_b_quote_volume = swap_count_k_lines.token_b_quote_volume + ?,", swapCount.TokenBQuoteVolume.Abs()).
 		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
 		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
 		Suffix("high = ?,", swapCount.High).
