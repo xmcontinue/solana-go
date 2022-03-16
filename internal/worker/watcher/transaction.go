@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	dbpool "git.cplus.link/go/akit/client/psql"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
@@ -186,6 +187,10 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 				return signatures, errors.Wrap(err)
 			}
 
+			if len(newSignatures) == 0 {
+				break
+			}
+
 			isComplete = len(newSignatures) < limit
 
 			if !isComplete {
@@ -216,6 +221,10 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	tokenAUSD, tokenBUSD := coingecko.GetPriceForTokenAccount(s.swapConfig.TokenA.SwapTokenAccount), coingecko.GetPriceForTokenAccount(s.swapConfig.TokenB.SwapTokenAccount)
 	// open model transaction
 	txModelTransaction := func(mCtx context.Context) error {
+		if len(transactions) == 0 {
+			return nil
+		}
+
 		// update schedule
 		swapPairBaseMap := map[string]interface{}{}
 		if before == nil {
@@ -234,10 +243,6 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		err := model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.swapConfig.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
-		}
-
-		if len(transactions) == 0 {
-			return nil
 		}
 
 		// created transaction record
@@ -271,23 +276,33 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			})
 		}
 
-		transactionsLen := len(swapTransactions)
+		// transactionsLen := len(swapTransactions)
 
-		page := 100
-		for i := 0; i < transactionsLen; i = i + page {
-			if transactionsLen < i+page {
-				err = model.CreateSwapTransactions(mCtx, swapTransactions[i:transactionsLen])
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				break
-			} else {
-				err = model.CreateSwapTransactions(mCtx, swapTransactions[i:i+page])
-				if err != nil {
+		for _, v := range swapTransactions {
+			_, err = model.QuerySwapTransaction(context.Background(), model.NewFilter("signature = ?", v.Signature))
+			if err != nil {
+				err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
+				if err != nil && !dbpool.IsDuplicateKeyError(err) {
 					return errors.Wrap(err)
 				}
 			}
 		}
+
+		// page := 100
+		// for i := 0; i < transactionsLen; i = i + page {
+		// 	if transactionsLen < i+page {
+		// 		err = model.CreateSwapTransactions(mCtx, swapTransactions[i:transactionsLen])
+		// 		if err != nil {
+		// 			return errors.Wrap(err)
+		// 		}
+		// 		break
+		// 	} else {
+		// 		err = model.CreateSwapTransactions(mCtx, swapTransactions[i:i+page])
+		// 		if err != nil {
+		// 			return errors.Wrap(err)
+		// 		}
+		// 	}
+		// }
 
 		return nil
 	}
