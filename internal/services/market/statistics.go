@@ -120,6 +120,7 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 		key    string
 		offset = int64(0)
 		list   = make([]*process.SwapHistogramNumber, 0, histogramLimit(args.Limit))
+		err    error
 	)
 
 	if args.SwapAccount == "" {

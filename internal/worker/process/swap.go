@@ -206,11 +206,11 @@ func (m *KLineTyp) updateKline(ctx context.Context, swapCountKLine *domain.SwapC
 	return nil
 }
 
-// 按照上一个周期计算平均值，month除外（按照天计算）
+// calculateAvg 按照上一个周期计算平均值，month除外（按照天计算）
 func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decimal.Decimal, error) {
 	type interTime struct {
 		Date time.Time
-		avg  decimal.Decimal
+		avg  *decimal.Decimal
 	}
 
 	var (
@@ -247,22 +247,38 @@ func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decima
 			}
 		}
 
+		// 减少for 循环
+		swapCountKLineMap := make(map[int64]*domain.SwapCountKLine, len(swapCountKLines))
 		for index := range swapCountKLines {
-			for _, avg := range avgList {
-				if swapCountKLines[len(swapCountKLines)-1-index].Date.Equal(avg.Date) || swapCountKLines[len(swapCountKLines)-1-index].Date.Before(avg.Date) {
-					avg.avg = swapCountKLines[len(swapCountKLines)-1-index].Avg // 以上一个时间区间的平均值作为新的时间区间的平均值
-				}
+			swapCountKLineMap[swapCountKLines[index].Date.Unix()] = swapCountKLines[index]
+		}
+
+		// 找到第一个数据
+		lastAvg := &domain.SwapCountKLine{}
+		for index := range swapCountKLines {
+			if swapCountKLines[len(swapCountKLines)-index-1].Date.After(avgList[0].Date) {
+				break
+			}
+			lastAvg = swapCountKLines[len(swapCountKLines)-index-1]
+		}
+
+		for index, avg := range avgList {
+			lastSwapCountKLine, ok := swapCountKLineMap[avg.Date.Unix()]
+			if ok {
+				lastAvg = lastSwapCountKLine
+				avgList[index].avg = &lastSwapCountKLine.Avg
+			} else {
+				avgList[index].avg = &lastAvg.Settle // 上一个周期的结束值用作空缺周期的平均值
 			}
 		}
 
 		// calculate avg
 		for _, v := range avgList {
 			if !v.avg.IsZero() {
-				sum = sum.Add(v.avg)
+				sum = sum.Add(*v.avg)
 				count++
 			}
 		}
-
 	} else {
 		return decimal.Zero, errors.New("error date_type")
 	}
