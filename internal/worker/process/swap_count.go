@@ -277,5 +277,5 @@ func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string
 func FormatFloat(num decimal.Decimal, d int) string {
 	f, _ := num.Float64()
 	n := math.Pow10(d)
-	return strconv.FormatFloat(math.Trunc(f*n)/n, 'f', -1, 64)
+	return strconv.FormatFloat(math.Trunc(f*n)/n, 'f', 1, 64)
 }
