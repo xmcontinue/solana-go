@@ -185,7 +185,7 @@ func syncVolAndTvlHistogram() error {
 
 func syncSwapAccountVolAndTvlByDateType(ctx context.Context, klineT KLineTyp, swapAccount string) error {
 	var (
-		key = domain.KLineKey(klineT.DateType, swapAccount)
+		key = domain.HistogramKey(klineT.DateType, swapAccount)
 	)
 
 	// 构造初始零值数据

@@ -109,13 +109,17 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 			}
 
 			var (
-				tokenAVolume decimal.Decimal
-				tokenBVolume decimal.Decimal
+				tokenAVolume      decimal.Decimal
+				tokenBVolume      decimal.Decimal
+				tokenAQuoteVolume decimal.Decimal
+				tokenBQuoteVolume decimal.Decimal
 			)
 			if swapRecord.Direction == 0 {
 				tokenAVolume = swapRecord.TokenCount.TokenAVolume
+				tokenBQuoteVolume = swapRecord.TokenCount.TokenBVolume
 			} else {
 				tokenBVolume = swapRecord.TokenCount.TokenBVolume
+				tokenAQuoteVolume = swapRecord.TokenCount.TokenAVolume
 			}
 
 			swapCountKLine := &domain.SwapCountKLine{
@@ -125,6 +129,8 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
 				TokenAVolume:          tokenAVolume,
 				TokenBVolume:          tokenBVolume,
+				TokenAQuoteVolume:     tokenAQuoteVolume,
+				TokenBQuoteVolume:     tokenBQuoteVolume,
 				TokenABalance:         swapRecord.TokenCount.TokenABalance,
 				TokenBBalance:         swapRecord.TokenCount.TokenBBalance,
 				DateType:              domain.DateMin,

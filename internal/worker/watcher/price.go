@@ -39,7 +39,7 @@ func SyncSwapPrice() error {
 		if err != nil {
 			return errors.Wrap(err)
 		}
-		swapPrice := parse.GetSwapPrice(res)
+		swapPrice := parse.GetSwapPrice(res, config)
 
 		swapPairPrices = append(swapPairPrices, &swapPairPrice{
 			TokenASymbol: config.TokenA.Symbol,
