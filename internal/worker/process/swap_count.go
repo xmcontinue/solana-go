@@ -103,7 +103,7 @@ func SwapTotalCount() error {
 			TxNum:          swapCountTotal.TxNum,
 			Apr:            apr,
 			TvlInUsd:       tvlInUsd.String(),
-			PriceIntervals: v.PriceIntervals,
+			PriceInterval:  v.PriceInterval,
 			Price:          FormatFloat(newSwapPrice, 2),
 			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
