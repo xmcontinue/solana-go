@@ -3,7 +3,9 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"math"
 	"sort"
+	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -102,8 +104,8 @@ func SwapTotalCount() error {
 			TxNum:          swapCountTotal.TxNum,
 			Apr:            apr,
 			TvlInUsd:       tvlInUsd.String(),
-			PriceInterval:  v.PriceInterval,
-			Price:          newSwapPrice.String(),
+			PriceIntervals: v.PriceIntervals,
+			Price:          FormatFloat(newSwapPrice, 2),
 			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
@@ -144,7 +146,7 @@ func SwapTotalCount() error {
 	for _, v := range swapCountToApi.Tokens {
 
 		if price, ok := tokenPriceMap[v.Name]; ok {
-			v.Price = price.newPrice.String()
+			v.Price = FormatFloat(price.newPrice, 2)
 			v.PriceRate24h = price.newPrice.Sub(price.beforePrice).Div(price.beforePrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%"
 		} else {
 			v.Price = "0.00"
@@ -270,4 +272,10 @@ func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string
 	}
 
 	pairPriceToTokenPrice(pairPriceList, tokenPriceList)
+}
+
+func FormatFloat(num decimal.Decimal, d int) string {
+	f, _ := num.Float64()
+	n := math.Pow10(d)
+	return strconv.FormatFloat(math.Trunc(f*n)/n, 'f', -1, 64)
 }
