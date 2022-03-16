@@ -95,7 +95,7 @@ func (m *KLineTyp) Name() domain.DateType {
 	return m.DateType
 }
 
-// 最近一个时间点，并替换原来的值
+// GetDate 获取最近的时间类型的时间点
 func (m *KLineTyp) GetDate() *time.Time {
 	var date time.Time
 	if m.DateType == domain.DateMin {
@@ -115,17 +115,7 @@ func (m *KLineTyp) GetDate() *time.Time {
 	} else if m.DateType == domain.DateDay {
 		date = time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), 0, 0, 0, 0, m.Date.Location())
 	} else if m.DateType == domain.DateWek {
-		// 计算时间所在周的第一天的日期，周日对应的是0，周一到周六对应1，2，3，4，5，6
-		innerDate := time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), 0, 0, 0, 0, m.Date.Location())
-		if innerDate.Weekday() == time.Monday {
-			date = innerDate
-		} else {
-			offset := int(time.Monday - innerDate.Weekday())
-			if offset > 0 {
-				offset = -6
-			}
-			date = innerDate.AddDate(0, 0, offset)
-		}
+		date = m.getWeekFirstDay()
 	} else if m.DateType == domain.DateMon {
 		firstDateTime := m.Date.AddDate(0, 0, -m.Date.Day()+1)
 		date = time.Date(firstDateTime.Year(), firstDateTime.Month(), firstDateTime.Day(), 0, 0, 0, 0, firstDateTime.Location())
@@ -134,7 +124,7 @@ func (m *KLineTyp) GetDate() *time.Time {
 	return &date
 }
 
-// if skip >0 向后跳，skip<0 向前跳
+// SkipIntervalTime if skip >0 向后跳，skip<0 向前跳
 func (m *KLineTyp) SkipIntervalTime(skip int) *time.Time {
 	var date time.Time
 	if m.Date.IsZero() {
@@ -157,23 +147,30 @@ func (m *KLineTyp) SkipIntervalTime(skip int) *time.Time {
 	} else if m.DateType == domain.DateDay {
 		date = time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), 0, 0, 0, 0, m.Date.Location()).Add(m.TimeInterval * time.Duration(skip))
 	} else if m.DateType == domain.DateWek {
-		// 计算时间所在周的第一天的日期，周日对应的是0，周一到周六对应1，2，3，4，5，6
-		innerDate := time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), 0, 0, 0, 0, m.Date.Location())
-		if innerDate.Weekday() == time.Monday {
-			date = innerDate
-		} else {
-			offset := int(time.Monday - innerDate.Weekday())
-			if offset > 0 {
-				offset = -6
-			}
-			date = innerDate.AddDate(0, 0, offset).Add(m.TimeInterval * time.Duration(skip))
-		}
+		date = m.getWeekFirstDay().Add(m.TimeInterval * time.Duration(skip))
 	} else if m.DateType == domain.DateMon {
 		firstDateTime := m.Date.AddDate(0, 0, -m.Date.Day()+1)
 		date = time.Date(firstDateTime.Year(), firstDateTime.Month(), firstDateTime.Day(), 0, 0, 0, 0, firstDateTime.Location()).AddDate(0, skip, 0)
 	}
 
 	return &date
+}
+
+// getWeekFirstDay 获取给定时间所在周的第一天
+func (m *KLineTyp) getWeekFirstDay() time.Time {
+	var date time.Time
+	// 计算时间所在周的第一天的日期，周日对应的是0，周一到周六对应1，2，3，4，5，6
+	innerDate := time.Date(m.Date.Year(), m.Date.Month(), m.Date.Day(), 0, 0, 0, 0, m.Date.Location())
+	if innerDate.Weekday() == time.Monday {
+		date = innerDate
+	} else {
+		offset := int(time.Monday - innerDate.Weekday())
+		if offset > 0 {
+			offset = -6
+		}
+		date = innerDate.AddDate(0, 0, offset)
+	}
+	return date
 }
 
 type Price struct {
@@ -214,4 +211,14 @@ func (s *SwapHistogram) UnmarshalBinary(data []byte) error {
 
 func (s *SwapHistogram) IsEmpty() bool {
 	return reflect.DeepEqual(s, SwapHistogram{})
+}
+
+type HistogramZ struct {
+	Score  int64
+	Member *SwapHistogram
+}
+
+type PriceZ struct {
+	Score  int64
+	Member *Price
 }

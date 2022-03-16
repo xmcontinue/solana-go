@@ -96,7 +96,8 @@ func SwapTotalCount() error {
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:           v.Name,
 			SwapAccount:    v.SwapAccount,
-			PoolAddress:    v.PoolAddress,
+			TokenAReserves: v.TokenA.SwapTokenAccount,
+			TokenBReserves: v.TokenB.SwapTokenAccount,
 			VolInUsd24h:    volInUsd24h.String(),
 			TxNum24h:       swapCount24h.TxNum,
 			VolInUsd:       volInUsd.String(),
