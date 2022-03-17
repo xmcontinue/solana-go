@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sort"
+	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -68,6 +69,8 @@ func SwapTotalCount() error {
 		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCount24h.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newSwapCount.TokenAUSD).Round(6), swapCountTotal.TokenBVolume.Mul(newSwapCount.TokenBUSD).Round(6)
 		tvlInUsd, volInUsd24h, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol.Add(tokenBVol)
+		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolume.Mul(newSwapCount.TokenAUSD)).Round(6), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolume.Mul(newSwapCount.TokenBUSD)).Round(6)
+		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolume.Mul(newSwapCount.TokenAUSD)).Round(6), tokenBVol.Add(swapCountTotal.TokenBQuoteVolume.Mul(newSwapCount.TokenBUSD)).Round(6)
 
 		// 计算apr
 		apr := "0%"
@@ -102,7 +105,7 @@ func SwapTotalCount() error {
 			Apr:            apr,
 			TvlInUsd:       tvlInUsd.String(),
 			PriceInterval:  v.PriceInterval,
-			Price:          newSwapPrice.String(),
+			Price:          FormatFloat(newSwapPrice, 6),
 			PriceRate24h:   newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
@@ -112,17 +115,17 @@ func SwapTotalCount() error {
 			swapCountToApi,
 			&domain.SwapCountToApiToken{
 				Name:        v.TokenA.Symbol,
-				VolInUsd24h: tokenAVol24h.String(),
+				VolInUsd24h: tokenA24hVol.String(),
 				TxNum24h:    swapCount24h.TxNum,
-				VolInUsd:    tokenAVol.String(),
+				VolInUsd:    tokenATotalVol.String(),
 				TxNum:       swapCountTotal.TxNum,
 				TvlInUsd:    tokenATvl.String(),
 			},
 			&domain.SwapCountToApiToken{
 				Name:        v.TokenB.Symbol,
-				VolInUsd24h: tokenBVol24h.String(),
+				VolInUsd24h: tokenB24hVol.String(),
 				TxNum24h:    swapCount24h.TxNum,
-				VolInUsd:    tokenBVol.String(),
+				VolInUsd:    tokenBTotalVol.String(),
 				TxNum:       swapCountTotal.TxNum,
 				TvlInUsd:    tokenBTvl.String(),
 			},
@@ -143,7 +146,7 @@ func SwapTotalCount() error {
 	for _, v := range swapCountToApi.Tokens {
 
 		if price, ok := tokenPriceMap[v.Name]; ok {
-			v.Price = price.newPrice.String()
+			v.Price = FormatFloat(price.newPrice, 6)
 			v.PriceRate24h = price.newPrice.Sub(price.beforePrice).Div(price.beforePrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%"
 		} else {
 			v.Price = "0.00"
@@ -269,4 +272,9 @@ func pairPriceToTokenPrice(pairPriceList []*pairPrice, tokenPriceList map[string
 	}
 
 	pairPriceToTokenPrice(pairPriceList, tokenPriceList)
+}
+
+func FormatFloat(num decimal.Decimal, d int) string {
+	f, _ := num.Float64()
+	return strconv.FormatFloat(f, 'f', d, 64)
 }

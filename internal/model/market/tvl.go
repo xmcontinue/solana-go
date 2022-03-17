@@ -425,7 +425,7 @@ func SumSwapCountVolForKLines(ctx context.Context, filter ...Filter) (*domain.Sw
 		swapCountKLineVolCount = &domain.SwapCountKLineVolCount{}
 	)
 
-	if err = db.Model(&domain.SwapCountKLine{}).Select("SUM(token_a_volume) as token_a_volume, SUM(token_b_volume) as token_b_volume, SUM(tx_num) as tx_num").Scopes(filter...).Scan(&swapCountKLineVolCount).Error; err != nil {
+	if err = db.Model(&domain.SwapCountKLine{}).Select("SUM(token_a_volume) as token_a_volume, SUM(token_b_volume) as token_b_volume, SUM(token_a_quote_volume) as token_a_quote_volume, SUM(token_b_quote_volume) as token_b_quote_volume, SUM(tx_num) as tx_num").Scopes(filter...).Scan(&swapCountKLineVolCount).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 
