@@ -52,6 +52,7 @@ type UserSwapCount struct {
 	MinTxVolume             decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                   // 最小交易额
 	WithdrawLiquidityVolume decimal.Decimal `json:"withdraw_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                       // 移出流动性数量 // TODO 新加字段
 	DepositLiquidityVolume  decimal.Decimal `json:"deposit_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                        // 添加流动性数量 // TODO 新加字段
+	ClaimVolume             decimal.Decimal `json:"claim_volume"  gorm:"type:decimal(36,18);default:0"`                                                    // Claim数量 // TODO 新加字段
 }
 
 // UserSwapCountDay TODO 更名为 UserCountKline
@@ -71,8 +72,9 @@ type UserSwapCountDay struct {
 	TxNum                   int64           `json:"tx_num"`                                                                                                               // 交易笔数
 	MaxTxVolume             decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                                   // 最大交易额，单位是价格 usd
 	MinTxVolume             decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                                  // 最小交易额，单位是价格 usd
-	WithdrawLiquidityVolume decimal.Decimal `json:"withdraw_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                                      // 移出流动性数量 // TODO 新加字段s
+	WithdrawLiquidityVolume decimal.Decimal `json:"withdraw_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                                      // 移出流动性数量 // TODO 新加字段
 	DepositLiquidityVolume  decimal.Decimal `json:"deposit_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                                       // 添加流动性数量 // TODO 新加字段
+	ClaimVolume             decimal.Decimal `json:"claim_volume"  gorm:"type:decimal(36,18);default:0"`                                                                   // Claim数量 // TODO 新加字段
 	Date                    *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:user_swap_tvl_count_day_swap_address_unique_key"`                   // 统计日期
 	DateType                DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key"` // 时间类型（min,quarter,hour,day,wek,mon） // TODO 新加字段
 }
