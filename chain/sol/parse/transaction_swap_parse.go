@@ -195,7 +195,9 @@ func (t *Tx) calculate(k int, amountCount *AmountCount, config *domain.SwapConfi
 
 	accounts := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
 	var innerInstructions []solana.CompiledInstruction
-	if len(t.LiquidityRecords) > 0 {
+	if len(t.ClaimRecords) > 0 {
+		innerInstructions = t.ClaimRecords[k].InnerInstructions
+	} else if len(t.LiquidityRecords) > 0 {
 		innerInstructions = t.LiquidityRecords[k].InnerInstructions
 	} else {
 		innerInstructions = t.SwapRecords[k].InnerInstructions
