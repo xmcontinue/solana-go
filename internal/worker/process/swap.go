@@ -12,20 +12,22 @@ import (
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
+	"git.cplus.link/crema/backend/pkg/kline"
 )
 
-// SwapAndUserCount 同步更新swap_counts表和user_swap_counts表
-type SwapAndUserCount struct {
+// SwapCount 同步更新swap_counts表和user_swap_counts表
+type SwapCount struct {
 	ID                int64
 	LastTransactionID int64
 	SwapAccount       string
 	SwapRecords       []*parse.SwapRecord
+	tx                *parse.Tx
 	BlockDate         *time.Time
 	spec              string
 }
 
 // ParserDate 按照区块时间顺序解析
-func (s *SwapAndUserCount) ParserDate() error {
+func (s *SwapCount) ParserDate() error {
 	for {
 		swapCount, err := model.QuerySwapCount(context.TODO(), model.SwapAddress(s.SwapAccount))
 		if err != nil && !errors.Is(err, errors.RecordNotFound) {
@@ -87,7 +89,7 @@ func (s *SwapAndUserCount) ParserDate() error {
 	return nil
 }
 
-func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
+func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 	var err error
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
@@ -97,14 +99,6 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 			}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
-				return errors.Wrap(err)
-			}
-
-			if err = s.userSwapCount(ctx, swapRecord, tx); err != nil {
-				return errors.Wrap(err)
-			}
-
-			if err = s.userSwapCountDay(ctx, swapRecord, tx); err != nil {
 				return errors.Wrap(err)
 			}
 
@@ -149,25 +143,94 @@ func (s *SwapAndUserCount) WriteToDB(tx *domain.SwapTransaction) error {
 				VolInUsd:              tokenAVolume.Mul(tx.TokenAUSD).Abs().Add(tokenBVolume.Mul(tx.TokenBUSD)).Abs(),
 			}
 
-			for _, dateType := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
-				KLType := &KLineTyp{
-					Date:                   tx.BlockTime,
-					DateType:               dateType.DateType,
-					BeforeIntervalDateType: dateType.BeforeIntervalDateType,
-					Interval:               dateType.Interval,
-					InnerTimeInterval:      dateType.InnerTimeInterval,
-				}
-
-				if err = KLType.updateKline(ctx, swapCountKLine); err != nil {
+			newKline := kline.NewKline(s.BlockDate)
+			for _, t := range newKline.Types {
+				swapCountKLine.DateType = t.DateType
+				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 					return errors.Wrap(err)
 				}
 			}
-			return nil
+
 		}
 		return nil
 	}
 
 	if err = model.Transaction(context.TODO(), trans); err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountKLine, t *kline.Type) error {
+
+	currentSwapCountKLine, err := model.QuerySwapCountKLine(ctx,
+		model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
+		model.NewFilter("date = ?", t.Date),
+		model.NewFilter("date_type = ?", t.DateType))
+
+	if err != nil && !errors.Is(err, errors.RecordNotFound) {
+		return errors.Wrap(err)
+	}
+
+	if currentSwapCountKLine != nil {
+		if currentSwapCountKLine.High.GreaterThan(swapCountKLine.High) {
+			swapCountKLine.High = currentSwapCountKLine.High
+		}
+		if currentSwapCountKLine.Low.LessThan(swapCountKLine.Low) {
+			swapCountKLine.Low = currentSwapCountKLine.Low
+		}
+	}
+
+	if t.DateType != domain.DateMin {
+		avg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
+			swapCountKLines, err := model.QuerySwapCountKLines(ctx, t.Interval, 0,
+				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
+				model.SwapAddress(swapCountKLine.SwapAddress),
+				model.NewFilter("date < ?", endTime),
+				model.OrderFilter("date desc"),
+			)
+
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			// 减少for 循环
+			swapCountKLineMap := make(map[int64]*domain.SwapCountKLine, len(swapCountKLines))
+			for index := range swapCountKLines {
+				swapCountKLineMap[swapCountKLines[index].Date.Unix()] = swapCountKLines[index]
+			}
+
+			// 找到第一个数据
+			lastAvg := &domain.SwapCountKLine{}
+			for index := range swapCountKLines {
+				if swapCountKLines[len(swapCountKLines)-index-1].Date.After((*avgList)[0].Date) {
+					break
+				}
+				lastAvg = swapCountKLines[len(swapCountKLines)-index-1]
+			}
+
+			for index, avg := range *avgList {
+				lastSwapCountKLine, ok := swapCountKLineMap[avg.Date.Unix()]
+				if ok {
+					lastAvg = lastSwapCountKLine
+					(*avgList)[index].Avg = lastSwapCountKLine.Avg
+				} else {
+					(*avgList)[index].Avg = lastAvg.Settle // 上一个周期的结束值用作空缺周期的平均值
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		swapCountKLine.Avg = avg
+	}
+
+	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, t.Date)
+	if err != nil {
 		return errors.Wrap(err)
 	}
 
@@ -292,7 +355,7 @@ func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decima
 	return sum.Div(decimal.NewFromInt32(count)), nil
 }
 
-func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapRecord) error {
+func (s *SwapCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapRecord) error {
 	swapCount := &domain.SwapCount{
 		LastSwapTransactionID: s.ID,
 		SwapAddress:           swapRecord.SwapConfig.SwapAccount,
@@ -310,81 +373,4 @@ func (s *SwapAndUserCount) updateSwapCount(ctx context.Context, swapRecord *pars
 	}
 
 	return nil
-}
-
-// userSwapCount 写入user_counts 表
-func (s *SwapAndUserCount) userSwapCount(ctx context.Context, swapRecord *parse.SwapRecord, tx *domain.SwapTransaction) error {
-	userSwapCount := &domain.UserSwapCount{
-		LastSwapTransactionID: s.ID,
-		UserAddress:           swapRecord.UserTokenBAddress,
-		SwapAddress:           swapRecord.SwapConfig.SwapAccount,
-		TokenAAddress:         swapRecord.SwapConfig.TokenA.SwapTokenAccount,
-		TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
-		UserTokenAVolume:      swapRecord.UserCount.TokenAVolume,
-		UserTokenBVolume:      swapRecord.UserCount.TokenBVolume,
-		UserTokenABalance:     swapRecord.UserCount.TokenABalance,
-		UserTokenBBalance:     swapRecord.UserCount.TokenBBalance,
-		TxNum:                 1,
-		MaxTxVolume:           swapRecord.UserCount.TokenAVolume.Mul(tx.TokenAUSD),
-		MinTxVolume:           swapRecord.UserCount.TokenAVolume.Mul(tx.TokenAUSD),
-	}
-
-	_, err := model.UpsertUserSwapCount(ctx, userSwapCount)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	return nil
-}
-
-// userSwapCountDay 写入user_count_days 表
-func (s *SwapAndUserCount) userSwapCountDay(ctx context.Context, swapRecord *parse.SwapRecord, tx *domain.SwapTransaction) error {
-	userSwapCountDate := time.Date(s.BlockDate.Year(), s.BlockDate.Month(), s.BlockDate.Day(), 0, 0, 0, 0, s.BlockDate.Location())
-	// 统计用户每日swap count
-	userSwapCountDay := &domain.UserSwapCountDay{
-		LastSwapTransactionID: s.ID,
-		UserAddress:           swapRecord.UserOwnerAddress,
-		SwapAddress:           swapRecord.SwapConfig.SwapAccount,
-		TokenAAddress:         swapRecord.SwapConfig.TokenA.SwapTokenAccount,
-		TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
-		UserTokenAVolume:      swapRecord.UserCount.TokenAVolume,
-		UserTokenBVolume:      swapRecord.UserCount.TokenBVolume,
-		UserTokenABalance:     swapRecord.UserCount.TokenABalance,
-		UserTokenBBalance:     swapRecord.UserCount.TokenBBalance,
-		TxNum:                 1,
-		Date:                  &userSwapCountDate,
-	}
-	userSwapCountDays, total, err := model.QueryUserSwapCountDay(
-		ctx,
-		1,
-		0,
-		model.NewFilter("user_address = ?", swapRecord.UserOwnerAddress),
-		model.NewFilter("swap_address = ?", swapRecord.SwapConfig.SwapAccount),
-		model.NewFilter("date = ?", userSwapCountDate),
-	)
-
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if total == 0 {
-		userSwapCountDay.MaxTxVolume = userSwapCountDay.UserTokenAVolume
-		userSwapCountDay.MinTxVolume = userSwapCountDay.UserTokenAVolume
-	} else {
-		if userSwapCountDays[0].MaxTxVolume.LessThan(userSwapCountDay.UserTokenAVolume) {
-			userSwapCountDay.MaxTxVolume = userSwapCountDay.UserTokenAVolume.Mul(tx.TokenAUSD)
-		}
-
-		if userSwapCountDays[0].MinTxVolume.GreaterThan(userSwapCountDay.UserTokenAVolume) {
-			userSwapCountDay.MaxTxVolume = userSwapCountDay.UserTokenAVolume.Mul(tx.TokenAUSD)
-		}
-	}
-
-	_, err = model.UpsertUserSwapCountDay(ctx, userSwapCountDay, s.BlockDate)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	return nil
-
 }

@@ -96,20 +96,6 @@ type GetNetRecordResp struct {
 	List   []*domain.NetRecode `json:"list"`
 }
 
-type QueryUserSwapTvlCountReq struct {
-	UserAddress string           `json:"user_address" binding:"omitempty"`
-	Limit       int              `json:"limit,omitempty"        form:"limit"        gquery:"-"`                        // limit
-	Offset      int              `json:"offset,omitempty"       form:"offset"       gquery:"-"`                        // offset
-	OrderBy     *gquery.GOrderBy `json:"order_by,omitempty"     form:"order_by"     gquery:"id,updated_at,created_at"` // 排序
-}
-
-type QueryUserSwapTvlCountResp struct {
-	Total  int64                   `json:"total"`
-	Limit  int                     `json:"limit"`
-	Offset int                     `json:"offset"`
-	List   []*domain.UserSwapCount `json:"list"`
-}
-
 type QueryUserSwapTvlCountDayReq struct {
 	UserAddress string           `json:"user_address" binding:"omitempty"`
 	Limit       int              `json:"limit,omitempty"        form:"limit"        gquery:"-"`                        // limit
@@ -118,10 +104,10 @@ type QueryUserSwapTvlCountDayReq struct {
 }
 
 type QueryUserSwapTvlCountDayResp struct {
-	Total  int64                      `json:"total"`
-	Limit  int                        `json:"limit"`
-	Offset int                        `json:"offset"`
-	List   []*domain.UserSwapCountDay `json:"list"`
+	Total  int64                    `json:"total"`
+	Limit  int                      `json:"limit"`
+	Offset int                      `json:"offset"`
+	List   []*domain.UserCountKLine `json:"list"`
 }
 
 type GetKlineReq struct {

@@ -29,10 +29,14 @@ type InterTime struct {
 	Avg  decimal.Decimal
 }
 
-func NewKline() *Kline {
-	now := time.Now().UTC()
+func NewKline(date *time.Time) *Kline {
+	if date.IsZero() {
+		temp := time.Now().UTC()
+		date = &temp
+	}
+
 	k := &Kline{
-		Date: &now,
+		Date: date,
 		Types: []*Type{
 			{
 				BeforeIntervalDateType: domain.DateNone,
