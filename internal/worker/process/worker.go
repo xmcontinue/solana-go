@@ -114,6 +114,8 @@ func Init(viperConf *config.Config) error {
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncKline"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
+	userSyncTransactionJob := NewJobInfo("UserSync")
+	job.JobList["UserSyncKline"] = userSyncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
 
 	job.Cron.Start()
