@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -89,7 +90,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		}
 	)
 
-	sql, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
+	upSertSQL, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_counts.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_counts.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -105,7 +106,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(sql, args...).Scan(&after)
+	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -155,7 +156,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		avgFmt = "avg = ?"
 	}
 
-	sql, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
+	upSertSQL, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -181,7 +182,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(sql, args...).Scan(&after)
+	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -189,35 +190,55 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 	return &after, nil
 }
 
-func UpsertUserSwapCount(ctx context.Context, userSwapCount *domain.UserSwapCount) (*domain.UserSwapCount, error) {
+func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCountKLine) (*domain.UserCountKLine, error) {
 	var (
-		after   domain.UserSwapCount
+		after   domain.UserCountKLine
 		now     = time.Now().UTC()
 		inserts = map[string]interface{}{
-			"last_swap_transaction_id": userSwapCount.LastSwapTransactionID,
-			"user_address":             userSwapCount.UserAddress,
-			"swap_address":             userSwapCount.SwapAddress,
-			"token_a_address":          userSwapCount.TokenAAddress,
-			"token_b_address":          userSwapCount.TokenBAddress,
-			"user_token_a_volume":      userSwapCount.UserTokenAVolume.Abs(),
-			"user_token_b_volume":      userSwapCount.UserTokenBVolume.Abs(),
-			"user_token_a_balance":     userSwapCount.UserTokenABalance,
-			"user_token_b_balance":     userSwapCount.UserTokenBBalance,
-			"updated_at":               &now,
-			"created_at":               &now,
-			"tx_num":                   1,
+			"last_swap_transaction_id":          userSwapCount.LastSwapTransactionID,
+			"user_address":                      userSwapCount.UserAddress,
+			"swap_address":                      userSwapCount.SwapAddress,
+			"token_a_address":                   userSwapCount.TokenAAddress,
+			"token_b_address":                   userSwapCount.TokenBAddress,
+			"date_type":                         userSwapCount.DateType,
+			"token_a_symbol":                    userSwapCount.TokenASymbol,
+			"token_b_symbol":                    userSwapCount.TokenBSymbol,
+			"user_token_a_volume":               userSwapCount.UserTokenAVolume.Abs(),
+			"user_token_b_volume":               userSwapCount.UserTokenBVolume.Abs(),
+			"token_a_quote_volume":              userSwapCount.TokenAQuoteVolume,
+			"token_b_quote_volume":              userSwapCount.TokenBQuoteVolume,
+			"user_token_a_balance":              userSwapCount.UserTokenABalance,
+			"user_token_b_balance":              userSwapCount.UserTokenBBalance,
+			"updated_at":                        &now,
+			"created_at":                        &now,
+			"tx_num":                            1,
+			"date":                              userSwapCount.Date,
+			"token_a_withdraw_liquidity_volume": userSwapCount.TokenAWithdrawLiquidityVolume,
+			"token_b_withdraw_liquidity_volume": userSwapCount.TokenBWithdrawLiquidityVolume,
+			"token_a_deposit_liquidity_volume":  userSwapCount.TokenADepositLiquidityVolume,
+			"token_b_deposit_liquidity_volume":  userSwapCount.TokenBDepositLiquidityVolume,
+			"token_a_claim_volume":              userSwapCount.TokenAClaimVolume,
+			"token_b_claim_volume":              userSwapCount.TokenBClaimVolume,
 		}
 	)
 
-	sql, args, err := sq.Insert("user_swap_counts").SetMap(inserts).Suffix("ON CONFLICT(user_address,swap_address) DO UPDATE SET").
+	upSertSQL, args, err := sq.Insert("user_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(user_address,date,date_type,swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", userSwapCount.LastSwapTransactionID).
-		Suffix("user_token_a_volume = user_swap_counts.user_token_a_volume + ?,", userSwapCount.UserTokenAVolume.Abs()).
-		Suffix("user_token_b_volume = user_swap_counts.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
+		Suffix("user_token_a_volume = user_count_k_lines.user_token_a_volume + ?,", userSwapCount.UserTokenAVolume.Abs()).
+		Suffix("user_token_b_volume = user_count_k_lines.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
 		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
 		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
-		Suffix("tx_num = user_swap_counts.tx_num +1").
+		Suffix("token_a_quote_volume = ?,", userSwapCount.TokenAQuoteVolume).
+		Suffix("token_b_quote_volume = ?,", userSwapCount.TokenBQuoteVolume).
+		Suffix("token_a_withdraw_liquidity_volume = user_count_k_lines.token_a_withdraw_liquidity_volume + ?,", userSwapCount.TokenAWithdrawLiquidityVolume).
+		Suffix("token_b_withdraw_liquidity_volume = user_count_k_lines.token_b_withdraw_liquidity_volume + ?,", userSwapCount.TokenBWithdrawLiquidityVolume).
+		Suffix("token_a_deposit_liquidity_volume = user_count_k_lines.token_a_deposit_liquidity_volume + ?,", userSwapCount.TokenADepositLiquidityVolume).
+		Suffix("token_b_deposit_liquidity_volume = user_count_k_lines.token_b_deposit_liquidity_volume + ?,", userSwapCount.TokenBDepositLiquidityVolume).
+		Suffix("token_a_claim_volume = user_count_k_lines.token_a_claim_volume + ?,", userSwapCount.TokenAClaimVolume).
+		Suffix("token_b_claim_volume = user_count_k_lines.token_b_claim_volume + ?,", userSwapCount.TokenBClaimVolume).
+		Suffix("tx_num = user_count_k_lines.tx_num +1").
 		Suffix("WHERE ").
-		Suffix("user_swap_counts.last_swap_transaction_id <= ?", userSwapCount.LastSwapTransactionID).
+		Suffix("user_count_k_lines.last_swap_transaction_id <= ?", userSwapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -225,7 +246,7 @@ func UpsertUserSwapCount(ctx context.Context, userSwapCount *domain.UserSwapCoun
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(sql, args...).Scan(&after)
+	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -233,59 +254,14 @@ func UpsertUserSwapCount(ctx context.Context, userSwapCount *domain.UserSwapCoun
 	return &after, nil
 }
 
-func UpsertUserSwapCountDay(ctx context.Context, userSwapCount *domain.UserSwapCountDay, blockDate *time.Time) (*domain.UserSwapCountDay, error) {
-	var (
-		after   domain.UserSwapCountDay
-		now     = time.Now().UTC()
-		inserts = map[string]interface{}{
-			"last_swap_transaction_id": userSwapCount.LastSwapTransactionID,
-			"user_address":             userSwapCount.UserAddress,
-			"swap_address":             userSwapCount.SwapAddress,
-			"token_a_address":          userSwapCount.TokenAAddress,
-			"token_b_address":          userSwapCount.TokenBAddress,
-			"user_token_a_volume":      userSwapCount.UserTokenAVolume.Abs(),
-			"user_token_b_volume":      userSwapCount.UserTokenBVolume.Abs(),
-			"user_token_a_balance":     userSwapCount.UserTokenABalance,
-			"user_token_b_balance":     userSwapCount.UserTokenBBalance,
-			"updated_at":               &now,
-			"created_at":               &now,
-			"tx_num":                   1,
-			"date":                     blockDate,
-		}
-	)
-
-	sql, args, err := sq.Insert("user_swap_count_days").SetMap(inserts).Suffix("ON CONFLICT(user_address,swap_address,date) DO UPDATE SET").
-		Suffix("last_swap_transaction_id = ?,", userSwapCount.LastSwapTransactionID).
-		Suffix("user_token_a_volume = user_swap_count_days.user_token_a_volume + ?,", userSwapCount.UserTokenAVolume.Abs()).
-		Suffix("user_token_b_volume = user_swap_count_days.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
-		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
-		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
-		Suffix("tx_num = user_swap_count_days.tx_num +1").
-		Suffix("WHERE ").
-		Suffix("user_swap_count_days.last_swap_transaction_id <= ?", userSwapCount.LastSwapTransactionID).
-		Suffix("RETURNING *").
-		ToSql()
-
-	if err != nil {
-		return nil, errors.Wrap(err)
-	}
-
-	res := wDB(ctx).Raw(sql, args...).Scan(&after)
-	if err = res.Error; err != nil {
-		return nil, errors.Wrap(err)
-	}
-
-	return &after, nil
-}
-
-func QueryUserSwapCountDay(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCountDay, int64, error) {
+func QueryUserSwapCountDay(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserCountKLine, int64, error) {
 	var (
 		db    = rDB(ctx)
-		list  []*domain.UserSwapCountDay
+		list  []*domain.UserCountKLine
 		total int64
 		err   error
 	)
-	if err = db.Model(&domain.UserSwapCountDay{}).Scopes(filter...).Count(&total).Error; err != nil {
+	if err = db.Model(&domain.UserCountKLine{}).Scopes(filter...).Count(&total).Error; err != nil {
 		return nil, 0, errors.Wrap(err)
 	}
 
@@ -316,55 +292,6 @@ func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount,
 	return list, nil
 }
 
-func QueryUserSwapCount(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCount, int64, error) {
-	var (
-		db    = rDB(ctx)
-		list  []*domain.UserSwapCount
-		total int64
-		err   error
-	)
-	if err = db.Model(&domain.UserSwapCount{}).Scopes(filter...).Count(&total).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
-	}
-
-	if total == 0 {
-		return list, 0, nil
-	}
-
-	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
-		return nil, 0, errors.Wrap(err)
-	}
-
-	return list, total, nil
-}
-
-func CountUserSwapCount(ctx context.Context, filter ...Filter) (int64, error) {
-	var (
-		db    = rDB(ctx)
-		total int64
-		err   error
-	)
-	if err = db.Model(&domain.UserSwapCount{}).Scopes(filter...).Count(&total).Error; err != nil {
-		return 0, errors.Wrap(err)
-	}
-
-	return total, nil
-}
-
-func QueryUserSwapCounts(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.UserSwapCount, error) {
-	var (
-		db   = rDB(ctx)
-		list []*domain.UserSwapCount
-		err  error
-	)
-
-	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
-		return nil, errors.Wrap(err)
-	}
-
-	return list, nil
-}
-
 func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
 	var swapCount = &domain.SwapCount{}
 	if err := rDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Take(swapCount).Error; err != nil {
@@ -376,7 +303,28 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, e
 	return swapCount, nil
 
 }
+func UpdateUserCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	db := wDB(ctx).Model(&domain.UserCountKLine{}).Scopes(filter...).Updates(updates)
+	if err := db.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
 
+func GetMaxUserCountKLineID(ctx context.Context, swapAccount string) (int64, error) {
+	var max sql.NullInt64
+	if err := rDB(ctx).Model(&domain.UserCountKLine{}).Select("max(last_swap_transaction_id)").Scopes(SwapAddress(swapAccount), NewFilter("date_type = 'mon'")).Take(&max).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, errors.Wrap(errors.RecordNotFound)
+		}
+		return 0, errors.Wrap(err)
+	}
+	if max.Valid {
+		return max.Int64, nil
+	}
+
+	return 0, nil
+}
 func UpdateSwapCountBySwapAccount(ctx context.Context, swapAccount string, updates map[string]interface{}, filter ...Filter) error {
 	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, SwapAddress(swapAccount))...).Updates(updates).Error; err != nil {
 		if dbPool.IsDuplicateKeyError(err) {

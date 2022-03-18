@@ -13,6 +13,7 @@ type Tx struct {
 	Data             rpc.GetTransactionResult
 	SwapRecords      []*SwapRecord
 	LiquidityRecords []*LiquidityRecord
+	ClaimRecords     []*ClaimRecord
 }
 
 const cremaSwapProgramAddress = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
