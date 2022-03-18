@@ -209,8 +209,6 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 			"token_b_quote_volume":              userSwapCount.TokenBQuoteVolume,
 			"user_token_a_balance":              userSwapCount.UserTokenABalance,
 			"user_token_b_balance":              userSwapCount.UserTokenBBalance,
-			"max_tx_volume":                     userSwapCount.MaxTxVolume,
-			"min_tx_volume":                     userSwapCount.MinTxVolume,
 			"updated_at":                        &now,
 			"created_at":                        &now,
 			"tx_num":                            1,
@@ -238,8 +236,6 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		Suffix("token_b_deposit_liquidity_volume = user_count_k_lines.token_b_deposit_liquidity_volume + ?,", userSwapCount.TokenBDepositLiquidityVolume).
 		Suffix("token_a_claim_volume = user_count_k_lines.token_a_claim_volume + ?,", userSwapCount.TokenAClaimVolume).
 		Suffix("token_b_claim_volume = user_count_k_lines.token_b_claim_volume + ?,", userSwapCount.TokenBClaimVolume).
-		Suffix("max_tx_volume =  ?,", userSwapCount.MaxTxVolume).
-		Suffix("min_tx_volume =  ?,", userSwapCount.MinTxVolume).
 		Suffix("tx_num = user_count_k_lines.tx_num +1").
 		Suffix("WHERE ").
 		Suffix("user_count_k_lines.last_swap_transaction_id <= ?", userSwapCount.LastSwapTransactionID).

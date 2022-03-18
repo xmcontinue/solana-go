@@ -52,8 +52,6 @@ type UserCountKLine struct {
 	UserTokenABalance             decimal.Decimal `json:"user_token_a_balance" gorm:"type:decimal(36,18);default:0"`                                                   // swap token a 余额
 	UserTokenBBalance             decimal.Decimal `json:"user_token_b_balance" gorm:"type:decimal(36,18);default:0"`                                                   // swap token b 余额
 	TxNum                         int64           `json:"tx_num"`                                                                                                      // 交易笔数
-	MaxTxVolume                   decimal.Decimal `json:"max_tx_volume" gorm:"type:decimal(36,18);default:0"`                                                          // 最大交易额，单位是价格 usd
-	MinTxVolume                   decimal.Decimal `json:"min_tx_volume"  gorm:"type:decimal(36,18);default:0"`                                                         // 最小交易额，单位是价格 usd
 	TokenAWithdrawLiquidityVolume decimal.Decimal `json:"token_a_withdraw_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                     // 移出流动性数量 // TODO 新加字段
 	TokenADepositLiquidityVolume  decimal.Decimal `json:"token_a_deposit_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                      // 添加流动性数量 // TODO 新加字段
 	TokenBWithdrawLiquidityVolume decimal.Decimal `json:"token_b_withdraw_liquidity_volume"  gorm:"type:decimal(36,18);default:0"`                                     // 移出流动性数量 // TODO 新加字段
