@@ -44,7 +44,7 @@ type Index struct {
 
 // ParseTxALl 解析TX内的所有类型
 func (t *Tx) ParseTxALl() error {
-	if t.ParseTxToSwap() != nil && t.ParseTxToLiquidity() != nil && t.ParseTxToLiquidity() != nil {
+	if t.ParseTxToSwap() != nil && t.ParseTxToLiquidity() != nil && t.ParseTxToClaim() != nil {
 		return errors.New("parse tx all failed")
 	}
 	return nil
