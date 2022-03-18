@@ -161,7 +161,8 @@ func (u *UserCount) WriteToDB() error {
 			userCountKLine.TxNum = 1
 			userCountKLine.TokenAAddress = liquidity.SwapConfig.TokenA.SwapTokenAccount
 			userCountKLine.TokenBAddress = liquidity.SwapConfig.TokenB.SwapTokenAccount
-
+			userCountKLine.TokenASymbol = liquidity.SwapConfig.TokenA.Symbol
+			userCountKLine.TokenBSymbol = liquidity.SwapConfig.TokenB.Symbol
 			if liquidity.Direction == 0 {
 				userCountKLine.TokenAWithdrawLiquidityVolume = userCountKLine.TokenAWithdrawLiquidityVolume.Add(liquidity.UserCount.TokenAVolume)
 				userCountKLine.TokenBWithdrawLiquidityVolume = userCountKLine.TokenBWithdrawLiquidityVolume.Add(liquidity.UserCount.TokenBVolume)
@@ -185,6 +186,8 @@ func (u *UserCount) WriteToDB() error {
 			userCountKLine.SwapAddress = claim.SwapConfig.SwapAccount
 			userCountKLine.TokenAAddress = claim.SwapConfig.TokenA.SwapTokenAccount
 			userCountKLine.TokenBAddress = claim.SwapConfig.TokenB.SwapTokenAccount
+			userCountKLine.TokenASymbol = claim.SwapConfig.TokenA.Symbol
+			userCountKLine.TokenBSymbol = claim.SwapConfig.TokenB.Symbol
 
 			userCountKLine.TokenAClaimVolume = userCountKLine.TokenAClaimVolume.Add(claim.UserCount.TokenAVolume)
 			userCountKLine.TokenBClaimVolume = userCountKLine.TokenBClaimVolume.Add(claim.UserCount.TokenBVolume)
@@ -214,7 +217,6 @@ func (u *UserCount) WriteToDB() error {
 
 // updateUserCountKLine 写入user_count_days 表
 func (u *UserCount) updateUserCountKLine(ctx context.Context, userCountKline *domain.UserCountKLine, t *kline.Type) error {
-
 	userSwapCountDays, total, err := model.QueryUserSwapCountDay(
 		ctx,
 		1,
