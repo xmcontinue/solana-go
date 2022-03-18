@@ -73,7 +73,7 @@ func (t *Tx) ParseTxToClaim() error {
 		}
 	}
 
-	err := t.calculateSwap()
+	err := t.calculateClaim()
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -123,4 +123,19 @@ func getClaimInnerInstructionsForInstructionIndex(index int, innerInstructions [
 		}
 	}
 	return nil, errors.RecordNotFound
+}
+
+// calculateClaim ...
+func (t *Tx) calculateClaim() error {
+	if len(t.ClaimRecords) == 0 {
+		return errors.RecordNotFound
+	}
+
+	for k, v := range t.ClaimRecords {
+		t.calculate(k, v.UserCount, v.SwapConfig)
+
+		t.calculate(k, v.TokenCount, v.SwapConfig)
+	}
+
+	return nil
 }
