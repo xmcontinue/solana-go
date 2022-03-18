@@ -90,7 +90,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		}
 	)
 
-	upSertSQL, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_counts.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_counts.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -106,7 +106,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -156,7 +156,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		avgFmt = "avg = ?"
 	}
 
-	upSertSQL, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -182,7 +182,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -222,14 +222,14 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		}
 	)
 
-	upSertSQL, args, err := sq.Insert("user_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(user_address,date,date_type,swap_address) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("user_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(user_address,date,date_type,swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", userSwapCount.LastSwapTransactionID).
 		Suffix("user_token_a_volume = user_count_k_lines.user_token_a_volume + ?,", userSwapCount.UserTokenAVolume.Abs()).
 		Suffix("user_token_b_volume = user_count_k_lines.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
+		Suffix("token_a_quote_volume = user_count_k_lines.token_a_quote_volume + ?,", userSwapCount.TokenAQuoteVolume).
+		Suffix("token_b_quote_volume = user_count_k_lines.token_b_quote_volume + ?,", userSwapCount.TokenBQuoteVolume).
 		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
 		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
-		Suffix("token_a_quote_volume = ?,", userSwapCount.TokenAQuoteVolume).
-		Suffix("token_b_quote_volume = ?,", userSwapCount.TokenBQuoteVolume).
 		Suffix("token_a_withdraw_liquidity_volume = user_count_k_lines.token_a_withdraw_liquidity_volume + ?,", userSwapCount.TokenAWithdrawLiquidityVolume).
 		Suffix("token_b_withdraw_liquidity_volume = user_count_k_lines.token_b_withdraw_liquidity_volume + ?,", userSwapCount.TokenBWithdrawLiquidityVolume).
 		Suffix("token_a_deposit_liquidity_volume = user_count_k_lines.token_a_deposit_liquidity_volume + ?,", userSwapCount.TokenADepositLiquidityVolume).
@@ -246,7 +246,7 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}

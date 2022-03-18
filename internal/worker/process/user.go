@@ -201,7 +201,7 @@ func (u *UserCount) WriteToDB() error {
 
 			userCountKLine.DateType = t.DateType
 			userCountKLine.Date = t.Date
-			if err = u.updateUserCountKLine(ctx, userCountKLine, t); err != nil {
+			if err = u.updateUserCountKLine(ctx, userCountKLine); err != nil {
 				return errors.Wrap(err)
 			}
 		}
@@ -216,34 +216,9 @@ func (u *UserCount) WriteToDB() error {
 }
 
 // updateUserCountKLine 写入user_count_days 表
-func (u *UserCount) updateUserCountKLine(ctx context.Context, userCountKline *domain.UserCountKLine, t *kline.Type) error {
-	userSwapCountDays, total, err := model.QueryUserSwapCountDay(
-		ctx,
-		1,
-		0,
-		model.NewFilter("user_address = ?", userCountKline.UserAddress),
-		model.NewFilter("swap_address = ?", userCountKline.SwapAddress),
-		model.NewFilter("date = ?", t.Date),
-	)
+func (u *UserCount) updateUserCountKLine(ctx context.Context, userCountKline *domain.UserCountKLine) error {
 
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if total == 0 {
-		userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		userCountKline.MinTxVolume = userCountKline.UserTokenAVolume
-	} else {
-		if userSwapCountDays[0].MaxTxVolume.LessThan(userCountKline.UserTokenAVolume) {
-			userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		}
-
-		if userSwapCountDays[0].MinTxVolume.GreaterThan(userCountKline.UserTokenAVolume) {
-			userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		}
-	}
-
-	_, err = model.UpsertUserSwapCountKLine(ctx, userCountKline)
+	_, err := model.UpsertUserSwapCountKLine(ctx, userCountKline)
 	if err != nil {
 		return errors.Wrap(err)
 	}
