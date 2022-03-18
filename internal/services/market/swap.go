@@ -177,23 +177,23 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 	return nil
 }
 
-func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
-	defer rpcx.Recover(ctx)
-	if err := validate(args); err != nil {
-		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
-	}
-
-	list, total, err := model.QueryUserSwapCount(ctx, limit(args.Limit), args.Offset, gquery.ParseQuery(args))
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	reply.Limit = limit(args.Limit)
-	reply.Offset = args.Offset
-	reply.List = list
-	reply.Total = total
-	return nil
-}
+//func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
+//	defer rpcx.Recover(ctx)
+//	if err := validate(args); err != nil {
+//		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+//	}
+//
+//	list, total, err := model.QueryUserSwapCount(ctx, limit(args.Limit), args.Offset, gquery.ParseQuery(args))
+//	if err != nil {
+//		return errors.Wrap(err)
+//	}
+//
+//	reply.Limit = limit(args.Limit)
+//	reply.Offset = args.Offset
+//	reply.List = list
+//	reply.Total = total
+//	return nil
+//}
 
 func (t *MarketService) QueryUserSwapTvlCountDay(ctx context.Context, args *iface.QueryUserSwapTvlCountDayReq, reply *iface.QueryUserSwapTvlCountDayResp) error {
 	defer rpcx.Recover(ctx)

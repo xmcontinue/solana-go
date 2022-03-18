@@ -48,7 +48,8 @@ func SyncSwapPrice() error {
 		})
 
 		// 处理kline数据
-		Kline := kline.NewKline()
+		now := time.Now().UTC()
+		Kline := kline.NewKline(&now)
 
 		swapPairPriceKLine := &domain.SwapPairPriceKLine{
 			SwapAddress: config.SwapAccount,
@@ -87,7 +88,8 @@ func SyncSwapPrice() error {
 
 	for k, v := range tokenPrices {
 		// 处理kline数据
-		Kline := kline.NewKline()
+		now := time.Now().UTC()
+		Kline := kline.NewKline(&now)
 
 		swapTokenPriceKLine := &domain.SwapTokenPriceKLine{
 			Symbol:   k,

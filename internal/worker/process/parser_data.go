@@ -57,7 +57,7 @@ func (s *SyncKline) Run() error {
 		return errors.Wrap(err)
 	}
 
-	swapAndUserCount := &SwapAndUserCount{
+	swapAndUserCount := &SwapCount{
 		LastTransactionID: lastSwapTransactionID,
 		SwapAccount:       s.swapConfig.SwapAccount,
 	}
@@ -66,6 +66,55 @@ func (s *SyncKline) Run() error {
 		return errors.Wrap(err)
 	}
 
+	return nil
+}
+
+// UserSyncKline sync transaction
+type UserSyncKline struct {
+	name       string
+	spec       string
+	swapConfig *domain.SwapConfig
+}
+
+func (s *UserSyncKline) Name() string {
+	return s.name
+}
+
+func (s *UserSyncKline) GetSpecFunc() string {
+	return s.spec
+}
+
+func (s *UserSyncKline) DeleteJobFunc(_ *JobInfo) error {
+	return nil
+}
+
+func (s *UserSyncKline) Run() error {
+	var err error
+	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddress(s.swapConfig.SwapAccount))
+	if err != nil {
+		logger.Error("query swap_pair_bases err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+	if swapPairBase == nil {
+		return nil
+	}
+
+	if swapPairBase.IsSync == false {
+		return nil
+	}
+
+	lastSwapTransactionID, err := getTransactionID()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	userCount := &UserCount{
+		LastTransactionID: lastSwapTransactionID,
+		SwapAccount:       s.swapConfig.SwapAccount,
+	}
+	if err = userCount.ParserDate(); err != nil {
+		return errors.Wrap(err)
+	}
 	return nil
 }
 
@@ -79,6 +128,27 @@ func CreateSyncKLine() error {
 
 	err := job.WatchJobForMap("SyncKline", &m, func(value interface{}) JobInterface {
 		return &SyncKline{
+			name:       "sync_kline",
+			spec:       getSpec("sync_kline"),
+			swapConfig: value.(*domain.SwapConfig),
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func CreateUserSyncKLine() error {
+	m := sync.Map{}
+
+	keys := sol.SwapConfigList()
+	for _, v := range keys {
+		m.Store(v.SwapAccount, v)
+	}
+
+	err := job.WatchJobForMap("SyncKline", &m, func(value interface{}) JobInterface {
+		return &UserSyncKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),
 			swapConfig: value.(*domain.SwapConfig),

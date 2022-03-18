@@ -159,8 +159,12 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	swapCountToApi.UserNum, _ = model.CountUserSwapCount(context.Background())
+	total, err := model.CountUserNumber(context.Background(), model.NewFilter("date_type = ?", domain.DateMon))
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
+	swapCountToApi.UserNum = total
 	// 总交易额
 	swapCountToApi.VolInUsd24h = totalVolInUsd24h.String()
 	swapCountToApi.VolInUsd = totalVolInUsd.String()
