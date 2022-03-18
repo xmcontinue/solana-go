@@ -40,7 +40,7 @@ func GetTransactionsForSignature(signatures []*rpc.TransactionSignature) ([]*rpc
 
 	opts := rpc.GetTransactionOpts{
 		Encoding:   solana.EncodingJSON,
-		Commitment: rpc.CommitmentMax,
+		Commitment: rpc.CommitmentFinalized,
 	}
 
 	for _, value := range signatures {

@@ -208,8 +208,19 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
 	}
 
-	if len(signatures) > 5000 {
-		signatures = signatures[:5000]
+	for k, v := range signatures {
+		if sol.GetRpcSlot()-v.Slot < 50 {
+			signatures = signatures[:k]
+		}
+	}
+
+	if len(signatures) == 0 {
+		*complete = true
+		return signatures, nil
+	}
+
+	if len(signatures) > limit {
+		signatures = signatures[:limit]
 	}
 
 	return signatures, nil
