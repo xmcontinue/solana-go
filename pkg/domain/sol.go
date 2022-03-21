@@ -10,6 +10,7 @@ type ChainNet struct {
 	Address string
 	Client  *rpc.Client
 	Height  uint64
+	Slot    uint64
 	Status  uint64
 }
 

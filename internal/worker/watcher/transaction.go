@@ -204,12 +204,12 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 	}
 
 	// array inversion
-	for i := 0; i < len(signatures)/2; i++ {
-		signatures[len(signatures)-1-i], signatures[i] = signatures[i], signatures[len(signatures)-1-i]
+	for i, j := 0, len(signatures)-1; i < j; i, j = i+1, j-1 {
+		signatures[i], signatures[j] = signatures[j], signatures[i]
 	}
 
-	if len(signatures) > 5000 {
-		signatures = signatures[:5000]
+	if len(signatures) > limit {
+		signatures = signatures[:limit]
 	}
 
 	return signatures, nil
@@ -278,7 +278,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		// transactionsLen := len(swapTransactions)
 
 		for _, v := range swapTransactions {
-			_, err = model.QuerySwapTransaction(context.Background(), model.NewFilter("signature = ?", v.Signature))
+			_, err = model.QuerySwapTransaction(context.Background(), model.SwapAddress(v.SwapAddress), model.NewFilter("signature = ?", v.Signature))
 			if err != nil {
 				err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
 				if err != nil {

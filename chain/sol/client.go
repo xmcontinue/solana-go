@@ -146,7 +146,7 @@ func watchNet() {
 
 		logger.Info(fmt.Sprintf("chain net block height is %d", chainNet.Height))
 
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second * 5)
 	}
 }
 
@@ -180,6 +180,10 @@ func watchBlockHeight() {
 		if err != nil {
 			continue
 		}
+		slot, err := GetBlockSlotForClient(v.Client)
+		if err == nil {
+			v.Slot = slot
+		}
 		v.Height = height
 	}
 }
@@ -200,7 +204,12 @@ func watchBalance() {
 			var tokenA token.Account
 			err = bin.NewBinDecoder(resp.Value.Data.GetBinary()).Decode(&tokenA)
 			if err != nil {
-				return
+				if chainNet.Address == rpc.DevNet_RPC {
+					wg.Done()
+					return
+				} else {
+					panic(err)
+				}
 			}
 			v.Balance = parse.PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
@@ -220,11 +229,19 @@ func watchBalance() {
 }
 
 func GetBlockHeightForClient(rpcClient *rpc.Client) (uint64, error) {
-	return rpcClient.GetBlockHeight(context.TODO(), rpc.CommitmentMax)
+	return rpcClient.GetBlockHeight(context.TODO(), rpc.CommitmentFinalized)
+}
+
+func GetBlockSlotForClient(rpcClient *rpc.Client) (uint64, error) {
+	return rpcClient.GetSlot(context.TODO(), rpc.CommitmentFinalized)
 }
 
 func GetRpcClient() *rpc.Client {
 	return chainNet.Client
+}
+
+func GetRpcSlot() uint64 {
+	return chainNet.Slot
 }
 
 func abs(n int64) int64 {

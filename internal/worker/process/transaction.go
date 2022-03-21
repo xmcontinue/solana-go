@@ -18,7 +18,7 @@ var (
 
 func transactionIDCache() error {
 	// 同步当前进度到redis
-	lastSwapTransaction, err := model.QuerySwapTransaction(context.Background(), model.OrderFilter("slot desc,id desc"))
+	lastSwapTransaction, err := model.QuerySwapTransaction(context.Background(), model.OrderFilter("id desc"))
 	if err != nil {
 		logger.Error("sync transaction id err", logger.Errorv(err))
 		return errors.Wrap(err)
