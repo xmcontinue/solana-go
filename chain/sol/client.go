@@ -204,7 +204,12 @@ func watchBalance() {
 			var tokenA token.Account
 			err = bin.NewBinDecoder(resp.Value.Data.GetBinary()).Decode(&tokenA)
 			if err != nil {
-				return
+				if chainNet.Address == rpc.DevNet_RPC {
+					wg.Done()
+					return
+				} else {
+					panic(err)
+				}
 			}
 			v.Balance = parse.PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
 		}
