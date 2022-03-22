@@ -2,6 +2,7 @@ package coingecko
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -9,11 +10,13 @@ import (
 	"github.com/go-resty/resty/v2"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const (
-	url        = "https://api.coingecko.com/api/v3"
-	tokenPrice = "/simple/token_price/solana"
+	url         = "https://api.coingecko.com/api/v3"
+	tokenPrice  = "/simple/token_price/solana"
+	simplePrice = "/simple/price"
 )
 
 var (
@@ -40,35 +43,38 @@ func syncPrice() {
 	keys := sol.SwapConfigList()
 	newPrices := make(map[string]decimal.Decimal, 0)
 	newPriceForSymbol := make(map[string]decimal.Decimal, 0)
+
+	f := func(tokenConf domain.Token) {
+		if _, ok := newPrices[tokenConf.SwapTokenAccount]; !ok {
+			var (
+				err   error
+				price = decimal.NewFromInt(1)
+			)
+
+			if strings.Contains(strings.ToUpper(tokenConf.Symbol), "SOL") {
+				price, err = GetPriceFromIds("solana")
+			} else {
+				price, err = GetPriceFromTokenMintAccount(tokenConf.TokenMint)
+			}
+
+			if err != nil {
+				newPrices[tokenConf.SwapTokenAccount] = decimal.NewFromInt(1)
+			}
+			newPrices[tokenConf.SwapTokenAccount] = price
+
+			if _, ok = newPriceForSymbol[tokenConf.Symbol]; !ok {
+				newPriceForSymbol[tokenConf.Symbol] = price
+			}
+		}
+	}
+
 	for _, v := range keys {
-
-		if _, ok := newPrices[v.TokenA.SwapTokenAccount]; !ok {
-			tokenAPrice, err := GetPriceFromTokenMintAccount(v.TokenA.TokenMint)
-			if err != nil {
-				newPrices[v.TokenA.SwapTokenAccount] = decimal.NewFromInt(1)
-			}
-			newPrices[v.TokenA.SwapTokenAccount] = tokenAPrice
-
-			if _, ok = newPriceForSymbol[v.TokenA.Symbol]; !ok {
-				newPriceForSymbol[v.TokenA.Symbol] = tokenAPrice
-			}
-		}
-
-		if _, ok := newPrices[v.TokenB.SwapTokenAccount]; !ok {
-			tokenAPrice, err := GetPriceFromTokenMintAccount(v.TokenB.TokenMint)
-			if err != nil {
-				newPrices[v.TokenB.SwapTokenAccount] = decimal.NewFromInt(1)
-			}
-			newPrices[v.TokenB.SwapTokenAccount] = tokenAPrice
-
-			if _, ok = newPriceForSymbol[v.TokenB.Symbol]; !ok {
-				newPriceForSymbol[v.TokenB.Symbol] = tokenAPrice
-			}
-		}
-
+		f(v.TokenA)
+		f(v.TokenB)
 	}
 
 	prices = newPrices
+	priceForSymbol = newPriceForSymbol
 }
 
 // GetPriceFromTokenMintAccount 通过token mint账户地址拿取币价
@@ -92,6 +98,34 @@ func GetPriceFromTokenMintAccount(tokenMintAccount string) (decimal.Decimal, err
 	}
 
 	priceStruct, ok := resMap[tokenMintAccount]
+	if !ok {
+		return defaultPrice, nil
+	}
+
+	return priceStruct.Usd, nil
+}
+
+// GetPriceFromIds 通过ids拿取币价
+func GetPriceFromIds(ids string) (decimal.Decimal, error) {
+	defaultPrice := decimal.NewFromInt(1)
+	resp, err := client.R().
+		SetQueryParams(map[string]string{
+			"ids":           ids,
+			"vs_currencies": "usd",
+		}).
+		Get(url + simplePrice)
+	if err != nil {
+		return defaultPrice, nil
+	}
+
+	var resMap map[string]Price
+
+	err = json.Unmarshal(resp.Body(), &resMap)
+	if err != nil {
+		return defaultPrice, errors.Wrap(err)
+	}
+
+	priceStruct, ok := resMap[ids]
 	if !ok {
 		return defaultPrice, nil
 	}
