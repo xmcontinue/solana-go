@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/util/decimal"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -63,4 +64,17 @@ func CountTxNum(ctx context.Context, filter ...Filter) (*domain.SumVol, error) {
 		TokenATotalVol: sumTokenAVol.TokenATotalVol.Abs(),
 		TokenBTotalVol: sumTokenBVol.TokenBTotalVol.Abs(),
 	}, nil
+}
+
+func GetPriceForSymbol(ctx context.Context, symbol string, filter ...Filter) (decimal.Decimal, error) {
+	var (
+		info  *domain.SwapTokenPriceKLine
+		price = decimal.NewFromInt(0)
+	)
+
+	if err := wDB(ctx).Model(&domain.SwapTokenPriceKLine{}).Scopes(append(filter, NewFilter("symbol = ?", symbol), NewFilter("date_type = ?", "1min"), OrderFilter("id desc"))...).Take(&info).Error; err != nil {
+		return price, errors.Wrap(err)
+	}
+
+	return info.Settle, nil
 }

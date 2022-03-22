@@ -16,7 +16,6 @@ import (
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
-	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -217,7 +216,11 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 // writeTxToDb
 func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
-	tokenAUSD, tokenBUSD := coingecko.GetPriceForTokenAccount(s.swapConfig.TokenA.SwapTokenAccount), coingecko.GetPriceForTokenAccount(s.swapConfig.TokenB.SwapTokenAccount)
+	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
+	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	// open model transaction
 	txModelTransaction := func(mCtx context.Context) error {
 		// update schedule
@@ -235,7 +238,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
 		}
 
-		err := model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.swapConfig.SwapAccount))
+		err = model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.swapConfig.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -306,7 +309,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		return nil
 	}
 
-	err := model.Transaction(context.Background(), txModelTransaction)
+	err = model.Transaction(context.Background(), txModelTransaction)
 	if err != nil {
 		time.Sleep(time.Second * 5)
 		return errors.Wrap(err)
