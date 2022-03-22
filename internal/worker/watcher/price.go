@@ -89,6 +89,8 @@ func SyncSwapPrice() error {
 	}
 	if solPrice, err := coingecko.GetPriceFromIds("solana"); err == nil {
 		tokenPrices["SOL"] = &tokenPrice{solPrice}
+	} else {
+		return errors.Wrap(err)
 	}
 
 	pairPriceToTokenPrice(swapPairPrices, tokenPrices)

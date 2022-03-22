@@ -115,7 +115,7 @@ func GetPriceFromIds(ids string) (decimal.Decimal, error) {
 		}).
 		Get(url + simplePrice)
 	if err != nil {
-		return defaultPrice, nil
+		return defaultPrice, errors.Wrap(err)
 	}
 
 	var resMap map[string]Price
@@ -127,7 +127,7 @@ func GetPriceFromIds(ids string) (decimal.Decimal, error) {
 
 	priceStruct, ok := resMap[ids]
 	if !ok {
-		return defaultPrice, nil
+		return defaultPrice, errors.New("get price error")
 	}
 
 	return priceStruct.Usd, nil
