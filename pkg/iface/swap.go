@@ -17,6 +17,7 @@ type MarketService interface {
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
 	SwapCount(context.Context, *NilReq, *SwapCountResp) error
+	TvlOfSingleToken(context.Context, *TvlOfSingleTokenReq, *TvlOfSingleTokenResp) error
 }
 
 type SwapCountReq struct {
@@ -133,4 +134,12 @@ type GetHistogramReq struct {
 
 type GetHistogramResp struct {
 	List []*process.SwapHistogramNumber `json:"list"`
+}
+
+type TvlOfSingleTokenReq struct {
+	Symbol string `form:"symbol"     binding:"required"`
+}
+
+type TvlOfSingleTokenResp struct {
+	List []*process.SymbolPri `form:"list"`
 }

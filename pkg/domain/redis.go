@@ -42,6 +42,10 @@ func KLineKey(dateType DateType, swapAccount string) string {
 	return fmt.Sprintf("%sswap:kline:count:%s:%s", publicPrefix, dateType, swapAccount)
 }
 
+func TokenKey(swapAccount string) string {
+	return fmt.Sprintf("%sswap:token:count:%s", publicPrefix, swapAccount)
+}
+
 func HistogramKey(dateType DateType, swapAccount string) string {
 	return fmt.Sprintf("%shistogram:swap:count:%s:%s", publicPrefix, dateType, swapAccount)
 }

@@ -183,7 +183,7 @@ func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	}
 
 	if t.DateType != domain.DateMin {
-		avg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
+		innerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
 			swapCountKLines, err := model.QuerySwapCountKLines(ctx, t.Interval, 0,
 				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
 				model.SwapAddress(swapCountKLine.SwapAddress),
@@ -215,8 +215,12 @@ func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 				if ok {
 					lastAvg = lastSwapCountKLine
 					(*avgList)[index].Avg = lastSwapCountKLine.Avg
+					(*avgList)[index].TokenAUSD = lastSwapCountKLine.TokenAUSD
+					(*avgList)[index].TokenBUSD = lastSwapCountKLine.TokenBUSD
 				} else {
 					(*avgList)[index].Avg = lastAvg.Settle // 上一个周期的结束值用作空缺周期的平均值
+					(*avgList)[index].TokenAUSD = lastAvg.TokenAUSD
+					(*avgList)[index].TokenBUSD = lastAvg.TokenBUSD
 				}
 			}
 
@@ -226,7 +230,9 @@ func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 			return errors.Wrap(err)
 		}
 
-		swapCountKLine.Avg = avg
+		swapCountKLine.Avg = innerAvg.Avg
+		swapCountKLine.TokenAUSD = innerAvg.TokenAUSD
+		swapCountKLine.TokenBUSD = innerAvg.TokenBUSD
 	}
 
 	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, t.Date)
