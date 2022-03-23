@@ -152,7 +152,7 @@ func updateSwapPairPrice(ctx context.Context, config *domain.SwapConfig, t *klin
 
 	if t.DateType != domain.DateMin {
 
-		avg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
+		InnerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
 			swapCountKLines, err := model.QuerySwapPairPriceKLines(ctx, t.Interval, 0,
 				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
 				model.SwapAddress(config.SwapAccount),
@@ -178,7 +178,7 @@ func updateSwapPairPrice(ctx context.Context, config *domain.SwapConfig, t *klin
 			return errors.Wrap(err)
 		}
 
-		swapPairPriceKLine.Avg = avg
+		swapPairPriceKLine.Avg = InnerAvg.Avg
 
 	}
 
@@ -206,7 +206,7 @@ func updateSwapTokenPrice(ctx context.Context, t *kline.Type, swapPairPriceKLine
 
 	if t.DateType != domain.DateMin {
 
-		avg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
+		InnerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
 			swapCountKLines, err := model.QuerySwapTokenPriceKLines(ctx, t.Interval, 0,
 				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
 				model.NewFilter("symbol = ?", swapPairPriceKLine.Symbol),
@@ -232,7 +232,7 @@ func updateSwapTokenPrice(ctx context.Context, t *kline.Type, swapPairPriceKLine
 			return errors.Wrap(err)
 		}
 
-		swapPairPriceKLine.Avg = avg
+		swapPairPriceKLine.Avg = InnerAvg.Avg
 
 	}
 

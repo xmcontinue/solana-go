@@ -25,8 +25,10 @@ type Type struct {
 }
 
 type InterTime struct {
-	Date time.Time
-	Avg  decimal.Decimal
+	Date      time.Time
+	Avg       decimal.Decimal
+	TokenAUSD decimal.Decimal
+	TokenBUSD decimal.Decimal
 }
 
 func NewKline(date *time.Time) *Kline {
@@ -150,13 +152,15 @@ func (k *Kline) getWeekFirstDay() time.Time {
 }
 
 // CalculateAvg 按照上一个周期计算平均值，month除外（按照天计算）
-func (m *Type) CalculateAvg(f func(time.Time, *[]*InterTime) error) (decimal.Decimal, error) {
+func (m *Type) CalculateAvg(f func(time.Time, *[]*InterTime) error) (*InterTime, error) {
 
 	var (
-		count     = int32(0)
-		sum       = decimal.Zero
-		beginTime time.Time
-		endTime   time.Time
+		count        = int32(0)
+		sumAvg       = decimal.Zero
+		sumTokenAUSD = decimal.Zero
+		sumTokenBUSD = decimal.Zero
+		beginTime    time.Time
+		endTime      time.Time
 	)
 
 	avgList := make([]*InterTime, m.Interval, m.Interval)
@@ -177,16 +181,24 @@ func (m *Type) CalculateAvg(f func(time.Time, *[]*InterTime) error) (decimal.Dec
 
 	err := f(endTime, &avgList)
 	if err != nil {
-		return decimal.Zero, errors.Wrap(err)
+		return nil, errors.Wrap(err)
 	}
 
 	// calculate avg
 	for _, v := range avgList {
 		if !v.Avg.IsZero() {
-			sum = sum.Add(v.Avg)
+			sumAvg = sumAvg.Add(v.Avg)
+			sumTokenAUSD = sumTokenAUSD.Add(v.TokenAUSD)
+			sumTokenBUSD = sumTokenBUSD.Add(v.TokenBUSD)
 			count++
 		}
 	}
 
-	return sum.Div(decimal.NewFromInt32(count)), nil
+	return &InterTime{
+		Avg:       sumAvg.Div(decimal.NewFromInt32(count)),
+		TokenAUSD: sumTokenAUSD.Div(decimal.NewFromInt32(count)),
+		TokenBUSD: sumTokenBUSD.Div(decimal.NewFromInt32(count)),
+	}, nil
+
+	//return sumAvg.Div(decimal.NewFromInt32(count)), nil
 }

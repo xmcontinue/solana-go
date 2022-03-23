@@ -110,6 +110,12 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
+	// 统计相同币种的tvl
+	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), tvlOfToken)
+	if err != nil {
+		panic(err)
+	}
+
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncKline"] = syncTransactionJob

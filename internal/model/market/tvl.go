@@ -167,7 +167,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("high = ?,", swapCount.High).
 		Suffix("low = ?,", swapCount.Low).
 		Suffix("settle = ?,", swapCount.Settle).
-		Suffix("token_a_usd = ?,", swapCount.TokenAUSD).
+		Suffix("token_a_usd = ?,", swapCount.TokenAUSD). // 不求平均值是因为价格本身就是一分钟更新一次，在一分钟内，其值都是相同的，不用求平均值了
 		Suffix("token_b_usd = ?,", swapCount.TokenBUSD).
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
 		Suffix("tx_num = swap_count_k_lines.tx_num + 1,").
@@ -364,6 +364,24 @@ func QuerySwapCountKLines(ctx context.Context, limit, offset int, filter ...Filt
 	}
 
 	return swapCountKLine, nil
+}
+
+type DateAndPrice struct {
+	Tvl  decimal.Decimal
+	Date time.Time
+}
+
+func SumTvlPriceInUSD(ctx context.Context, limit, offset int, filter ...Filter) ([]*DateAndPrice, error) {
+	var (
+		db           = rDB(ctx)
+		err          error
+		dateAndPrice []*DateAndPrice
+	)
+
+	if err = db.Model(&domain.SwapCountKLine{}).Select("sum(token_a_usd*token_a_balance) as tvl,date").Scopes(filter...).Group("date").Limit(limit).Offset(offset).Scan(&dateAndPrice).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return dateAndPrice, nil
 }
 
 func SumSwapCountVolForKLines(ctx context.Context, filter ...Filter) (*domain.SwapCountKLineVolCount, error) {

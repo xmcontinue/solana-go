@@ -165,3 +165,42 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 
 	return nil
 }
+
+func (t *MarketService) TvlOfSingleToken(ctx context.Context, args *iface.TvlOfSingleTokenReq, reply *iface.TvlOfSingleTokenResp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	var (
+		key string
+
+		list = make([]*process.SymbolPri, 0, 24)
+		err  error
+	)
+
+	key = domain.TokenKey(args.Symbol)
+
+	values, err := t.redisClient.ZRange(ctx, key, 0, -1).Result()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if len(values) == 0 {
+		return nil
+	}
+
+	for i := range values {
+		innerSymbolPri := &process.SymbolPri{}
+		_ = json.Unmarshal([]byte(values[i]), innerSymbolPri)
+
+		list = append(list, &process.SymbolPri{
+			Num:  innerSymbolPri.Num,
+			Date: innerSymbolPri.Date,
+		})
+	}
+
+	reply.List = list
+
+	return nil
+}
