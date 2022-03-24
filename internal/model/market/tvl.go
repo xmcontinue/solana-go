@@ -90,7 +90,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		}
 	)
 
-	upSertSQL, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("swap_counts").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_counts.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_counts.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -106,7 +106,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -156,7 +156,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		avgFmt = "avg = ?"
 	}
 
-	upSertSQL, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
@@ -167,7 +167,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("high = ?,", swapCount.High).
 		Suffix("low = ?,", swapCount.Low).
 		Suffix("settle = ?,", swapCount.Settle).
-		Suffix("token_a_usd = ?,", swapCount.TokenAUSD).
+		Suffix("token_a_usd = ?,", swapCount.TokenAUSD). // 不求平均值是因为价格本身就是一分钟更新一次，在一分钟内，其值都是相同的，不用求平均值了
 		Suffix("token_b_usd = ?,", swapCount.TokenBUSD).
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
 		Suffix("tx_num = swap_count_k_lines.tx_num + 1,").
@@ -182,7 +182,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -222,14 +222,14 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		}
 	)
 
-	upSertSQL, args, err := sq.Insert("user_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(user_address,date,date_type,swap_address) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert("user_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(user_address,date,date_type,swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", userSwapCount.LastSwapTransactionID).
 		Suffix("user_token_a_volume = user_count_k_lines.user_token_a_volume + ?,", userSwapCount.UserTokenAVolume.Abs()).
 		Suffix("user_token_b_volume = user_count_k_lines.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
+		Suffix("token_a_quote_volume = user_count_k_lines.token_a_quote_volume + ?,", userSwapCount.TokenAQuoteVolume).
+		Suffix("token_b_quote_volume = user_count_k_lines.token_b_quote_volume + ?,", userSwapCount.TokenBQuoteVolume).
 		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
 		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
-		Suffix("token_a_quote_volume = ?,", userSwapCount.TokenAQuoteVolume).
-		Suffix("token_b_quote_volume = ?,", userSwapCount.TokenBQuoteVolume).
 		Suffix("token_a_withdraw_liquidity_volume = user_count_k_lines.token_a_withdraw_liquidity_volume + ?,", userSwapCount.TokenAWithdrawLiquidityVolume).
 		Suffix("token_b_withdraw_liquidity_volume = user_count_k_lines.token_b_withdraw_liquidity_volume + ?,", userSwapCount.TokenBWithdrawLiquidityVolume).
 		Suffix("token_a_deposit_liquidity_volume = user_count_k_lines.token_a_deposit_liquidity_volume + ?,", userSwapCount.TokenADepositLiquidityVolume).
@@ -246,7 +246,7 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		return nil, errors.Wrap(err)
 	}
 
-	res := wDB(ctx).Raw(upSertSQL, args...).Scan(&after)
+	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -364,6 +364,24 @@ func QuerySwapCountKLines(ctx context.Context, limit, offset int, filter ...Filt
 	}
 
 	return swapCountKLine, nil
+}
+
+type DateAndPrice struct {
+	Tvl  decimal.Decimal
+	Date time.Time
+}
+
+func SumTvlPriceInUSD(ctx context.Context, limit, offset int, filter ...Filter) ([]*DateAndPrice, error) {
+	var (
+		db           = rDB(ctx)
+		err          error
+		dateAndPrice []*DateAndPrice
+	)
+
+	if err = db.Model(&domain.SwapCountKLine{}).Select("sum(token_a_usd*token_a_balance) as tvl,date").Scopes(filter...).Group("date").Limit(limit).Offset(offset).Scan(&dateAndPrice).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return dateAndPrice, nil
 }
 
 func SumSwapCountVolForKLines(ctx context.Context, filter ...Filter) (*domain.SwapCountKLineVolCount, error) {

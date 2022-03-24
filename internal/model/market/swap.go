@@ -207,14 +207,14 @@ func UpsertSwapTokenPriceKLine(ctx context.Context, swapTokenPriceKLine *domain.
 	return &after, nil
 }
 
-func CountUserNumber(ctx context.Context, filter ...Filter) (int64, error) {
+func CountUserNumber(ctx context.Context) (int64, error) {
 	var (
 		db    = rDB(ctx)
 		err   error
 		total int64
 	)
 
-	if err = db.Model(&domain.UserCountKLine{}).Scopes(filter...).Group("user_address").Count(&total).Error; err != nil {
+	if err = db.Model(&domain.UserCountKLine{}).Select("select count(*) from user_count_k_lines where date_type = 'mon' ").Group("user_address").Count(&total).Error; err != nil {
 		return 0, errors.Wrap(err)
 	}
 	return total, nil

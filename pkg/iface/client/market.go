@@ -34,6 +34,10 @@ func (c *CremaMarketClient) GetHistogram(ctx context.Context, args *iface.GetHis
 	return c.Call(ctx, "GetHistogram", args, reply)
 }
 
+func (c *CremaMarketClient) TvlOfSingleToken(ctx context.Context, args *iface.TvlOfSingleTokenReq, reply *iface.TvlOfSingleTokenResp) error {
+	return c.Call(ctx, "TvlOfSingleToken", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

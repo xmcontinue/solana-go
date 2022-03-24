@@ -161,7 +161,8 @@ func (u *UserCount) WriteToDB() error {
 			userCountKLine.TxNum = 1
 			userCountKLine.TokenAAddress = liquidity.SwapConfig.TokenA.SwapTokenAccount
 			userCountKLine.TokenBAddress = liquidity.SwapConfig.TokenB.SwapTokenAccount
-
+			userCountKLine.TokenASymbol = liquidity.SwapConfig.TokenA.Symbol
+			userCountKLine.TokenBSymbol = liquidity.SwapConfig.TokenB.Symbol
 			if liquidity.Direction == 0 {
 				userCountKLine.TokenAWithdrawLiquidityVolume = userCountKLine.TokenAWithdrawLiquidityVolume.Add(liquidity.UserCount.TokenAVolume)
 				userCountKLine.TokenBWithdrawLiquidityVolume = userCountKLine.TokenBWithdrawLiquidityVolume.Add(liquidity.UserCount.TokenBVolume)
@@ -185,6 +186,8 @@ func (u *UserCount) WriteToDB() error {
 			userCountKLine.SwapAddress = claim.SwapConfig.SwapAccount
 			userCountKLine.TokenAAddress = claim.SwapConfig.TokenA.SwapTokenAccount
 			userCountKLine.TokenBAddress = claim.SwapConfig.TokenB.SwapTokenAccount
+			userCountKLine.TokenASymbol = claim.SwapConfig.TokenA.Symbol
+			userCountKLine.TokenBSymbol = claim.SwapConfig.TokenB.Symbol
 
 			userCountKLine.TokenAClaimVolume = userCountKLine.TokenAClaimVolume.Add(claim.UserCount.TokenAVolume)
 			userCountKLine.TokenBClaimVolume = userCountKLine.TokenBClaimVolume.Add(claim.UserCount.TokenBVolume)
@@ -198,7 +201,7 @@ func (u *UserCount) WriteToDB() error {
 
 			userCountKLine.DateType = t.DateType
 			userCountKLine.Date = t.Date
-			if err = u.updateUserCountKLine(ctx, userCountKLine, t); err != nil {
+			if err = u.updateUserCountKLine(ctx, userCountKLine); err != nil {
 				return errors.Wrap(err)
 			}
 		}
@@ -213,35 +216,9 @@ func (u *UserCount) WriteToDB() error {
 }
 
 // updateUserCountKLine 写入user_count_days 表
-func (u *UserCount) updateUserCountKLine(ctx context.Context, userCountKline *domain.UserCountKLine, t *kline.Type) error {
+func (u *UserCount) updateUserCountKLine(ctx context.Context, userCountKline *domain.UserCountKLine) error {
 
-	userSwapCountDays, total, err := model.QueryUserSwapCountDay(
-		ctx,
-		1,
-		0,
-		model.NewFilter("user_address = ?", userCountKline.UserAddress),
-		model.NewFilter("swap_address = ?", userCountKline.SwapAddress),
-		model.NewFilter("date = ?", t.Date),
-	)
-
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	if total == 0 {
-		userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		userCountKline.MinTxVolume = userCountKline.UserTokenAVolume
-	} else {
-		if userSwapCountDays[0].MaxTxVolume.LessThan(userCountKline.UserTokenAVolume) {
-			userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		}
-
-		if userSwapCountDays[0].MinTxVolume.GreaterThan(userCountKline.UserTokenAVolume) {
-			userCountKline.MaxTxVolume = userCountKline.UserTokenAVolume
-		}
-	}
-
-	_, err = model.UpsertUserSwapCountKLine(ctx, userCountKline)
+	_, err := model.UpsertUserSwapCountKLine(ctx, userCountKline)
 	if err != nil {
 		return errors.Wrap(err)
 	}

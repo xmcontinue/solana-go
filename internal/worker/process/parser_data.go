@@ -139,6 +139,7 @@ func CreateSyncKLine() error {
 
 	return nil
 }
+
 func CreateUserSyncKLine() error {
 	m := sync.Map{}
 
@@ -147,7 +148,7 @@ func CreateUserSyncKLine() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("SyncKline", &m, func(value interface{}) JobInterface {
+	err := job.WatchJobForMap("UserSyncKline", &m, func(value interface{}) JobInterface {
 		return &UserSyncKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),

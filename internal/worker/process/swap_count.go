@@ -138,7 +138,7 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	total, err := model.CountUserNumber(context.Background(), model.NewFilter("date_type = ?", domain.DateMon))
+	total, err := model.CountUserNumber(context.Background())
 	if err != nil {
 		return errors.Wrap(err)
 	}
