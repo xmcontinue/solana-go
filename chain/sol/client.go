@@ -252,3 +252,17 @@ func abs(n int64) int64 {
 func GetTokenForTokenAccount(account string) *domain.Token {
 	return tokenConfigMap[account]
 }
+
+// GetTokenShowDecimalForTokenAccount 根据token account获取token show decimal
+func GetTokenShowDecimalForTokenAccount(account string) uint8 {
+	d := uint8(4)
+	t, ok := tokenConfigMap[account]
+	if !ok {
+		return d
+	}
+	if t.ShowDecimal == 0 {
+		return d
+	}
+
+	return t.ShowDecimal
+}
