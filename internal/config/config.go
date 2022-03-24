@@ -11,6 +11,11 @@ const (
 	StringUpper = int8(1)
 )
 
+var (
+	defaultBaseSymbols  = []string{"BTC", "ETH", "USDT", "BNB", "USDC", "XRP", "ADA", "LUNA", "SOL", "DOT", "AVAX", "DOGE", "BUSD", "UST", "SHIB", "WBTC", "CRO", "MATIC", "DAI", "LTC", "STETH", "ATOM", "NEAR", "LINK", "BCH", "TRX", "FTT", "ETC", "LEO", "ALGO", "OKB", "XLM", "AXS", "UNI", "HBAR", "ICP", "EGLD", "MANA", "SAND", "VET", "XMR", "FIL", "FTM", "CETH", "THETA", "KLAY", "XTZ", "WAVES", "OSMO", "FRAX", "MIM", "GRT", "CUSDC", "RUNE", "HNT", "EOS", "APE", "FLOW", "ZEC", "MIOTA", "AAVE", "CDAI", "CAKE", "GALA", "TFUEL", "MKR", "ONE", "BTT", "BSV", "HBTC", "QNT", "NEO", "AR", "OMI", "XRD", "XEC", "ENJ", "JUNO", "KSM", "STX", "HT", "KCS", "CEL", "DASH", "TUSD", "LRC", "HEART", "CELO", "AMP", "BAT", "NEXO", "CHZ", "CVX", "SNX", "MINA", "KDA", "BIT", "FXS", "XIDO", "GT"}
+	defaultQuoteSymbols = []string{"USD"}
+)
+
 type ExchangeConfig struct {
 	BaseSymbols    []string
 	QuoteSymbols   []string
@@ -46,11 +51,15 @@ func NewExchangeConfigForViper(viperConf *aConfig.Config) (*ExchangeConfig, erro
 }
 
 func (e *ExchangeConfig) setBaseSymbols(b []string) {
-	e.BaseSymbols = StringLowerUpperForSlice(b, StringUpper)
+	defaultSlice := make([]string, len(defaultBaseSymbols))
+	copy(defaultSlice, defaultBaseSymbols)
+	e.BaseSymbols = SliceRemoveDuplicates(append(defaultSlice, StringLowerUpperForSlice(b, StringUpper)...))
 }
 
 func (e *ExchangeConfig) setQuoteSymbols(q []string) {
-	e.QuoteSymbols = StringLowerUpperForSlice(q, StringUpper)
+	defaultSlice := make([]string, len(defaultQuoteSymbols))
+	copy(defaultSlice, defaultQuoteSymbols)
+	e.QuoteSymbols = SliceRemoveDuplicates(append(defaultSlice, StringLowerUpperForSlice(q, StringUpper)...))
 }
 
 func (e *ExchangeConfig) setReplaceSymbols(r map[string]string) {
@@ -77,4 +86,20 @@ func StringLowerUpperForMap(l map[string]string, typ int8) map[string]string {
 		res[StringLowerUpper(k, typ)] = StringLowerUpper(v, typ)
 	}
 	return res
+}
+
+func SliceRemoveDuplicates(slice []string) []string {
+	i := 0
+	var j int
+	for {
+		if i >= len(slice)-1 {
+			break
+		}
+
+		for j = i + 1; j < len(slice) && slice[i] == slice[j]; j++ {
+		}
+		slice = append(slice[:i+1], slice[j:]...)
+		i++
+	}
+	return slice
 }
