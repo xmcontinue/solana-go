@@ -32,5 +32,6 @@ type Token struct {
 	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
 	SwapTokenPublicKey solana.PublicKey
 	Decimal            uint8           `json:"decimal" mapstructure:"decimal"`
+	ShowDecimal        uint8           `json:"show_decimal" mapstructure:"show_decimal"`
 	Balance            decimal.Decimal `json:"-"`
 }
