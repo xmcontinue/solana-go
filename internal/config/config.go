@@ -29,17 +29,17 @@ func NewExchangeConfigForViper(viperConf *aConfig.Config) (*ExchangeConfig, erro
 		replaceSymbols map[string]string
 		exchangeConfig = &ExchangeConfig{}
 	)
-	err := viperConf.UnmarshalKey("exchange.base_symbols", &baseSymbols)
-	if err != nil {
-		return nil, err
-	}
-	exchangeConfig.setBaseSymbols(strings.Split(baseSymbols, ","))
-
-	err = viperConf.UnmarshalKey("exchange.quote_symbols", &quoteSymbols)
+	err := viperConf.UnmarshalKey("exchange.quote_symbols", &quoteSymbols)
 	if err != nil {
 		return nil, err
 	}
 	exchangeConfig.setQuoteSymbols(strings.Split(quoteSymbols, ","))
+
+	err = viperConf.UnmarshalKey("exchange.base_symbols", &baseSymbols)
+	if err != nil {
+		return nil, err
+	}
+	exchangeConfig.setBaseSymbols(strings.Split(baseSymbols, ","))
 
 	err = viperConf.UnmarshalKey("exchange.replace_symbols", &replaceSymbols)
 	if err != nil {
@@ -53,7 +53,7 @@ func NewExchangeConfigForViper(viperConf *aConfig.Config) (*ExchangeConfig, erro
 func (e *ExchangeConfig) setBaseSymbols(b []string) {
 	defaultSlice := make([]string, len(defaultBaseSymbols))
 	copy(defaultSlice, defaultBaseSymbols)
-	e.BaseSymbols = SliceRemoveDuplicates(append(defaultSlice, StringLowerUpperForSlice(b, StringUpper)...))
+	e.BaseSymbols = SliceRemoveDuplicates(append(append(defaultSlice, e.QuoteSymbols...), StringLowerUpperForSlice(b, StringUpper)...))
 }
 
 func (e *ExchangeConfig) setQuoteSymbols(q []string) {
