@@ -17,18 +17,24 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	defer rpcx.Recover(ctx)
 
 	if args.BaseSymbol == "" {
-		var err error
-		reply.Prices, err = es.exchangerC.GetPricesForMarket("coingecko", args.QuoteSymbol)
+		prices, err := es.exchangerC.GetPricesForMarket("coingecko", args.QuoteSymbol)
+		reply.Prices = *prices
 		if err != nil {
 			logger.Error("get price failed", logger.Errorv(err))
 			return errcode.GetPriceFailed
 		}
 	} else {
-		price, err := es.exchangerC.GetPriceForMarket("coingecko", args.BaseSymbol, args.QuoteSymbol)
+		// price, err := es.exchangerC.GetPriceForMarket("coingecko", args.BaseSymbol, args.QuoteSymbol)
+		// if err != nil {
+		// 	logger.Error("get price failed", logger.Errorv(err))
+		// 	return errcode.GetPriceFailed
+		// }
+		price, err := es.exchangerC.GetPriceForMarketForShotPath("coingecko", args.BaseSymbol, args.QuoteSymbol)
 		if err != nil {
 			logger.Error("get price failed", logger.Errorv(err))
 			return errcode.GetPriceFailed
 		}
+
 		reply.Prices = []*domain.Price{
 			{
 				strings.ToUpper(args.BaseSymbol),

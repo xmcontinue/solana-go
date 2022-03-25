@@ -77,11 +77,13 @@ func (cg *Coingecko) GetPrices() (map[string][]*domain.Price, error) {
 				prices[quoteSymbolUpper] = make([]*domain.Price, 0)
 			}
 
-			prices[quoteSymbolUpper] = append(prices[quoteSymbolUpper], &domain.Price{
-				BaseSymbol:  strings.ToUpper(cg.idToSymbol[baseSymbol]),
-				QuoteSymbol: quoteSymbolUpper,
-				Price:       decimal.NewFromFloat(price),
-			})
+			if price != 0 {
+				prices[quoteSymbolUpper] = append(prices[quoteSymbolUpper], &domain.Price{
+					BaseSymbol:  strings.ToUpper(cg.idToSymbol[baseSymbol]),
+					QuoteSymbol: quoteSymbolUpper,
+					Price:       decimal.NewFromFloat(price),
+				})
+			}
 		}
 	}
 
