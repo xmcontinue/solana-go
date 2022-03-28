@@ -2,8 +2,10 @@ package config
 
 import (
 	"strings"
+	"time"
 
 	aConfig "git.cplus.link/go/akit/config"
+	"git.cplus.link/go/akit/errors"
 )
 
 const (
@@ -23,31 +25,57 @@ type ExchangeConfig struct {
 }
 
 func NewExchangeConfigForViper(viperConf *aConfig.Config) (*ExchangeConfig, error) {
+	exchangeConfig := &ExchangeConfig{}
+
+	err := exchangeConfig.LoadConfig(viperConf)
+	if err != nil {
+		return exchangeConfig, err
+	}
+
+	go exchangeConfig.WatchConfigForViper(viperConf)
+
+	return exchangeConfig, nil
+}
+
+func (e *ExchangeConfig) WatchConfigForViper(viperConf *aConfig.Config) {
+	for {
+		time.Sleep(time.Second * 10)
+
+		err := viperConf.WatchRemoteConfig()
+		if err != nil {
+			continue
+		}
+
+		e.LoadConfig(viperConf)
+	}
+}
+
+func (e *ExchangeConfig) LoadConfig(viperConf *aConfig.Config) error {
 	var (
 		baseSymbols    string
 		quoteSymbols   string
 		replaceSymbols map[string]string
-		exchangeConfig = &ExchangeConfig{}
 	)
+
 	err := viperConf.UnmarshalKey("exchange.quote_symbols", &quoteSymbols)
 	if err != nil {
-		return nil, err
+		return errors.Wrap(err)
 	}
-	exchangeConfig.setQuoteSymbols(strings.Split(quoteSymbols, ","))
+	e.setQuoteSymbols(strings.Split(quoteSymbols, ","))
 
 	err = viperConf.UnmarshalKey("exchange.base_symbols", &baseSymbols)
 	if err != nil {
-		return nil, err
+		return errors.Wrap(err)
 	}
-	exchangeConfig.setBaseSymbols(strings.Split(baseSymbols, ","))
+	e.setBaseSymbols(strings.Split(baseSymbols, ","))
 
 	err = viperConf.UnmarshalKey("exchange.replace_symbols", &replaceSymbols)
 	if err != nil {
-		return nil, err
+		return errors.Wrap(err)
 	}
-	exchangeConfig.setReplaceSymbols(replaceSymbols)
+	e.setReplaceSymbols(replaceSymbols)
 
-	return exchangeConfig, nil
+	return nil
 }
 
 func (e *ExchangeConfig) setBaseSymbols(b []string) {
