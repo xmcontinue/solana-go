@@ -79,6 +79,30 @@ func (e *ExchangeConfig) setReplaceSymbols(r map[string]string) {
 	e.ReplaceSymbols = StringLowerUpperForMap(r, StringUpper)
 }
 
+func (e *ExchangeConfig) GetBaseSymbols() []string {
+	return e.BaseSymbols
+}
+
+func (e *ExchangeConfig) GetQuoteSymbols() []string {
+	return e.QuoteSymbols
+}
+
+func (e *ExchangeConfig) GetReplaceSymbols() map[string]string {
+	return e.ReplaceSymbols
+}
+
+func (e *ExchangeConfig) GetBaseSymbolsForCopy() []string {
+	baseSymbols := make([]string, len(e.GetBaseSymbols()))
+	copy(baseSymbols, e.BaseSymbols)
+	return baseSymbols
+}
+
+func (e *ExchangeConfig) GetQuoteSymbolsForCopy() []string {
+	quoteSymbols := make([]string, len(e.GetQuoteSymbols()))
+	copy(quoteSymbols, e.QuoteSymbols)
+	return quoteSymbols
+}
+
 func (e *ExchangeConfig) Equal(config *ExchangeConfig) bool {
 	c1Json, _ := json.Marshal(e)
 	c2Json, _ := json.Marshal(config)

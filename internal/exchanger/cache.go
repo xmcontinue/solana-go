@@ -27,6 +27,10 @@ func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
 	d.raw = &r
 }
 
+func (d *Data) DataHandle(raw map[string]map[string][]*domain.Price) {
+	
+}
+
 func (d *Data) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
 	var price decimal.Decimal
 

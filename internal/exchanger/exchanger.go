@@ -39,6 +39,8 @@ func (e *Exchanger) SyncPrice() error {
 		return errors.Wrap(err)
 	}
 
+	e.data.DataHandle(raw)
+
 	e.data.LoadRawData(raw)
 
 	return nil
