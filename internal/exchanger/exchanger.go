@@ -75,6 +75,10 @@ func (e *Exchanger) watchConfigForViper(aConf *aConfig.Config) error {
 			return errors.Wrap(err)
 		}
 
+		if e.Market.GetConfig() != nil && e.Market.GetConfig().Equal(exchangeConf) {
+			return nil
+		}
+
 		err = e.LoadConfig(exchangeConf)
 		if err != nil {
 			return errors.Wrap(err)

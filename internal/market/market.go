@@ -54,6 +54,10 @@ func (m *Market) GetPrices() (map[string]map[string][]*domain.Price, error) {
 	return prices, nil
 }
 
+func (m *Market) GetConfig() *config.ExchangeConfig {
+	return m.config
+}
+
 func (m *Market) setConfig(eConfig *config.ExchangeConfig) error {
 	m.config = eConfig
 	return nil
