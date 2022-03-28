@@ -28,6 +28,10 @@ func (e *Exchanger) LoadConfig(eConfig *config.ExchangeConfig) error {
 	if err != nil {
 		return err
 	}
+	err = e.SyncPrice()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
