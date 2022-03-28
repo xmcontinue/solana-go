@@ -28,15 +28,16 @@ const (
 )
 
 var (
-	chainNet       *domain.ChainNet
-	chainNets      []*domain.ChainNet
-	swapConfigList []*domain.SwapConfig
-	swapConfigMap  map[string]*domain.SwapConfig
-	tokenConfigMap map[string]*domain.Token
-	once           sync.Once
-	wg             sync.WaitGroup
-	isInit         bool
-	configLock     sync.Mutex
+	chainNet        *domain.ChainNet
+	chainNets       []*domain.ChainNet
+	chainNetsConfig []string
+	swapConfigList  []*domain.SwapConfig
+	swapConfigMap   map[string]*domain.SwapConfig
+	tokenConfigMap  map[string]*domain.Token
+	once            sync.Once
+	wg              sync.WaitGroup
+	isInit          bool
+	configLock      sync.Mutex
 )
 
 func Init(conf *config.Config) error {
@@ -113,7 +114,6 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 // initNet 初始化网络
 func initNet(conf *config.Config) error {
-	chainNetsConfig := make([]string, 0)
 	err := conf.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
 	if err != nil {
 		return errors.Wrap(err)
@@ -175,13 +175,15 @@ func checkNet() {
 // watchBlockHeight 监测区块高度,若落后则切换
 func watchBlockHeight() {
 	// 获取最新区块高度
-	for _, v := range chainNets {
+	for k, v := range chainNets {
 		height, err := GetBlockHeightForClient(v.Client)
 		if err != nil {
-			continue
+			chainNets[k].Client = rpc.New(chainNetsConfig[k])
 		}
 		slot, err := GetBlockSlotForClient(v.Client)
-		if err == nil {
+		if err != nil {
+			chainNets[k].Client = rpc.New(chainNetsConfig[k])
+		} else {
 			v.Slot = slot
 		}
 		v.Height = height
