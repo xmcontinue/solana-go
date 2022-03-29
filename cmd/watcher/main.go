@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/coingecko"
+	"git.cplus.link/crema/backend/pkg/domain"
 
 	"git.cplus.link/crema/backend/internal/worker/watcher"
 
@@ -18,6 +19,8 @@ import (
 
 func main() {
 	configer := config.NewConfiger()
+
+	domain.SetPublicPrefix(configer.Get("namespace").(string))
 
 	// etcd初始化
 	if err := etcd.Init(configer); err != nil {
