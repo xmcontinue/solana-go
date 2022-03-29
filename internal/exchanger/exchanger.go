@@ -54,8 +54,15 @@ func (e *Exchanger) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol s
 	return e.data.GetPriceForMarketForShotPath(name, strings.ToUpper(baseSymbol), strings.ToUpper(quoteSymbol))
 }
 
+func (e *Exchanger) GetPriceForAvgForShotPath(baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
+	return e.data.GetPriceForAvgForShotPath(strings.ToUpper(baseSymbol), strings.ToUpper(quoteSymbol))
+}
+
 func (e *Exchanger) GetPricesForMarket(name, quoteSymbol string) (*Prices, error) {
 	return e.data.GetPricesForMarket(name, strings.ToUpper(quoteSymbol))
+}
+func (e *Exchanger) GetPricesForAvg(quoteSymbol string) (*Prices, error) {
+	return e.data.GetPricesForAvg(strings.ToUpper(quoteSymbol))
 }
 
 func (e *Exchanger) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
