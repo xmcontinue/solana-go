@@ -6,12 +6,15 @@ import (
 	"git.cplus.link/go/akit/transport/rpcx"
 
 	handler "git.cplus.link/crema/backend/internal/services/market"
+	"git.cplus.link/crema/backend/pkg/domain"
 
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
 func main() {
 	configer := config.NewConfiger()
+
+	domain.SetPublicPrefix(configer.Get("namespace").(string))
 
 	serviceConf, err := configer.Service(iface.MarketServiceName)
 	if err != nil {

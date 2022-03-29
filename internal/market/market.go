@@ -5,6 +5,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 
 	"git.cplus.link/crema/backend/internal/config"
+	"git.cplus.link/crema/backend/internal/market/bybit"
 	"git.cplus.link/crema/backend/internal/market/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -21,15 +22,29 @@ func NewMarket() *Market {
 
 func (m *Market) LoadConfig(eConfig *config.ExchangeConfig) error {
 	businesses := make([]Business, 0)
-	name := coingecko.BusinessName
-	switch name {
-	case coingecko.BusinessName:
-		coingeckoS, err := coingecko.NewCoingecko(eConfig)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-		businesses = append(businesses, coingeckoS)
+	
+	names := []string{
+		coingecko.BusinessName,
+		bybit.BusinessName,
 	}
+
+	for _, name := range names {
+		switch name {
+		case coingecko.BusinessName:
+			coinGeckoS, err := coingecko.NewCoinGecko(eConfig)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+			businesses = append(businesses, coinGeckoS)
+		case bybit.BusinessName:
+			byBitS, err := bybit.NewByBit(eConfig)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+			businesses = append(businesses, byBitS)
+		}
+	}
+
 	m.Businesses = businesses
 	m.config = eConfig
 

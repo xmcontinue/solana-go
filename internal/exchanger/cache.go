@@ -4,18 +4,24 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
 
+	"git.cplus.link/crema/backend/internal/config"
 	"git.cplus.link/crema/backend/internal/exchanger/graph"
 	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/errcode"
 )
 
 type Data struct {
-	raw *Markets
-	avg *Coins
+	raw           *Markets
+	avg           *Coins
+	marketConfigs map[string]*config.MarketConfig
 }
 
 func NewData() *Data {
 	return &Data{}
+}
+
+func (d *Data) LoadConfig(eConfig *config.ExchangeConfig) {
+	d.marketConfigs = eConfig.GetMarketConfigs()
 }
 
 func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
@@ -27,8 +33,21 @@ func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
 	d.raw = &r
 }
 
+func (d *Data) LoadAvgData() {
+	// for k, v := range *d.raw {
+	// 	for i, r := range v.prices {
+	// 		for f, m := range *r {
+	//
+	// 		}
+	// 	}
+	// }
+	// 求加权平均值 TODO
+	coins := &Coins{}
+	d.SetAvg(coins)
+}
+
 func (d *Data) DataHandle(raw map[string]map[string][]*domain.Price) {
-	
+	//
 }
 
 func (d *Data) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
@@ -72,6 +91,10 @@ func (d *Data) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.
 	return prices.GetPrice(baseSymbol)
 }
 
+func (d *Data) SetAvg(avg *Coins) {
+	d.avg = avg
+}
+
 type Markets map[string]*Coins
 
 type Coins struct {
@@ -85,18 +108,28 @@ func NewCoins() *Coins {
 }
 
 func (c *Coins) LoadRawData(raw map[string][]*domain.Price) {
-	c.loadPrices(raw)
+	c.loadRawPrices(raw)
 	c.loadGraph()
 	c.loadCurrencies()
 }
 
-func (c *Coins) loadPrices(raw map[string][]*domain.Price) {
+func (c *Coins) loadRawPrices(raw map[string][]*domain.Price) {
 	coins := make(map[string]*Prices, len(raw))
 	for k, v := range raw {
 		coins[k] = NewPrices()
 		coins[k].LoadRawData(v)
 	}
 	c.prices = coins
+}
+
+func (c *Coins) LoadData(data map[string]*Prices) {
+	c.loadPrices(data)
+	c.loadGraph()
+	c.loadCurrencies()
+}
+
+func (c *Coins) loadPrices(data map[string]*Prices) {
+	c.prices = data
 }
 
 func (c *Coins) loadGraph() {
