@@ -7,11 +7,14 @@ import (
 	"git.cplus.link/go/akit/config"
 
 	handler "git.cplus.link/crema/backend/internal/services/exchange"
+	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
 func main() {
 	configer := config.NewConfiger()
+
+	domain.SetPublicPrefix(configer.Get("namespace").(string))
 
 	serviceConf, err := configer.Service(iface.ExchangeServiceName)
 	if err != nil {
