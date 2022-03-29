@@ -34,20 +34,66 @@ func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
 }
 
 func (d *Data) LoadAvgData() {
-	// for k, v := range *d.raw {
-	// 	for i, r := range v.prices {
-	// 		for f, m := range *r {
-	//
-	// 		}
-	// 	}
-	// }
-	// 求加权平均值 TODO
-	coins := &Coins{}
+	// 求加权平均值
+	data := make(map[string]map[string]map[string]decimal.Decimal, 0)
+	for mName, coins := range *d.raw {
+		for cName, prices := range coins.prices {
+			for _, price := range *prices {
+				if _, ok := data[cName]; !ok {
+					data[cName] = make(map[string]map[string]decimal.Decimal, 0)
+				}
+
+				if _, ok := data[cName][price.BaseSymbol]; !ok {
+					data[cName][price.BaseSymbol] = make(map[string]decimal.Decimal, 0)
+				}
+
+				data[cName][price.BaseSymbol][mName] = price.Price
+			}
+		}
+	}
+
+	coins := NewCoins()
+	coins.prices = make(map[string]*Prices, len(data))
+	for cName, prices := range data {
+		pricesS := NewPrices()
+		for sName, market := range prices {
+			totalPrice, totalWeight := decimal.Decimal{}, 0
+
+			for mName, price := range market {
+				weight := d.getHeight(mName)
+				if weight == 0 {
+					continue
+				}
+				totalWeight += weight
+				totalPrice = totalPrice.Add(price.Mul(decimal.NewFromInt(int64(weight))))
+			}
+
+			if totalWeight != 0 {
+				price := totalPrice.Div(decimal.NewFromInt(int64(totalWeight)))
+				*pricesS = append(*pricesS, &domain.Price{
+					BaseSymbol:  sName,
+					QuoteSymbol: cName,
+					Price:       price,
+				})
+			}
+		}
+		coins.prices[cName] = pricesS
+	}
+
+	coins.LoadGraphCurrencies()
+
 	d.SetAvg(coins)
 }
 
 func (d *Data) DataHandle(raw map[string]map[string][]*domain.Price) {
 	//
+}
+
+func (d *Data) getHeight(marketName string) int {
+	if conf, ok := d.marketConfigs[marketName]; ok {
+		return conf.Weight
+	}
+	return 0
 }
 
 func (d *Data) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
@@ -66,6 +112,10 @@ func (d *Data) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol string
 	return price, nil
 }
 
+func (d *Data) GetPriceForAvgForShotPath(baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
+	return d.avg.GetPriceForShotPath(baseSymbol, quoteSymbol)
+}
+
 func (d *Data) GetPricesForMarket(name, quoteSymbol string) (*Prices, error) {
 	var price *Prices
 
@@ -80,6 +130,10 @@ func (d *Data) GetPricesForMarket(name, quoteSymbol string) (*Prices, error) {
 	}
 
 	return prices, nil
+}
+
+func (d *Data) GetPricesForAvg(quoteSymbol string) (*Prices, error) {
+	return d.avg.GetPrices(quoteSymbol)
 }
 
 func (d *Data) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
@@ -109,6 +163,10 @@ func NewCoins() *Coins {
 
 func (c *Coins) LoadRawData(raw map[string][]*domain.Price) {
 	c.loadRawPrices(raw)
+	c.LoadGraphCurrencies()
+}
+
+func (c *Coins) LoadGraphCurrencies() {
 	c.loadGraph()
 	c.loadCurrencies()
 }
