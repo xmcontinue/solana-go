@@ -57,3 +57,7 @@ func TotalHistogramKey(dateType DateType) string {
 func SetPublicPrefix(key string) {
 	publicPrefix = key
 }
+
+func GetPublicPrefix() string {
+	return publicPrefix
+}

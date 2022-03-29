@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	etcdSwapPairsKey = "/crema/swap-pairs"
-	chainNetRpcKey   = "chain_net_rpc"
+	chainNetRpcKey = "chain_net_rpc"
 )
+
+var etcdSwapPairsKey = "/swap-pairs"
 
 var (
 	chainNet        *domain.ChainNet
@@ -44,8 +45,10 @@ var (
 )
 
 func Init(conf *config.Config) error {
+
 	var err error
 	once.Do(func() {
+		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
 		stopChan := make(chan struct{})
 		resChan, err := etcd.Watch(etcdSwapPairsKey, stopChan)
