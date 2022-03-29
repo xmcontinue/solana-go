@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -15,6 +17,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/rpcxio/libkv/store"
 
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -28,15 +31,16 @@ const (
 )
 
 var (
-	chainNet       *domain.ChainNet
-	chainNets      []*domain.ChainNet
-	swapConfigList []*domain.SwapConfig
-	swapConfigMap  map[string]*domain.SwapConfig
-	tokenConfigMap map[string]*domain.Token
-	once           sync.Once
-	wg             sync.WaitGroup
-	isInit         bool
-	configLock     sync.Mutex
+	chainNet        *domain.ChainNet
+	chainNets       []*domain.ChainNet
+	chainNetsConfig []string
+	swapConfigList  []*domain.SwapConfig
+	swapConfigMap   map[string]*domain.SwapConfig
+	tokenConfigMap  map[string]*domain.Token
+	once            sync.Once
+	wg              sync.WaitGroup
+	isInit          bool
+	configLock      sync.Mutex
 )
 
 func Init(conf *config.Config) error {
@@ -113,7 +117,6 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 // initNet 初始化网络
 func initNet(conf *config.Config) error {
-	chainNetsConfig := make([]string, 0)
 	err := conf.UnmarshalKey(chainNetRpcKey, &chainNetsConfig)
 	if err != nil {
 		return errors.Wrap(err)
@@ -125,7 +128,7 @@ func initNet(conf *config.Config) error {
 
 	for _, v := range chainNetsConfig {
 		chainNets = append(chainNets, &domain.ChainNet{
-			Client:  rpc.New(v),
+			Client:  NewRPC(v),
 			Address: v,
 		})
 	}
@@ -175,13 +178,15 @@ func checkNet() {
 // watchBlockHeight 监测区块高度,若落后则切换
 func watchBlockHeight() {
 	// 获取最新区块高度
-	for _, v := range chainNets {
+	for k, v := range chainNets {
 		height, err := GetBlockHeightForClient(v.Client)
 		if err != nil {
-			continue
+			chainNets[k].Client = NewRPC(chainNetsConfig[k])
 		}
 		slot, err := GetBlockSlotForClient(v.Client)
-		if err == nil {
+		if err != nil {
+			chainNets[k].Client = NewRPC(chainNetsConfig[k])
+		} else {
 			v.Slot = slot
 		}
 		v.Height = height
@@ -265,4 +270,56 @@ func GetTokenShowDecimalForTokenAccount(account string) uint8 {
 	}
 
 	return t.ShowDecimal
+}
+
+func NewHTTPTransport(
+	timeout time.Duration,
+	maxIdleConnsPerHost int,
+	keepAlive time.Duration,
+) *http.Transport {
+	return &http.Transport{
+		IdleConnTimeout:     timeout,
+		MaxIdleConnsPerHost: maxIdleConnsPerHost,
+		Proxy:               http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   timeout,
+			KeepAlive: keepAlive,
+		}).Dial,
+	}
+}
+
+// NewHTTP returns a new Client from the provided config.
+func NewHTTP(
+	timeout time.Duration,
+	maxIdleConnsPerHost int,
+	keepAlive time.Duration,
+) *http.Client {
+	tr := NewHTTPTransport(
+		timeout,
+		maxIdleConnsPerHost,
+		keepAlive,
+	)
+
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: tr,
+	}
+}
+
+// NewRPC creates a new Solana JSON RPC client.
+func NewRPC(rpcEndpoint string) *rpc.Client {
+	var (
+		defaultMaxIdleConnsPerHost = 10
+		defaultTimeout             = 5 * time.Second
+		defaultKeepAlive           = 180 * time.Second
+	)
+	opts := &jsonrpc.RPCClientOpts{
+		HTTPClient: NewHTTP(
+			defaultTimeout,
+			defaultMaxIdleConnsPerHost,
+			defaultKeepAlive,
+		),
+	}
+	rpcClient := jsonrpc.NewClientWithOpts(rpcEndpoint, opts)
+	return rpc.NewWithCustomRPCClient(rpcClient)
 }

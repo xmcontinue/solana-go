@@ -1,9 +1,11 @@
 package config
 
 import (
+	"encoding/json"
 	"strings"
 
 	aConfig "git.cplus.link/go/akit/config"
+	"git.cplus.link/go/akit/errors"
 )
 
 const (
@@ -17,37 +19,48 @@ var (
 )
 
 type ExchangeConfig struct {
-	BaseSymbols    []string
-	QuoteSymbols   []string
-	ReplaceSymbols map[string]string
+	BaseSymbols    []string          `json:"base_symbols"            yaml:"base_symbols"            mapstructure:"base_symbols"`
+	QuoteSymbols   []string          `json:"quote_symbols"           yaml:"quote_symbols"           mapstructure:"quote_symbols"`
+	ReplaceSymbols map[string]string `json:"replace_symbols"         yaml:"replace_symbols"         mapstructure:"replace_symbols"`
+}
+
+func NewExchangeConfig() *ExchangeConfig {
+	return &ExchangeConfig{}
 }
 
 func NewExchangeConfigForViper(viperConf *aConfig.Config) (*ExchangeConfig, error) {
-	var (
-		baseSymbols    string
-		quoteSymbols   string
-		replaceSymbols map[string]string
-		exchangeConfig = &ExchangeConfig{}
-	)
-	err := viperConf.UnmarshalKey("exchange.quote_symbols", &quoteSymbols)
-	if err != nil {
-		return nil, err
-	}
-	exchangeConfig.setQuoteSymbols(strings.Split(quoteSymbols, ","))
+	exchangeConfig := NewExchangeConfig()
 
-	err = viperConf.UnmarshalKey("exchange.base_symbols", &baseSymbols)
+	err := viperConf.UnmarshalKey("exchange", &exchangeConfig)
 	if err != nil {
-		return nil, err
+		return exchangeConfig, errors.Wrap(err)
 	}
-	exchangeConfig.setBaseSymbols(strings.Split(baseSymbols, ","))
 
-	err = viperConf.UnmarshalKey("exchange.replace_symbols", &replaceSymbols)
-	if err != nil {
-		return nil, err
-	}
-	exchangeConfig.setReplaceSymbols(replaceSymbols)
+	exchangeConfig.LoadConfig()
 
 	return exchangeConfig, nil
+}
+
+func (e *ExchangeConfig) LoadConfig() {
+	e.loadBaseSymbols()
+	e.loadQuoteSymbols()
+	e.loadReplaceSymbols()
+}
+
+func (e *ExchangeConfig) loadBaseSymbols() {
+	defaultSlice := make([]string, len(defaultBaseSymbols))
+	copy(defaultSlice, defaultBaseSymbols)
+	e.BaseSymbols = SliceRemoveDuplicates(append(append(defaultSlice, e.QuoteSymbols...), StringLowerUpperForSlice(e.BaseSymbols, StringUpper)...))
+}
+
+func (e *ExchangeConfig) loadQuoteSymbols() {
+	defaultSlice := make([]string, len(defaultQuoteSymbols))
+	copy(defaultSlice, defaultQuoteSymbols)
+	e.QuoteSymbols = SliceRemoveDuplicates(append(defaultSlice, StringLowerUpperForSlice(e.QuoteSymbols, StringUpper)...))
+}
+
+func (e *ExchangeConfig) loadReplaceSymbols() {
+	e.ReplaceSymbols = StringLowerUpperForMap(e.ReplaceSymbols, StringUpper)
 }
 
 func (e *ExchangeConfig) setBaseSymbols(b []string) {
@@ -64,6 +77,36 @@ func (e *ExchangeConfig) setQuoteSymbols(q []string) {
 
 func (e *ExchangeConfig) setReplaceSymbols(r map[string]string) {
 	e.ReplaceSymbols = StringLowerUpperForMap(r, StringUpper)
+}
+
+func (e *ExchangeConfig) GetBaseSymbols() []string {
+	return e.BaseSymbols
+}
+
+func (e *ExchangeConfig) GetQuoteSymbols() []string {
+	return e.QuoteSymbols
+}
+
+func (e *ExchangeConfig) GetReplaceSymbols() map[string]string {
+	return e.ReplaceSymbols
+}
+
+func (e *ExchangeConfig) GetBaseSymbolsForCopy() []string {
+	baseSymbols := make([]string, len(e.GetBaseSymbols()))
+	copy(baseSymbols, e.BaseSymbols)
+	return baseSymbols
+}
+
+func (e *ExchangeConfig) GetQuoteSymbolsForCopy() []string {
+	quoteSymbols := make([]string, len(e.GetQuoteSymbols()))
+	copy(quoteSymbols, e.QuoteSymbols)
+	return quoteSymbols
+}
+
+func (e *ExchangeConfig) Equal(config *ExchangeConfig) bool {
+	c1Json, _ := json.Marshal(e)
+	c2Json, _ := json.Marshal(config)
+	return string(c1Json) == string(c2Json)
 }
 
 func StringLowerUpperForSlice(l []string, typ int8) []string {

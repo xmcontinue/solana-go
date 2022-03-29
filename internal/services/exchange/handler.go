@@ -10,7 +10,6 @@ import (
 
 	"git.cplus.link/crema/backend/internal/worker/exchange"
 
-	eConfig "git.cplus.link/crema/backend/internal/config"
 	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/internal/exchanger"
 	"git.cplus.link/crema/backend/pkg/iface"
@@ -59,15 +58,12 @@ func NewExchangeService(conf *config.Config) (iface.ExchangeService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// 汇率中心初始化
-		exchangeConf, rErr := eConfig.NewExchangeConfigForViper(conf)
-		if rErr != nil {
-			return
-		}
 		instance.exchangerC = exchanger.NewExchanger()
-		rErr = instance.exchangerC.LoadConfig(exchangeConf)
+		rErr = instance.exchangerC.RunForViper(conf)
 		if rErr != nil {
 			return
 		}
+
 		// cron初始化
 		if rErr = worker.Init(conf, instance.exchangerC); rErr != nil {
 			return

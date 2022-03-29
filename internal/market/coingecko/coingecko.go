@@ -31,9 +31,7 @@ type id struct {
 }
 
 func NewCoingecko(eConfig *config.ExchangeConfig) (*Coingecko, error) {
-	baseSymbols, quoteSymbols := make([]string, len(eConfig.BaseSymbols)), make([]string, len(eConfig.QuoteSymbols))
-	copy(baseSymbols, eConfig.BaseSymbols)
-	copy(quoteSymbols, eConfig.QuoteSymbols)
+	baseSymbols, quoteSymbols := eConfig.GetBaseSymbolsForCopy(), eConfig.GetQuoteSymbolsForCopy()
 
 	coingecko := &Coingecko{
 		client: resty.New(),

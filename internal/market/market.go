@@ -2,6 +2,7 @@ package market
 
 import (
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/util/decimal"
 
 	"git.cplus.link/crema/backend/internal/config"
 	"git.cplus.link/crema/backend/internal/market/coingecko"
@@ -48,10 +49,45 @@ func (m *Market) GetPrices() (map[string]map[string][]*domain.Price, error) {
 			continue
 		}
 
+		l = m.ReplaceSymbolsPrice(l)
+
 		prices[v.GetName()] = l
 	}
 
 	return prices, nil
+}
+
+func (m *Market) ReplaceSymbolsPrice(coins map[string][]*domain.Price) map[string][]*domain.Price {
+	for k, prices := range coins {
+		replacePrices := make(map[string]decimal.Decimal, 0)
+		for _, v := range m.GetConfig().GetReplaceSymbols() {
+			replacePrices[v] = decimal.Decimal{}
+		}
+
+		for _, price := range prices {
+			if _, ok := replacePrices[price.BaseSymbol]; ok {
+				replacePrices[price.BaseSymbol] = price.Price
+			}
+		}
+
+		for i, v := range m.GetConfig().GetReplaceSymbols() {
+			if price, ok := replacePrices[v]; ok {
+				if !price.IsZero() {
+					coins[k] = append(coins[k], &domain.Price{
+						BaseSymbol:  i,
+						QuoteSymbol: k,
+						Price:       price,
+					})
+				}
+			}
+		}
+	}
+
+	return coins
+}
+
+func (m *Market) GetConfig() *config.ExchangeConfig {
+	return m.config
 }
 
 func (m *Market) setConfig(eConfig *config.ExchangeConfig) error {
