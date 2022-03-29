@@ -19,9 +19,14 @@ var (
 )
 
 type ExchangeConfig struct {
-	BaseSymbols    []string          `json:"base_symbols"            yaml:"base_symbols"            mapstructure:"base_symbols"`
-	QuoteSymbols   []string          `json:"quote_symbols"           yaml:"quote_symbols"           mapstructure:"quote_symbols"`
-	ReplaceSymbols map[string]string `json:"replace_symbols"         yaml:"replace_symbols"         mapstructure:"replace_symbols"`
+	BaseSymbols    []string                 `json:"base_symbols"            yaml:"base_symbols"            mapstructure:"base_symbols"`
+	QuoteSymbols   []string                 `json:"quote_symbols"           yaml:"quote_symbols"           mapstructure:"quote_symbols"`
+	ReplaceSymbols map[string]string        `json:"replace_symbols"         yaml:"replace_symbols"         mapstructure:"replace_symbols"`
+	MarketConfigs  map[string]*MarketConfig `json:"market_configs"          yaml:"market_configs"         mapstructure:"market_configs"`
+}
+
+type MarketConfig struct {
+	Weight int
 }
 
 func NewExchangeConfig() *ExchangeConfig {
@@ -89,6 +94,10 @@ func (e *ExchangeConfig) GetQuoteSymbols() []string {
 
 func (e *ExchangeConfig) GetReplaceSymbols() map[string]string {
 	return e.ReplaceSymbols
+}
+
+func (e *ExchangeConfig) GetMarketConfigs() map[string]*MarketConfig {
+	return e.MarketConfigs
 }
 
 func (e *ExchangeConfig) GetBaseSymbolsForCopy() []string {

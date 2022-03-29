@@ -30,6 +30,8 @@ func (e *Exchanger) LoadConfig(eConfig *config.ExchangeConfig) error {
 	if err != nil {
 		return err
 	}
+
+	e.data.LoadConfig(eConfig)
 	return nil
 }
 
