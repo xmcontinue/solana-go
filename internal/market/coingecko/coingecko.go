@@ -19,7 +19,7 @@ const (
 	BusinessName   = "coingecko"
 )
 
-type Coingecko struct {
+type CoinGecko struct {
 	client       *resty.Client
 	idToSymbol   map[string]string
 	quoteSymbols []string
@@ -30,27 +30,27 @@ type id struct {
 	Symbol string
 }
 
-func NewCoingecko(eConfig *config.ExchangeConfig) (*Coingecko, error) {
+func NewCoinGecko(eConfig *config.ExchangeConfig) (*CoinGecko, error) {
 	baseSymbols, quoteSymbols := eConfig.GetBaseSymbolsForCopy(), eConfig.GetQuoteSymbolsForCopy()
 
-	coingecko := &Coingecko{
+	coinGecko := &CoinGecko{
 		client: resty.New(),
 	}
-	err := coingecko.setSymbolToIds(config.StringLowerUpperForSlice(baseSymbols, config.StringLower))
+	err := coinGecko.setSymbolToIds(config.StringLowerUpperForSlice(baseSymbols, config.StringLower))
 	if err != nil {
 		return nil, err
 	}
 
-	coingecko.setQuoteSymbol(config.StringLowerUpperForSlice(quoteSymbols, config.StringLower))
+	coinGecko.setQuoteSymbol(config.StringLowerUpperForSlice(quoteSymbols, config.StringLower))
 
-	return coingecko, nil
+	return coinGecko, nil
 }
 
-func (cg *Coingecko) GetName() string {
+func (cg *CoinGecko) GetName() string {
 	return BusinessName
 }
 
-func (cg *Coingecko) GetPrices() (map[string][]*domain.Price, error) {
+func (cg *CoinGecko) GetPrices() (map[string][]*domain.Price, error) {
 	resp, err := cg.client.R().
 		SetQueryParams(map[string]string{
 			"ids":           cg.getIdsToString(),
@@ -88,11 +88,11 @@ func (cg *Coingecko) GetPrices() (map[string][]*domain.Price, error) {
 	return prices, nil
 }
 
-func (cg *Coingecko) setQuoteSymbol(quoteSymbols []string) {
+func (cg *CoinGecko) setQuoteSymbol(quoteSymbols []string) {
 	cg.quoteSymbols = quoteSymbols
 }
 
-func (cg *Coingecko) setSymbolToIds(baseSymbols []string) error {
+func (cg *CoinGecko) setSymbolToIds(baseSymbols []string) error {
 	if len(baseSymbols) == 0 {
 		return errors.RecordNotFound
 	}
@@ -112,7 +112,7 @@ func (cg *Coingecko) setSymbolToIds(baseSymbols []string) error {
 	return nil
 }
 
-func (cg *Coingecko) getIds() (map[string]*id, error) {
+func (cg *CoinGecko) getIds() (map[string]*id, error) {
 	resp, err := cg.client.R().
 		SetQueryParams(map[string]string{}).
 		Get(CoinsListUrl)
@@ -134,15 +134,15 @@ func (cg *Coingecko) getIds() (map[string]*id, error) {
 	return idsMap, nil
 }
 
-func (cg *Coingecko) getQuoteSymbolsToString() string {
+func (cg *CoinGecko) getQuoteSymbolsToString() string {
 	return strings.Join(cg.quoteSymbols, ",")
 }
 
-func (cg *Coingecko) getIdsToString() string {
+func (cg *CoinGecko) getIdsToString() string {
 	return strings.Join(cg.getIdsToSlice(), ",")
 }
 
-func (cg *Coingecko) getIdsToSlice() []string {
+func (cg *CoinGecko) getIdsToSlice() []string {
 	ids := make([]string, 0, len(cg.idToSymbol))
 	for k, _ := range cg.idToSymbol {
 		ids = append(ids, k)

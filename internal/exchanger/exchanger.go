@@ -43,6 +43,8 @@ func (e *Exchanger) SyncPrice() error {
 
 	e.data.LoadRawData(raw)
 
+	e.data.LoadAvgData()
+
 	return nil
 }
 

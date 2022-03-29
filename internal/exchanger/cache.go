@@ -27,8 +27,12 @@ func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
 	d.raw = &r
 }
 
+func (d *Data) LoadAvgData() {
+	// 求平均值
+}
+
 func (d *Data) DataHandle(raw map[string]map[string][]*domain.Price) {
-	
+	// TODO
 }
 
 func (d *Data) GetPriceForMarketForShotPath(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
