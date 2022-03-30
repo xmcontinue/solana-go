@@ -76,6 +76,10 @@ func (cg *CoinGecko) GetPrices() (map[string][]*domain.Price, error) {
 			}
 
 			if price != 0 {
+				if strings.ToUpper(cg.idToSymbol[baseSymbol]) == quoteSymbolUpper {
+					price = 1
+				}
+
 				prices[quoteSymbolUpper] = append(prices[quoteSymbolUpper], &domain.Price{
 					BaseSymbol:  strings.ToUpper(cg.idToSymbol[baseSymbol]),
 					QuoteSymbol: quoteSymbolUpper,

@@ -73,6 +73,10 @@ func (g *Gate) GetPrices() (map[string][]*domain.Price, error) {
 		if quoteSymbol == "USDT" {
 			quoteSymbol = "USD"
 		}
+		if baseSymbol == quoteSymbol {
+			v.Last = decimal.NewFromInt(1)
+		}
+
 		if g.hasQuoteSymbol(quoteSymbol) && g.hasBaseSymbol(baseSymbol) {
 			prices[quoteSymbol] = append(prices[quoteSymbol], &domain.Price{
 				BaseSymbol:  baseSymbol,
