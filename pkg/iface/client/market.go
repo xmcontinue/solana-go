@@ -21,7 +21,9 @@ func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.NilReq, r
 func (c *CremaMarketClient) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.JsonString) error {
 	return c.Call(ctx, "GetConfig", args, reply)
 }
-
+func (c *CremaMarketClient) GetTokenConfig(ctx context.Context, args *iface.NilReq, reply *iface.JsonString) error {
+	return c.Call(ctx, "GetTokenConfig", args, reply)
+}
 func (c *CremaMarketClient) GetTvl(ctx context.Context, args *iface.GetTvlReq, reply *iface.GetTvlResp) error {
 	return c.Call(ctx, "GetTvl", args, reply)
 }
