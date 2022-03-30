@@ -71,6 +71,10 @@ func (f *Ftx) GetPrices() (map[string][]*domain.Price, error) {
 			v.QuoteCurrency = "USD"
 		}
 		if f.hasQuoteSymbol(v.QuoteCurrency) && f.hasBaseSymbol(v.BaseCurrency) {
+			if v.BaseCurrency == v.QuoteCurrency {
+				v.Last = decimal.NewFromInt(1)
+			}
+
 			prices[v.QuoteCurrency] = append(prices[v.QuoteCurrency], &domain.Price{
 				BaseSymbol:  v.BaseCurrency,
 				QuoteSymbol: v.QuoteCurrency,

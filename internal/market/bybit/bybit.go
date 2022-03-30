@@ -79,6 +79,10 @@ func (b *ByBit) GetPrices() (map[string][]*domain.Price, error) {
 			continue
 		}
 
+		if p.BaseSymbol == p.QuoteSymbol {
+			v.LastPrice = decimal.NewFromInt(1)
+		}
+
 		if _, ok = prices[p.QuoteSymbol]; ok {
 			prices[p.QuoteSymbol] = append(prices[p.QuoteSymbol], &domain.Price{
 				BaseSymbol:  p.BaseSymbol,
