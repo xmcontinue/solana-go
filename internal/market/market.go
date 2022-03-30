@@ -7,6 +7,7 @@ import (
 	"git.cplus.link/crema/backend/internal/config"
 	"git.cplus.link/crema/backend/internal/market/bybit"
 	"git.cplus.link/crema/backend/internal/market/coingecko"
+	"git.cplus.link/crema/backend/internal/market/gate"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -22,10 +23,11 @@ func NewMarket() *Market {
 
 func (m *Market) LoadConfig(eConfig *config.ExchangeConfig) error {
 	businesses := make([]Business, 0)
-	
+
 	names := []string{
 		coingecko.BusinessName,
 		bybit.BusinessName,
+		gate.BusinessName,
 	}
 
 	for _, name := range names {
@@ -42,6 +44,10 @@ func (m *Market) LoadConfig(eConfig *config.ExchangeConfig) error {
 				return errors.Wrap(err)
 			}
 			businesses = append(businesses, byBitS)
+		case gate.BusinessName:
+			businesses = append(businesses, gate.NewGate(eConfig))
+		default:
+			continue
 		}
 	}
 
