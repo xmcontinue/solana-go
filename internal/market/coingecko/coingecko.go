@@ -132,6 +132,9 @@ func (cg *CoinGecko) getIds() (map[string]*id, error) {
 
 	idsMap := make(map[string]*id, len(ids))
 	for _, v := range ids {
+		if v.ID == "project-pai" {
+			continue
+		}
 		idsMap[v.Symbol] = v
 	}
 
