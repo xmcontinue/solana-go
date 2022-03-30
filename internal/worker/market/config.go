@@ -101,5 +101,5 @@ func GetConfig(configName string) []byte {
 
 // getEtcdConfigKey ...
 func getEtcdConfigKey(key string) string {
-	return baseConfigKey + key
+	return "/" + domain.GetPublicPrefix() + "/" + key
 }
