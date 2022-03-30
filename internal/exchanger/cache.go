@@ -244,27 +244,39 @@ func (c Coins) GetPriceForIDs(ids []graph.ID) decimal.Decimal {
 }
 
 func (c Coins) GetPriceForPair(baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
-	_, orderErr := c.GetPrices(quoteSymbol)
-
-	if orderErr != nil {
-		baseSymbol, quoteSymbol = quoteSymbol, baseSymbol
+	quotes := make(map[string]*Prices, 0)
+	quote1, err := c.GetPrices(baseSymbol)
+	if err == nil {
+		quotes[baseSymbol] = quote1
 	}
-
-	prices, err := c.GetPrices(quoteSymbol)
-	if err != nil {
+	quote2, err := c.GetPrices(quoteSymbol)
+	if err == nil {
+		quotes[quoteSymbol] = quote2
+	}
+	if len(quotes) == 0 {
 		return decimal.Decimal{}, errors.RecordNotFound
 	}
 
-	price, err := prices.GetPrice(baseSymbol)
-	if err != nil {
-		return decimal.Decimal{}, errors.RecordNotFound
+	for k, v := range quotes {
+		price, realBaseSymbol := decimal.Decimal{}, baseSymbol
+		if k == baseSymbol {
+			realBaseSymbol = quoteSymbol
+		}
+		price, err = v.GetPrice(realBaseSymbol)
+
+		if err == nil {
+			if price.IsZero() {
+				return decimal.Decimal{}, errors.RecordNotFound
+			}
+
+			if k == baseSymbol {
+				return decimal.NewFromInt(1).Div(price), nil
+			}
+			return price, nil
+		}
 	}
 
-	if orderErr != nil {
-		return decimal.NewFromInt(1).Div(price), nil
-	}
-
-	return price, nil
+	return decimal.Decimal{}, errors.Wrap(err)
 }
 
 func (c Coins) GetPrices(quoteSymbol string) (*Prices, error) {
