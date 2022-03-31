@@ -71,7 +71,6 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
 	delAndAddByZSet = redis.NewScript(DelAndAddSZSetScript)
 
 	// xCron init
@@ -85,15 +84,15 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	//_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncVolAndTvlHistogram)
-	//if err != nil {
+	// _, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncVolAndTvlHistogram)
+	// if err != nil {
 	//	panic(err)
-	//}
+	// }
 
-	//_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncKLineToRedis)
-	//if err != nil {
+	// _, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncKLineToRedis)
+	// if err != nil {
 	//	panic(err)
-	//}
+	// }
 
 	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
 	if err != nil {

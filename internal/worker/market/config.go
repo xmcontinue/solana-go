@@ -8,6 +8,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const (
@@ -16,7 +17,8 @@ const (
 )
 
 var (
-	configCache map[string][]byte
+	configCache      map[string][]byte
+	tokenConfigCache []byte
 )
 
 func SyncConfigJob() error {
@@ -48,6 +50,10 @@ func SyncConfigJob() error {
 			continue
 		}
 
+		if v == "swap-pairs" {
+			setTokenConfig([]byte(confVal.Node.Value))
+		}
+
 		configMap[v] = []byte(confVal.Node.Value)
 	}
 
@@ -57,6 +63,37 @@ func SyncConfigJob() error {
 	return nil
 }
 
+func setTokenConfig(b []byte) {
+	var swapConfig []*domain.SwapConfig
+	err := json.Unmarshal(b, &swapConfig)
+	if err != nil {
+		return
+	}
+
+	tokenConfig := make(map[string]*domain.TokenConfig, 0)
+	for _, v := range swapConfig {
+		tokenConfig[v.TokenA.Symbol] = &domain.TokenConfig{
+			Name:   v.TokenA.Name,
+			Symbol: v.TokenA.Symbol,
+		}
+
+		tokenConfig[v.TokenB.Symbol] = &domain.TokenConfig{
+			Name:   v.TokenB.Name,
+			Symbol: v.TokenB.Symbol,
+		}
+	}
+
+	newTokenConfigCache, err := json.Marshal(tokenConfig)
+	if err != nil {
+		return
+	}
+	tokenConfigCache = newTokenConfigCache
+}
+
+func GetTokenConfig() []byte {
+	return tokenConfigCache
+}
+
 // GetConfig ...
 func GetConfig(configName string) []byte {
 	return configCache[configName]
@@ -64,5 +101,5 @@ func GetConfig(configName string) []byte {
 
 // getEtcdConfigKey ...
 func getEtcdConfigKey(key string) string {
-	return baseConfigKey + key
+	return "/" + domain.GetPublicPrefix() + "/" + key
 }

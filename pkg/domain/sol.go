@@ -25,12 +25,19 @@ type SwapConfig struct {
 	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
 }
 
+type TokenConfig struct {
+	Name   string `json:"name" mapstructure:"name"`
+	Symbol string `json:"symbol" mapstructure:"symbol"`
+}
+
 type Token struct {
 	Symbol             string `json:"symbol" mapstructure:"symbol"`
+	Name               string `json:"name" mapstructure:"name"`
 	TokenMint          string `json:"token_mint" mapstructure:"token_mint"`
 	TokenMintPublicKey solana.PublicKey
 	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
 	SwapTokenPublicKey solana.PublicKey
 	Decimal            uint8           `json:"decimal" mapstructure:"decimal"`
+	ShowDecimal        uint8           `json:"show_decimal" mapstructure:"show_decimal"`
 	Balance            decimal.Decimal `json:"-"`
 }
