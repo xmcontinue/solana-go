@@ -63,6 +63,7 @@ func NewExchangeService(conf *config.Config) (iface.ExchangeService, error) {
 		if rErr != nil {
 			return
 		}
+		instance.exchangerC.SetHandle(cleanCache)
 
 		// cron初始化
 		if rErr = worker.Init(conf, instance.exchangerC); rErr != nil {
