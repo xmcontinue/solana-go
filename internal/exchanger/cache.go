@@ -244,19 +244,22 @@ func (c Coins) GetPriceForIDs(ids []graph.ID) decimal.Decimal {
 }
 
 func (c Coins) GetPriceForPair(baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
-	quotes := make([]*Prices, 0)
+	quotes := make([]*Prices, 2)
 
 	if quote1, err := c.GetPrices(baseSymbol); err == nil {
-		quotes = append(quotes, quote1)
+		quotes[0] = quote1
 	}
 	if quote2, err := c.GetPrices(quoteSymbol); err == nil {
-		quotes = append(quotes, quote2)
+		quotes[1] = quote2
 	}
 	if len(quotes) == 0 {
 		return decimal.Decimal{}, errors.RecordNotFound
 	}
 
 	for k, v := range quotes {
+		if v == nil {
+			continue
+		}
 		price, realBaseSymbol := decimal.Decimal{}, baseSymbol
 		if k == 0 {
 			realBaseSymbol = quoteSymbol
