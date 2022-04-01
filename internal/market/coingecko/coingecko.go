@@ -135,7 +135,15 @@ func (cg *CoinGecko) getIds() (map[string]*id, error) {
 		if v.ID == "project-pai" {
 			continue
 		}
+		if v.ID == "uniswap-state-dollar" {
+			continue
+		}
+
 		idsMap[v.Symbol] = v
+	}
+	idsMap["usd"] = &id{
+		"usd-coin",
+		"usd",
 	}
 
 	return idsMap, nil
