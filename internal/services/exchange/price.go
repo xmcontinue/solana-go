@@ -54,6 +54,10 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	} else {
 		var price domain.Price
 
+		if args.QuoteSymbol == "" {
+			args.QuoteSymbol = "usd"
+		}
+
 		if args.Market == "" {
 			price.Price, err = es.exchangerC.GetPriceForAvgForShotPath(args.BaseSymbol, args.QuoteSymbol)
 		} else {
