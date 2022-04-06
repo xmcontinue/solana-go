@@ -71,6 +71,10 @@ func (e *Exchanger) GetPricesForAvg(quoteSymbol string) (*Prices, error) {
 	return e.data.GetPricesForAvg(strings.ToUpper(quoteSymbol))
 }
 
+func (e *Exchanger) GetAllPricesForAvg() *Prices {
+	return e.data.GetAllPricesForAvg()
+}
+
 func (e *Exchanger) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
 	return e.data.GetPriceForMarket(name, strings.ToUpper(baseSymbol), strings.ToUpper(quoteSymbol))
 }

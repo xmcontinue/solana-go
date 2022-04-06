@@ -38,7 +38,11 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 
 	if args.BaseSymbol == "" {
 		if args.Market == "" {
-			prices, err = es.exchangerC.GetPricesForAvg(args.QuoteSymbol)
+			if args.QuoteSymbol == "" {
+				prices = es.exchangerC.GetAllPricesForAvg()
+			} else {
+				prices, err = es.exchangerC.GetPricesForAvg(args.QuoteSymbol)
+			}
 		} else {
 			prices, err = es.exchangerC.GetPricesForMarket(args.Market, args.QuoteSymbol)
 		}

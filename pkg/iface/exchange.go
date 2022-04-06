@@ -15,7 +15,7 @@ type ExchangeService interface {
 type GetPriceReq struct {
 	Market      string `form:"market"`
 	BaseSymbol  string `form:"base_symbol"`
-	QuoteSymbol string `form:"quote_symbol"      binding:"required"`
+	QuoteSymbol string `form:"quote_symbol"`
 }
 
 type GetPriceResp struct {
