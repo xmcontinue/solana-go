@@ -27,8 +27,6 @@ func (m *Market) LoadConfig(eConfig *config.ExchangeConfig) error {
 
 	names := []string{
 		coingecko.BusinessName,
-		bybit.BusinessName,
-		gate.BusinessName,
 		ftx.BusinessName,
 	}
 
