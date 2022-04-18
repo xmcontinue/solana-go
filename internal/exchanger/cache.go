@@ -136,6 +136,15 @@ func (d *Data) GetPricesForAvg(quoteSymbol string) (*Prices, error) {
 	return d.avg.GetPrices(quoteSymbol)
 }
 
+func (d *Data) GetAllPricesForAvg() *Prices {
+	prices := make([]*domain.Price, 0)
+	for _, v := range d.avg.GetAllPrices() {
+		prices = append(prices, v.GetPrices()...)
+	}
+
+	return (*Prices)(&prices)
+}
+
 func (d *Data) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
 	prices, err := d.GetPricesForMarket(name, quoteSymbol)
 	if err != nil {
@@ -320,6 +329,10 @@ func (p Prices) GetPrice(baseSymbol string) (decimal.Decimal, error) {
 	}
 
 	return decimal.Decimal{}, errors.New("price is not found")
+}
+
+func (p Prices) GetPrices() []*domain.Price {
+	return p
 }
 
 type Currencies map[string]struct{}

@@ -38,7 +38,7 @@ func SwapTotalCount() error {
 	ctx := context.Background()
 
 	// 获取swap pair 24h 内交易统计
-	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, date := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour)
+	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
 		// 获取token价格
@@ -47,15 +47,21 @@ func SwapTotalCount() error {
 		if err != nil || newTokenAPrice.IsZero() || newTokenBPrice.IsZero() {
 			continue
 		}
-		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", date))
-		beforeTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol, model.NewFilter("date < ?", date))
-		if err != nil || newTokenAPrice.IsZero() || newTokenBPrice.IsZero() {
+
+		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
+		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
+		}
+		beforeTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol, model.NewFilter("date < ?", before24hDate))
+		if err != nil || newTokenBPrice.IsZero() {
 			beforeTokenBPrice = newTokenBPrice
 		}
 
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
-		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", date), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+
+		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
+		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
@@ -63,8 +69,9 @@ func SwapTotalCount() error {
 		// 计算vol,tvl
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newTokenAPrice).Round(6), v.TokenB.Balance.Mul(newTokenBPrice).Round(6)
 		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newTokenAPrice).Round(6), swapCount24h.TokenBVolume.Mul(newTokenBPrice).Round(6)
+		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolume.Mul(newTokenAPrice).Round(6), swapCount7d.TokenBVolume.Mul(newTokenBPrice).Round(6)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newTokenAPrice).Round(6), swapCountTotal.TokenBVolume.Mul(newTokenBPrice).Round(6)
-		tvlInUsd, volInUsd24h, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol.Add(tokenBVol)
+		tvlInUsd, volInUsd24h, volInUsd7d, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol7d.Add(tokenBVol7d), tokenAVol.Add(tokenBVol)
 		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolume.Mul(newTokenAPrice)).Round(6), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolume.Mul(newTokenBPrice)).Round(6)
 		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolume.Mul(newTokenAPrice)).Round(6), tokenBVol.Add(swapCountTotal.TokenBQuoteVolume.Mul(newTokenBPrice)).Round(6)
 
@@ -72,7 +79,7 @@ func SwapTotalCount() error {
 		apr := "0%"
 		if !tvlInUsd.IsZero() {
 			fee, _ := decimal.NewFromString(v.Fee)
-			apr = volInUsd24h.Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 36500为365天*百分比转化100得出
+			apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
 		}
 
 		// 查找合约内价格
