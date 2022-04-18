@@ -60,7 +60,6 @@ func (cg *CoinGecko) GetPrices() (map[string][]*domain.Price, error) {
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-
 	raw := make(map[string]map[string]float64, 0)
 	err = json.Unmarshal(resp.Body(), &raw)
 	if err != nil {
@@ -138,15 +137,12 @@ func (cg *CoinGecko) getIds() (map[string]*id, error) {
 		if v.ID == "uniswap-state-dollar" {
 			continue
 		}
-		if v.ID == "usd-coin-avalanche-bridged-usdc-e" {
-			continue
-		}
 
 		idsMap[v.Symbol] = v
 	}
-	idsMap["usd"] = &id{
+	idsMap["usdc"] = &id{
 		"usd-coin",
-		"usd",
+		"usdc",
 	}
 
 	return idsMap, nil
