@@ -2,6 +2,7 @@ package crema
 
 import (
 	"encoding/json"
+	"strings"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
@@ -57,7 +58,7 @@ func (c *Crema) GetPrices() (map[string][]*domain.Price, error) {
 	prices := map[string][]*domain.Price{}
 	for _, token := range raw.Data.Tokens {
 		prices["USD"] = append(prices["USD"], &domain.Price{
-			BaseSymbol:  token.Name,
+			BaseSymbol:  strings.ToUpper(token.Name),
 			QuoteSymbol: "USD",
 			Price:       token.Price,
 		})
