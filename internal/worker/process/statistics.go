@@ -326,7 +326,7 @@ func sumTotalSwapAccount() error {
 	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
 		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, kLines[0].Date.Location())
 		v.Date = &date
-		if err := sumDateTypeSwapAccount(ctx, v); err != nil {
+		if err := sumDateTypeSwapAccount(ctx, v, &now); err != nil {
 			logger.Error("sync k line to redis err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
@@ -335,7 +335,7 @@ func sumTotalSwapAccount() error {
 	return nil
 }
 
-func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
+func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time) error {
 
 	var (
 		key = domain.TotalHistogramKey(klineT.DateType)
@@ -415,6 +415,26 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 			swapHistogramZ = swapHistogramZ[i:]
 			break
 		}
+	}
+
+	if len(swapHistogramZ) > 1 {
+		swapHistogramZ = append(swapHistogramZ, &HistogramZ{
+			Score: now.Unix(),
+			Member: &SwapHistogram{
+				Tvl:  swapHistogramZ[len(swapHistogramZ)-1].Member.Tvl,
+				Vol:  swapHistogramZ[len(swapHistogramZ)-1].Member.Vol,
+				Date: now,
+			},
+		})
+
+		// 时间计时改为每个时间段的最后时间点，最后一个时间段就前一个时间段到当前的时间，就用英文current 表示
+		for i := 0; i < len(swapHistogramZ)-1; i++ {
+			swapHistogramZ[len(swapHistogramZ)-1-i].Member.Tvl = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Tvl
+			swapHistogramZ[len(swapHistogramZ)-1-i].Member.Vol = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Vol
+		}
+
+		swapHistogramZ[0].Member.Tvl = decimal.Zero
+		swapHistogramZ[0].Member.Vol = decimal.Zero
 	}
 
 	// lua 通过脚本更新
