@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/transport/rpcx"
 
 	"git.cplus.link/crema/backend/internal/exchanger"
+	"git.cplus.link/crema/backend/internal/market/crema"
 	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/errcode"
 	"git.cplus.link/crema/backend/pkg/iface"
@@ -34,6 +35,14 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	if data, ok := getCache(string(cacheKey)); ok {
 		reply.Prices = data
 		return nil
+	}
+
+	// 这里更改逻辑默认获取crema平台价格，若传avg则获取加权平均价
+	if args.Market == "" {
+		args.Market = crema.BusinessName
+	}
+	if args.Market == "avg" {
+		args.Market = ""
 	}
 
 	if args.BaseSymbol == "" {
