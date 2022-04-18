@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	url            = "https://api.crema.finance"
-	simplePriceUrl = url + "/v1/swap/count"
+	simplePriceUrl = "/v1/swap/count"
 	BusinessName   = "crema"
 )
 
@@ -44,7 +43,7 @@ type Token struct {
 func (c *Crema) GetPrices() (map[string][]*domain.Price, error) {
 	resp, err := c.client.R().
 		SetQueryParams(map[string]string{}).
-		Get(simplePriceUrl)
+		Get(domain.ApiHost + simplePriceUrl)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}

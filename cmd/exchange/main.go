@@ -15,6 +15,7 @@ func main() {
 	configer := config.NewConfiger()
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
+	domain.SetApiHost(configer.Get("api_host").(string))
 
 	serviceConf, err := configer.Service(iface.ExchangeServiceName)
 	if err != nil {

@@ -138,6 +138,9 @@ func (cg *CoinGecko) getIds() (map[string]*id, error) {
 		if v.ID == "uniswap-state-dollar" {
 			continue
 		}
+		if v.ID == "usd-coin-avalanche-bridged-usdc-e" {
+			continue
+		}
 
 		idsMap[v.Symbol] = v
 	}
