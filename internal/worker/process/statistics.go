@@ -417,25 +417,26 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 		}
 	}
 
-	if len(swapHistogramZ) > 1 {
-		swapHistogramZ = append(swapHistogramZ, &HistogramZ{
-			Score: now.Unix(),
-			Member: &SwapHistogram{
-				Tvl:  swapHistogramZ[len(swapHistogramZ)-1].Member.Tvl,
-				Vol:  swapHistogramZ[len(swapHistogramZ)-1].Member.Vol,
-				Date: now,
-			},
-		})
-
-		// 时间计时改为每个时间段的最后时间点，最后一个时间段就前一个时间段到当前的时间，就用英文current 表示
-		for i := 0; i < len(swapHistogramZ)-1; i++ {
-			swapHistogramZ[len(swapHistogramZ)-1-i].Member.Tvl = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Tvl
-			swapHistogramZ[len(swapHistogramZ)-1-i].Member.Vol = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Vol
-		}
-
-		swapHistogramZ[0].Member.Tvl = decimal.Zero
-		swapHistogramZ[0].Member.Vol = decimal.Zero
-	}
+	// 注释，暂时不使用当前时间点这个坐标
+	//if len(swapHistogramZ) > 1 {
+	//	swapHistogramZ = append(swapHistogramZ, &HistogramZ{
+	//		Score: now.Unix(),
+	//		Member: &SwapHistogram{
+	//			Tvl:  swapHistogramZ[len(swapHistogramZ)-1].Member.Tvl,
+	//			Vol:  swapHistogramZ[len(swapHistogramZ)-1].Member.Vol,
+	//			Date: now,
+	//		},
+	//	})
+	//
+	//	// 时间计时改为每个时间段的最后时间点，最后一个时间段就前一个时间段到当前的时间，就用英文current 表示
+	//	for i := 0; i < len(swapHistogramZ)-1; i++ {
+	//		swapHistogramZ[len(swapHistogramZ)-1-i].Member.Tvl = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Tvl
+	//		swapHistogramZ[len(swapHistogramZ)-1-i].Member.Vol = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Vol
+	//	}
+	//
+	//	swapHistogramZ[0].Member.Tvl = decimal.Zero
+	//	swapHistogramZ[0].Member.Vol = decimal.Zero
+	//}
 
 	// lua 通过脚本更新
 	newZ := make([]interface{}, 0, len(swapHistogramZ)+1)
