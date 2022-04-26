@@ -10,10 +10,16 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 
 	"git.cplus.link/crema/backend/pkg/iface"
+	"git.cplus.link/crema/backend/internal/etcd"
 )
 
 func main() {
 	configer := config.NewConfiger()
+
+	// etcd初始化
+	if err := etcd.Init(configer); err != nil {
+		panic(err)
+	   }
 
 	// sol初始化
 	if err := sol.Init(configer); err != nil {
