@@ -94,3 +94,42 @@ func handleFunc(cli rpcxClient, name string, reqArg, respArg interface{}, preCal
 		http.ResponseOK(c, resp)
 	}
 }
+
+func handleFuncForNft(cli rpcxClient, name string, reqArg, respArg interface{}, preCalls ...preCallHandle) func(*gin.Context) {
+	//
+	reqTyp := reflect.TypeOf(reqArg)
+	if reqTyp.Kind() == reflect.Ptr {
+		reqTyp = reqTyp.Elem()
+	}
+	//
+	respTyp := reflect.TypeOf(respArg)
+	if respTyp.Kind() == reflect.Ptr {
+		respTyp = respTyp.Elem()
+	}
+	return func(c *gin.Context) {
+		//
+		req := reflect.New(reqTyp).Interface() // Elem().
+		resp := reflect.New(respTyp).Interface()
+
+		params := c.Params
+		if len(params) != 0 {
+			if err := c.BindUri(req); err != nil {
+				http.ResponseError(c, errors.Wrapf(errors.ParameterError, "bind uri"))
+				return
+			}
+		}
+
+		for _, f := range preCalls {
+			if err := f(c, name, req); err != nil {
+				http.ResponseError(c, errors.Wrapf(err, "pre call"))
+				return
+			}
+		}
+		if err := cli().Call(c, name, req, resp); err != nil {
+			http.ResponseError(c, errors.Wrapf(err, "call"))
+			return
+		}
+		defer c.Abort()
+		c.JSON(200, resp)
+	}
+}

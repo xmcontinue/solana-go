@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/util/gquery"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	solana "git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/market"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -211,4 +212,65 @@ func (t *MarketService) QueryUserSwapTvlCountDay(ctx context.Context, args *ifac
 	reply.List = list
 	reply.Total = total
 	return nil
+}
+
+/*
+
+Provide api for Activity project of nft metadata json, util the activity ends.
+*/
+
+func (t *MarketService) GetActivityNftMetadata(ctx context.Context, args *iface.GetActivityNftMetadataReq, reply *iface.GetActivityNftMetadataResp) error {
+	defer rpcx.Recover(ctx)
+	metadata, err := solana.GetMetadata(args.Mint)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	activityMeta, err := solana.GetActivityMeta(args.Mint)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	image := GetImageByDegree(activityMeta.Degree)
+	reply.Name = metadata.Data.Name
+	reply.Symbol = metadata.Data.Symbol
+	reply.Image = image
+	reply.SellerFeeBasisPoints = 0
+	creators := []iface.Creator{}
+	for _, e := range *metadata.Data.Creators {
+		creators = append(creators, iface.Creator{
+			Address: e.Address,
+			Share:   e.Share,
+		})
+	}
+	properties := &iface.Properties{
+		Category: "image",
+		Creators: &creators,
+		Files: &[]iface.File{
+			{
+				Type: "image/png",
+				Uri:  image,
+			},
+		},
+	}
+	reply.Properties = properties
+	return nil
+}
+
+func GetImageByDegree(degree uint8) string {
+	if degree == 1 {
+		return "https://bafybeidt2nojsctionflvt7xpitxrkmdca6pycp3aft2uhld57uqafn2bq.ipfs.dweb.link/bronze.png"
+	}
+	if degree == 2 {
+		return "https://bafybeihpr3kgcpksief7o2snebbfu65vc3jykimcyjjvyonyauzxbfunpu.ipfs.dweb.link/silver.png"
+	}
+	if degree == 3 {
+
+		return "https://bafybeiateouoesl4s2f7ju2qbggcrifsst3iajjh6zjz5gpogx4j6andj4.ipfs.dweb.link/Gold.png"
+	}
+	if degree == 4 {
+		return "https://bafybeicnen5re24nye47fplvrcivbwms6fv5v5qp4oqmhqwligvgimr5he.ipfs.dweb.link/platinum.png"
+	}
+	if degree == 5 {
+		return "https://bafybeiedxet5oez2j6epby2nxkyzgsbllflwwwrpzny37riie2iljzgydi.ipfs.dweb.link/diamond.png"
+	}
+	return ""
 }
