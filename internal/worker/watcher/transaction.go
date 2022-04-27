@@ -180,7 +180,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		afterSignatures, afterBefore := make([]*rpc.TransactionSignature, 0), signatures[len(signatures)-1].Signature
 
 		for !isComplete {
-			logger.Info(fmt.Sprintf("sync signatures: swap account(%s) ,from(%s),to(%s) ", s.swapConfig.SwapAccount, until, afterBefore.String()))
+			logger.Info(fmt.Sprintf("sync signatures: swap account(%s) ,from(%s),to(%s) ", s.swapConfig.SwapAccount, afterBefore.String(), until))
 
 			newSignatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, &afterBefore, until, limit)
 			if err != nil {
@@ -198,10 +198,14 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 			}
 
 			afterSignatures = append(afterSignatures, newSignatures...)
+
+			if len(afterSignatures) > 10000 {
+				afterSignatures = afterSignatures[5000:]
+			}
 		}
 
-		signatures = append(signatures, afterSignatures...)
-
+		// signatures = append(signatures, afterSignatures...)
+		signatures = afterSignatures
 	}
 
 	// array inversion
