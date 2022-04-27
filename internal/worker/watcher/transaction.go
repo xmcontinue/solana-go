@@ -65,6 +65,7 @@ func (s *SyncTransaction) Run() error {
 	for {
 		err := s.SyncTransaction(&complete)
 		if err != nil {
+			logger.Error(fmt.Sprintf("sync failed: swap account(%s) ", s.swapConfig.SwapAccount), logger.Errorv(err))
 			break
 		}
 		if complete {
@@ -179,6 +180,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		afterSignatures, afterBefore := make([]*rpc.TransactionSignature, 0), signatures[len(signatures)-1].Signature
 
 		for !isComplete {
+			logger.Info(fmt.Sprintf("sync signatures: swap account(%s) ,from(%s),to(%s) ", s.swapConfig.SwapAccount, until, afterBefore.String()))
 
 			newSignatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, &afterBefore, until, limit)
 			if err != nil {
