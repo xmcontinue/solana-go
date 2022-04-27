@@ -147,7 +147,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 // getSignatures
 func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, complete *bool) ([]*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
-	limit := 100
+	limit := 1000
 	signatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, before, until, limit)
 	if err != nil {
 		return signatures, errors.Wrap(err)
@@ -207,9 +207,9 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		signatures[i], signatures[j] = signatures[j], signatures[i]
 	}
 
-	if len(signatures) > limit {
-		signatures = signatures[:limit]
-	}
+	// if len(signatures) > limit {
+	// 	signatures = signatures[:limit]
+	// }
 
 	return signatures, nil
 }
