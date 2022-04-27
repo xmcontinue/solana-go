@@ -199,7 +199,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 			afterSignatures = append(afterSignatures, newSignatures...)
 
-			if len(afterSignatures) > 10000 {
+			if len(afterSignatures) > 15000 {
 				afterSignatures = afterSignatures[5000:]
 			}
 		}
@@ -222,6 +222,9 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 // writeTxToDb
 func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
+	if len(signatures) == 0 {
+		return errors.Wrap(errors.New(fmt.Sprintf("signatures is zero, swap_account: %s", s.swapConfig.SwapAccount)))
+	}
 	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
 	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
 	if err != nil {
