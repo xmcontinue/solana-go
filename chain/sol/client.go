@@ -212,8 +212,7 @@ func watchBalance() {
 			)
 			if err != nil {
 				if !isInit {
-					// panic(err)
-					continue
+					panic(err)
 				} else {
 					continue
 				}
