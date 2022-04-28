@@ -70,6 +70,14 @@ func handleFunc(cli rpcxClient, name string, reqArg, respArg interface{}, preCal
 		req := reflect.New(reqTyp).Interface() // Elem().
 		resp := reflect.New(respTyp).Interface()
 
+		params := c.Params
+		if len(params) != 0 {
+			if err := c.BindUri(req); err != nil {
+				http.ResponseError(c, errors.Wrapf(errors.ParameterError, "bind uri"))
+				return
+			}
+		}
+
 		if c.Request.Method == netHttp.MethodGet {
 			if err := c.BindQuery(req); err != nil {
 				http.ResponseError(c, errors.Wrapf(errors.ParameterError, "bind query"))

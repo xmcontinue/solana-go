@@ -79,7 +79,7 @@ func Init(viperConf *config.Config) error {
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalVol)
 
 	// 同步价格至kline
-	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncSwapPrice)
+	_, err = job.Cron.AddFunc(getSpec(""), SyncSwapPrice)
 
 	job.Cron.Start()
 

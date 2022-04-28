@@ -15,5 +15,6 @@ var (
 	GetKline         = handleFunc(marketClient, "GetKline", &iface.GetKlineReq{}, &iface.GetKlineResp{})
 	GetHistogram     = handleFunc(marketClient, "GetHistogram", &iface.GetHistogramReq{}, &iface.GetHistogramResp{})
 	TvlOfSingleToken = handleFunc(marketClient, "TvlOfSingleToken", &iface.TvlOfSingleTokenReq{}, &iface.TvlOfSingleTokenResp{})
+	GetActivityHistoryByUser = handleFunc(marketClient, "GetActivityHistoryByUser", &iface.GetActivityHistoryByUserReq{}, &iface.GetActivityHistoryByUserResp{})
 	GetActivityNftMetadata = handleFuncForNft(marketClient, "GetActivityNftMetadata", &iface.GetActivityNftMetadataReq{}, &iface.GetActivityNftMetadataResp{})
 )

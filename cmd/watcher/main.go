@@ -19,6 +19,7 @@ import (
 
 func main() {
 	configer := config.NewConfiger()
+	
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
 	domain.SetApiHost(configer.Get("api_host").(string))
@@ -37,7 +38,7 @@ func main() {
 	if err := sol.Init(configer); err != nil {
 		panic(err)
 	}
-
+	watcher.SyncActivityTransaction()
 	// coinGecko初始化
 	coingecko.Init()
 

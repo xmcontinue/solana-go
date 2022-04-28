@@ -20,6 +20,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"github.com/rpcxio/libkv/store"
 
+	event "git.cplus.link/crema/backend/chain/event/activity"
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -32,16 +33,17 @@ const (
 var etcdSwapPairsKey = "/swap-pairs"
 
 var (
-	chainNet        *domain.ChainNet
-	chainNets       []*domain.ChainNet
-	chainNetsConfig []string
-	swapConfigList  []*domain.SwapConfig
-	swapConfigMap   map[string]*domain.SwapConfig
-	tokenConfigMap  map[string]*domain.Token
-	once            sync.Once
-	wg              sync.WaitGroup
-	isInit          bool
-	configLock      sync.Mutex
+	chainNet            *domain.ChainNet
+	chainNets           []*domain.ChainNet
+	chainNetsConfig     []string
+	swapConfigList      []*domain.SwapConfig
+	swapConfigMap       map[string]*domain.SwapConfig
+	tokenConfigMap      map[string]*domain.Token
+	once                sync.Once
+	wg                  sync.WaitGroup
+	isInit              bool
+	configLock          sync.Mutex
+	activityEventParser event.EventParser
 )
 
 func Init(conf *config.Config) error {
@@ -55,6 +57,8 @@ func Init(conf *config.Config) error {
 		if err != nil {
 			return
 		}
+
+		activityEventParser = event.NewActivityEventParser()
 
 		wg.Add(1)
 		go watchSwapPairsConfig(resChan)
@@ -208,7 +212,8 @@ func watchBalance() {
 			)
 			if err != nil {
 				if !isInit {
-					panic(err)
+					// panic(err)
+					continue
 				} else {
 					continue
 				}
@@ -249,6 +254,10 @@ func GetRpcClient() *rpc.Client {
 
 func GetRpcSlot() uint64 {
 	return chainNet.Slot
+}
+
+func GetAcEventParser() *event.EventParser {
+	return &activityEventParser
 }
 
 func abs(n int64) int64 {

@@ -9,7 +9,6 @@ import (
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/process"
 	"git.cplus.link/crema/backend/pkg/domain"
-	ag_solanago "github.com/gagliardetto/solana-go"
 )
 
 const MarketServiceName = "CremaMarketService"
@@ -144,32 +143,4 @@ type TvlOfSingleTokenReq struct {
 
 type TvlOfSingleTokenResp struct {
 	List []*process.SymbolPri `form:"list"`
-}
-
-type GetActivityNftMetadataReq struct {
-	Mint string `json:"mint"`
-}
-
-type Creator struct {
-	Address  ag_solanago.PublicKey  `json:"address"`
-	Share    uint8 `json:"share"`
-}
-
-type File struct {
-	Type string `json:"type"`
-	Uri  string `json:"uri"`
-}
-
-type Properties struct {
-	Category string `json:"category"`
-	Creators *[]Creator `json:"creators"`
-	Files    *[]File `json:"files"`
-}
-
-type GetActivityNftMetadataResp struct {
-	Name                 string `json:"name"`
-	Symbol               string `json:"symbol"`
-	Image                string `json:"image"`
-	SellerFeeBasisPoints uint16 `json:"seller_fee_basis_points"`
-	Properties           *Properties `json:"properties"`
 }
