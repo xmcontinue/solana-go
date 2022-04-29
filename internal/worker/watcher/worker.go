@@ -81,7 +81,8 @@ func Init(viperConf *config.Config) error {
 	// 同步价格至kline
 	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncSwapPrice)
 
-	_, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
+	// TODO 由于未测试完成其他功能上线，此处暂时关闭
+	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
 	job.Cron.Start()
 
