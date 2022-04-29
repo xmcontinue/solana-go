@@ -10,7 +10,7 @@ import (
 	"github.com/near/borsh-go"
 )
 
-const ActivityProgramId = "ACTj4dCtGJqDsy7TJ5C3TDbjbeA3nzoaLW9LW571MzeU"
+var ActivityProgramId = ag_solanago.MustPublicKeyFromBase58("ACTj4dCtGJqDsy7TJ5C3TDbjbeA3nzoaLW9LW571MzeU")
 
 
 func GetMetadata(mintAddress string) (*Metadata, error) {
@@ -40,16 +40,12 @@ func GetMetadata(mintAddress string) (*Metadata, error) {
 }
 
 func GetActivityMeta(mintAddress string) (*ActivityMetadata, error) {
-	activityProgramId, err := ag_solanago.PublicKeyFromBase58(ActivityProgramId)
-	if err != nil {
-		return nil, errors.Wrap(err)
-	}
 	mintKey := ag_solanago.MustPublicKeyFromBase58(mintAddress)
 	seed := [][]byte{
 		[]byte("activity"),
 		mintKey[:],
 	}
-	activityMetaKey, _, err := ag_solanago.FindProgramAddress(seed, activityProgramId)
+	activityMetaKey, _, err := ag_solanago.FindProgramAddress(seed, ActivityProgramId)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
