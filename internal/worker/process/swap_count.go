@@ -109,8 +109,8 @@ func SwapTotalCount() error {
 			PriceInterval:     v.PriceInterval,
 			Price:             FormatFloat(newSwapPrice, countDecimal),
 			PriceRate24h:      newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
-			VolumeInTokenA24h: swapCount24h.TokenAVolume.Round(countDecimal).String(),
-			VolumeInTokenB24h: swapCount24h.TokenBVolume.Round(countDecimal).String(),
+			VolumeInTokenA24h: swapCount24h.TokenAVolume.Add(swapCount24h.TokenAQuoteVolume).Round(countDecimal).String(),
+			VolumeInTokenB24h: swapCount24h.TokenBVolume.Add(swapCount24h.TokenBQuoteVolume).Round(countDecimal).String(),
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
