@@ -123,19 +123,21 @@ type SwapCountToApi struct {
 }
 
 type SwapCountToApiPool struct {
-	Name           string         `json:"name"`
-	TvlInUsd       string         `json:"tvl_in_usd"`
-	VolInUsd24h    string         `json:"vol_in_usd_24h"`
-	TxNum24h       uint64         `json:"tx_num_24h"`
-	Apr            string         `json:"apr"`
-	SwapAccount    string         `json:"swap_account"`
-	TokenAReserves string         `json:"token_a_reserves"`
-	TokenBReserves string         `json:"token_b_reserves"`
-	TxNum          uint64         `json:"tx_num"`
-	VolInUsd       string         `json:"vol_in_usd"`
-	PriceInterval  *PriceInterval `json:"price_interval"`
-	Price          string         `json:"price"`
-	PriceRate24h   string         `json:"price_rate_24h"`
+	Name              string         `json:"name"`
+	TvlInUsd          string         `json:"tvl_in_usd"`
+	VolInUsd24h       string         `json:"vol_in_usd_24h"`
+	TxNum24h          uint64         `json:"tx_num_24h"`
+	Apr               string         `json:"apr"`
+	SwapAccount       string         `json:"swap_account"`
+	TokenAReserves    string         `json:"token_a_reserves"`
+	TokenBReserves    string         `json:"token_b_reserves"`
+	TxNum             uint64         `json:"tx_num"`
+	VolInUsd          string         `json:"vol_in_usd"`
+	PriceInterval     *PriceInterval `json:"price_interval"`
+	Price             string         `json:"price"`
+	PriceRate24h      string         `json:"price_rate_24h"`
+	VolumeInTokenA24h string         `json:"volume_in_tokenA_24h"`
+	VolumeInTokenB24h string         `json:"volume_in_tokenB_24h"`
 }
 
 type SwapCountToApiToken struct {
