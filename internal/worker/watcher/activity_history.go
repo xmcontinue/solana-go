@@ -75,7 +75,7 @@ func getUntil() (*solana.Signature, error) {
 // getSignatures
 func getSignatures(before *solana.Signature, until *solana.Signature) (*solana.Signature, []*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
-	limit := 50
+	limit := 100
 	signatures, err := sol.PullSignatures(sol.ActivityProgramId, before, until, limit)
 	if err != nil {
 		return nil, signatures, errors.Wrap(err)
