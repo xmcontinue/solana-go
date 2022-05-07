@@ -19,8 +19,8 @@ func GetSwapPrice(account *rpc.GetAccountInfoResult, config *domain.SwapConfig) 
 	decimalPrecision := int(config.TokenA.Decimal - config.TokenB.Decimal)
 
 	if decimalPrecision != 0 {
-		tmpPrice = PrecisionConversion(tmpPrice, decimalPrecision)
+		tmpPrice = PrecisionConversion(tmpPrice, -decimalPrecision)
 	}
-
+	
 	return tmpPrice
 }
