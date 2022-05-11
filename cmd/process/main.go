@@ -19,6 +19,7 @@ func main() {
 	configer := config.NewConfiger()
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
+	domain.SetApiHost(configer.Get("api_host").(string))
 
 	// etcd初始化
 	if err := etcd.Init(configer); err != nil {
