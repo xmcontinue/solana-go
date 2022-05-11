@@ -199,8 +199,8 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 			afterSignatures = append(afterSignatures, newSignatures...)
 
-			if len(afterSignatures) > 15000 {
-				afterSignatures = afterSignatures[5000:]
+			if len(afterSignatures) > 1100 {
+				afterSignatures = afterSignatures[1000:]
 			}
 		}
 
