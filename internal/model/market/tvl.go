@@ -114,6 +114,13 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	return &after, nil
 }
 
+func UpdateSwapCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Model(&domain.SwapCountKLine{}).Scopes(filter...).Updates(updates).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
 func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, blockDate *time.Time) (*domain.SwapCountKLine, error) {
 	var (
 		after   domain.SwapCountKLine
@@ -146,6 +153,8 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 			"token_b_symbol":           swapCount.TokenBSymbol,
 			"tvl_in_usd":               swapCount.TvlInUsd,
 			"vol_in_usd":               swapCount.VolInUsd,
+			"token_ausd_for_contract":  swapCount.TokenAUSDForContract,
+			"token_busd_for_contract":  swapCount.TokenBUSDForContract,
 		}
 	)
 
