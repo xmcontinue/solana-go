@@ -90,7 +90,7 @@ func (u *UserCount) ParserDate() error {
 
 		logger.Info(fmt.Sprintf("parse swap, swap address: %u , current id is %d, target id is %d", u.SwapAccount, u.ID, u.LastTransactionID))
 
-		id = swapTransactions[len(swapTransactions)-1].ID
+		id = swapTransactions[len(swapTransactions)-1].ID + 1
 	}
 
 	return nil
