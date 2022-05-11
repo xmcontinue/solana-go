@@ -444,8 +444,8 @@ func GetPriceInfo(date *time.Time, dateType domain.DateType, symbol string) (dec
 	TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
 		context.TODO(),
 		model.NewFilter("symbol = ?", symbol),
-		model.NewFilter("date_type = ?", dateType),
 		model.NewFilter("date <= ?", date),
+		model.NewFilter("date_type = ?", dateType),
 		model.OrderFilter("id desc"),
 	)
 	if err != nil {
@@ -453,8 +453,8 @@ func GetPriceInfo(date *time.Time, dateType domain.DateType, symbol string) (dec
 		TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
 			context.TODO(),
 			model.NewFilter("symbol = ?", symbol),
-			model.NewFilter("date_type = ?", dateType),
 			model.NewFilter("date > ?", date),
+			model.NewFilter("date_type = ?", dateType),
 			model.OrderFilter("id asc"),
 		)
 		if err != nil {
