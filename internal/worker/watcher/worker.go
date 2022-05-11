@@ -65,7 +65,7 @@ func Init(viperConf *config.Config) error {
 	// create sync tvl cron job
 	syncTvlJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTvl"] = syncTvlJob
-	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTvl)
+	// _, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTvl)
 
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
