@@ -135,7 +135,7 @@ func QuerySwapTokenPriceKLine(ctx context.Context, filter ...Filter) (*domain.Sw
 		swapTokenPriceKLine = &domain.SwapTokenPriceKLine{}
 	)
 
-	if err = db.Model(&domain.SwapTokenPriceKLine{}).Debug().Scopes(filter...).Take(swapTokenPriceKLine).Error; err != nil {
+	if err = db.Model(&domain.SwapTokenPriceKLine{}).Scopes(filter...).Take(swapTokenPriceKLine).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}
