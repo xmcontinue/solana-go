@@ -181,7 +181,7 @@ require (
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.5 // indirect
 	k8s.io/api v0.18.0 // indirect
 	k8s.io/apimachinery v0.18.0 // indirect
