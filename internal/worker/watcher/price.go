@@ -11,7 +11,7 @@ import (
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
-	"git.cplus.link/crema/backend/pkg/coingecko"
+	"git.cplus.link/crema/backend/pkg/crema"
 	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/kline"
 )
@@ -81,16 +81,19 @@ func SyncSwapPrice() error {
 	}
 
 	// 同步 token price
-
+	usdcPrice, err := crema.GetPriceForSymbol("USDC")
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	solPrice, err := crema.GetPriceForSymbol("SOL")
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	tokenPrices := map[string]*tokenPrice{
-		"USDC":  {decimal.NewFromInt(1)},
+		"USDC":  {usdcPrice},
+		"SOL":   {solPrice},
 		"pUSDC": {decimal.NewFromInt(1)},
 		"CUSDC": {decimal.NewFromInt(1)},
-	}
-	if solPrice, err := coingecko.GetPriceFromIds("solana"); err == nil {
-		tokenPrices["SOL"] = &tokenPrice{solPrice}
-	} else {
-		return errors.Wrap(err)
 	}
 
 	pairPriceToTokenPrice(swapPairPrices, tokenPrices)

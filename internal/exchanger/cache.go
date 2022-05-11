@@ -145,6 +145,21 @@ func (d *Data) GetAllPricesForAvg() *Prices {
 	return (*Prices)(&prices)
 }
 
+func (d *Data) GetAllPricesForMarket(name string) (*Prices, error) {
+	prices := make([]*domain.Price, 0)
+
+	coins, ok := (*d.raw)[name]
+	if !ok {
+		return (*Prices)(&prices), errors.New("market is not found")
+	}
+
+	for _, v := range coins.GetAllPrices() {
+		prices = append(prices, v.GetPrices()...)
+	}
+
+	return (*Prices)(&prices), nil
+}
+
 func (d *Data) GetPriceForMarket(name, baseSymbol, quoteSymbol string) (decimal.Decimal, error) {
 	prices, err := d.GetPricesForMarket(name, quoteSymbol)
 	if err != nil {
