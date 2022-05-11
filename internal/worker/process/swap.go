@@ -146,6 +146,14 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 			newKline := kline.NewKline(s.BlockDate)
 			for _, t := range newKline.Types {
 				swapCountKLine.DateType = t.DateType
+				// 获取价格
+				tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(swapCountKLine)
+				if err != nil {
+					return errors.Wrap(err)
+				}
+				swapCountKLine.TokenAUSDForContract = tokenAPrice
+				swapCountKLine.TokenBUSDForContract = tokenBPrice
+
 				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 					return errors.Wrap(err)
 				}
@@ -379,4 +387,79 @@ func (s *SwapCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapR
 	}
 
 	return nil
+}
+
+func SyncPriceToSwapKLine() error {
+	newInfo, _ := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("id desc"))
+	for {
+		info, err := model.QuerySwapCountKLine(context.TODO(), model.NewFilter("token_ausd_for_contract = ?", 0), model.OrderFilter("id asc"))
+		if err != nil {
+			break
+		}
+		tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(info)
+		if err != nil {
+			break
+		}
+		// 更改记录
+		err = model.UpdateSwapCountKLine(
+			context.TODO(),
+			map[string]interface{}{
+				"token_ausd_for_contract": tokenAPrice,
+				"token_busd_for_contract": tokenBPrice,
+			},
+			model.IDFilter(info.ID),
+		)
+		if err == nil {
+			logger.Info("SyncPriceToSwapKLine success", logger.Int64("ID:", info.ID), logger.Int64("newID:", newInfo.ID))
+		}
+	}
+	return nil
+}
+
+func PriceToSwapKLineHandle(swapInfo *domain.SwapCountKLine) (decimal.Decimal, decimal.Decimal, error) {
+	var (
+		tokenAPrice decimal.Decimal
+		tokenBPrice decimal.Decimal
+		err         error
+	)
+	// 查找tokenA,tokenB价格
+	tokenAPrice, err = GetPriceInfo(swapInfo.Date, swapInfo.DateType, swapInfo.TokenASymbol)
+	if err != nil {
+		return tokenAPrice, tokenBPrice, errors.Wrap(err)
+	}
+	tokenBPrice, err = GetPriceInfo(swapInfo.Date, swapInfo.DateType, swapInfo.TokenBSymbol)
+	if err != nil {
+		return tokenAPrice, tokenBPrice, errors.Wrap(err)
+	}
+
+	return tokenAPrice, tokenBPrice, nil
+}
+
+func GetPriceInfo(date *time.Time, dateType domain.DateType, symbol string) (decimal.Decimal, error) {
+	// 获取前一个时刻的价格
+	var (
+		TokenPriceInfo *domain.SwapTokenPriceKLine
+		err            error
+	)
+	TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
+		context.TODO(),
+		model.NewFilter("symbol = ?", symbol),
+		model.NewFilter("date_type = ?", dateType),
+		model.NewFilter("date <= ?", date),
+		model.OrderFilter("id desc"),
+	)
+	if err != nil {
+		// 获取后一个时刻的价格
+		TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
+			context.TODO(),
+			model.NewFilter("symbol = ?", symbol),
+			model.NewFilter("date_type = ?", dateType),
+			model.NewFilter("date > ?", date),
+			model.OrderFilter("id asc"),
+		)
+		if err != nil {
+			return decimal.Zero, errors.Wrap(err)
+		}
+	}
+	return TokenPriceInfo.Avg, nil
 }
