@@ -115,7 +115,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 }
 
 func UpdateSwapCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Debug().Model(&domain.SwapCountKLine{}).Scopes(filter...).Updates(updates).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCountKLine{}).Scopes(filter...).Updates(updates).Error; err != nil {
 		return errors.Wrap(err)
 	}
 	return nil
@@ -351,7 +351,7 @@ func QuerySwapCountKLine(ctx context.Context, filter ...Filter) (*domain.SwapCou
 		swapCountKLine = &domain.SwapCountKLine{}
 	)
 
-	if err = db.Model(&domain.SwapCountKLine{}).Debug().Scopes(filter...).Take(swapCountKLine).Error; err != nil {
+	if err = db.Model(&domain.SwapCountKLine{}).Scopes(filter...).Take(swapCountKLine).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}
