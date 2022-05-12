@@ -146,13 +146,13 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 			newKline := kline.NewKline(s.BlockDate)
 			for _, t := range newKline.Types {
 				swapCountKLine.DateType = t.DateType
-				// 获取价格
-				tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(swapCountKLine)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				swapCountKLine.TokenAUSDForContract = tokenAPrice
-				swapCountKLine.TokenBUSDForContract = tokenBPrice
+				// // 获取价格
+				// tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(swapCountKLine)
+				// if err != nil {
+				// 	return errors.Wrap(err)
+				// }
+				// swapCountKLine.TokenAUSDForContract = tokenAPrice
+				// swapCountKLine.TokenBUSDForContract = tokenBPrice
 
 				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 					return errors.Wrap(err)
