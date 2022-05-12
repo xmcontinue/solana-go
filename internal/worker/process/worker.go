@@ -116,15 +116,15 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// TODO 临时同步合约价格冗余至交易额表
-	// _, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), SyncPriceToSwapKLine)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), SyncPriceToSwapKLine)
+	if err != nil {
+		panic(err)
+	}
 
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncKline"] = syncTransactionJob
-	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
+	// _, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
 	userSyncTransactionJob := NewJobInfo("UserSync")
 	job.JobList["UserSyncKline"] = userSyncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
