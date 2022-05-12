@@ -146,13 +146,13 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 			newKline := kline.NewKline(s.BlockDate)
 			for _, t := range newKline.Types {
 				swapCountKLine.DateType = t.DateType
-				// // 获取价格
-				// tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(swapCountKLine)
-				// if err != nil {
-				// 	return errors.Wrap(err)
-				// }
-				// swapCountKLine.TokenAUSDForContract = tokenAPrice
-				// swapCountKLine.TokenBUSDForContract = tokenBPrice
+				// 获取价格
+				tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(swapCountKLine)
+				if err != nil {
+					return errors.Wrap(err)
+				}
+				swapCountKLine.TokenAUSDForContract = tokenAPrice
+				swapCountKLine.TokenBUSDForContract = tokenBPrice
 
 				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 					return errors.Wrap(err)
@@ -392,7 +392,12 @@ func (s *SwapCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapR
 func SyncPriceToSwapKLine() error {
 	newInfo, _ := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("id desc"))
 	for {
-		info, err := model.QuerySwapCountKLine(context.TODO(), model.NewFilter("token_ausd_for_contract = ?", 0), model.OrderFilter("id asc"))
+		info, err := model.QuerySwapCountKLine(
+			context.TODO(),
+			model.NewFilter("token_ausd_for_contract = ?", 0),
+			model.NewFilter("id <= ?", newInfo.ID),
+			model.OrderFilter("id asc"),
+		)
 		if err != nil {
 			break
 		}
