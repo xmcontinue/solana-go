@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -25,6 +26,8 @@ type SwapCount struct {
 	BlockDate         *time.Time
 	spec              string
 }
+
+var syncLuck sync.RWMutex
 
 // ParserDate 按照区块时间顺序解析
 func (s *SwapCount) ParserDate() error {
@@ -390,7 +393,10 @@ func (s *SwapCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapR
 }
 
 func SyncPriceToSwapKLine() error {
-	newInfo, _ := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("id desc"))
+	newInfo, err := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("id desc"))
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	for {
 		info, err := model.QuerySwapCountKLine(
 			context.TODO(),
@@ -422,6 +428,8 @@ func SyncPriceToSwapKLine() error {
 }
 
 func PriceToSwapKLineHandle(swapInfo *domain.SwapCountKLine) (decimal.Decimal, decimal.Decimal, error) {
+	syncLuck.Lock()
+	defer syncLuck.Unlock()
 	var (
 		tokenAPrice decimal.Decimal
 		tokenBPrice decimal.Decimal
