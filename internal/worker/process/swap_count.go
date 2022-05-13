@@ -66,18 +66,18 @@ func SwapTotalCount() error {
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
-		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
+		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 计算pairs vol,tvl 计算单边
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newTokenAPrice).Round(countDecimal), v.TokenB.Balance.Mul(newTokenBPrice).Round(countDecimal)
-		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolume.Mul(newTokenAPrice).Round(countDecimal), swapCount24h.TokenBVolume.Mul(newTokenBPrice).Round(countDecimal)
-		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolume.Mul(newTokenAPrice).Round(countDecimal), swapCount7d.TokenBVolume.Mul(newTokenBPrice).Round(countDecimal)
-		tokenAVol, tokenBVol := swapCountTotal.TokenAVolume.Mul(newTokenAPrice).Round(countDecimal), swapCountTotal.TokenBVolume.Mul(newTokenBPrice).Round(countDecimal)
+		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
+		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
+		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
 		tvlInUsd, volInUsd24h, volInUsd7d, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol7d.Add(tokenBVol7d), tokenAVol.Add(tokenBVol)
 
 		// 下面为token交易额，算双边
-		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolume.Mul(newTokenAPrice)).Round(countDecimal), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolume.Mul(newTokenBPrice)).Round(countDecimal)
-		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolume.Mul(newTokenAPrice)).Round(countDecimal), tokenBVol.Add(swapCountTotal.TokenBQuoteVolume.Mul(newTokenBPrice)).Round(countDecimal)
+		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolumeForUsd).Round(countDecimal)
+		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal)
 
 		// 计算apr
 		apr := "0%"

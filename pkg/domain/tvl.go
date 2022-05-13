@@ -106,11 +106,15 @@ type PairTvl struct {
 }
 
 type SwapCountKLineVolCount struct {
-	TokenAVolume      decimal.Decimal `json:"token_a_volume"`       // swap token a 总交易额(发起方)
-	TokenBVolume      decimal.Decimal `json:"token_b_volume"`       // swap token b 总交易额(发起方)
-	TokenAQuoteVolume decimal.Decimal `json:"token_a_quote_volume"` // swap token a 交易额(获得方)
-	TokenBQuoteVolume decimal.Decimal `json:"token_b_quote_volume"` // swap token b 交易额(获得方)
-	TxNum             uint64          `json:"tx_num"`               // swap token 总交易笔数
+	TokenAVolume            decimal.Decimal `json:"token_a_volume"`               // swap token a 总交易额(发起方)
+	TokenBVolume            decimal.Decimal `json:"token_b_volume"`               // swap token b 总交易额(发起方)
+	TokenAQuoteVolume       decimal.Decimal `json:"token_a_quote_volume"`         // swap token a 交易额(获得方)
+	TokenBQuoteVolume       decimal.Decimal `json:"token_b_quote_volume"`         // swap token b 交易额(获得方)
+	TokenAVolumeForUsd      decimal.Decimal `json:"token_a_volume_for_usd"`       // swap token a 总交易额(发起方)(USD)
+	TokenBVolumeForUsd      decimal.Decimal `json:"token_b_volume_for_usd"`       // swap token b 总交易额(发起方)(USD)
+	TokenAQuoteVolumeForUsd decimal.Decimal `json:"token_a_quote_volume_for_usd"` // swap token a 交易额(获得方)(USD)
+	TokenBQuoteVolumeForUsd decimal.Decimal `json:"token_b_quote_volume_for_usd"` // swap token b 交易额(获得方)(USD)
+	TxNum                   uint64          `json:"tx_num"`                       // swap token 总交易笔数
 }
 
 type SwapCountToApi struct {

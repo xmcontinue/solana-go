@@ -61,18 +61,18 @@ type UserCountKLine struct {
 }
 
 type SwapPairPriceKLine struct {
-	ID          int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	ID          int64           `json:"-" gorm:"primaryKey;auto_increment;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key"` // swap地址
-	Open        decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                               // 统计时间段第一个值
-	High        decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                               // 最大值
-	Low         decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                               // 最小值
-	Settle      decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                             // 结束值
-	Avg         decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                                // 平均值
-	Num         int64           `json:"num"`                                                                                                                     // 获取次数
-	Date        *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index"` // 统计日期
-	DateType    DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key"`    // 时间类型（min,quarter,hour,day,wek,mon）
+	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // swap地址
+	Open        decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                                                                                             // 统计时间段第一个值
+	High        decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                                                                                             // 最大值
+	Low         decimal.Decimal `json:"low"  gorm:"type:decimal(36,18);default:0"`                                                                                                                                             // 最小值
+	Settle      decimal.Decimal `json:"settle" gorm:"type:decimal(36,18);default:0"`                                                                                                                                           // 结束值
+	Avg         decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                                                                                              // 平均值
+	Num         int64           `json:"num"`                                                                                                                                                                                   // 获取次数
+	Date        *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // 统计日期
+	DateType    DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"`    // 时间类型（min,quarter,hour,day,wek,mon）
 }
 
 type SwapTokenPriceKLine struct {
