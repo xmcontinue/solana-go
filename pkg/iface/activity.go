@@ -26,12 +26,18 @@ type Properties struct {
 	Files    *[]File    `json:"files"`
 }
 
+type Attribute struct {
+	TraitType string `json:"trait_type"`
+	Value     string `json:"value"`
+}
+
 type GetActivityNftMetadataResp struct {
 	Name                 string      `json:"name"`
 	Symbol               string      `json:"symbol"`
 	Image                string      `json:"image"`
 	SellerFeeBasisPoints uint16      `json:"seller_fee_basis_points"`
 	Properties           *Properties `json:"properties"`
+	Attributes           *[]Attribute `json:"attributes"`
 }
 
 type CreateActivityHistoryReq struct {
@@ -45,7 +51,7 @@ type GetActivityHistoryByUserReq struct {
 }
 
 type ActivityHistoryResp struct {
-	ID           int64 `json:"id"`
+	ID           int64      `json:"id"`
 	CreatedAt    *time.Time `json:"created_at"`
 	UpdatedAt    *time.Time `json:"updated_at"`
 	UserKey      string     `json:"user_key"`

@@ -252,6 +252,13 @@ func (t *MarketService) GetActivityNftMetadata(ctx context.Context, args *iface.
 		},
 	}
 	reply.Properties = properties
+	attributes := &[]iface.Attribute{
+		{
+			TraitType: "Level",
+			Value:     GetLevelByDegree(activityMeta.Degree),
+		},
+	}
+	reply.Attributes = attributes
 	return nil
 }
 
@@ -271,6 +278,26 @@ func GetImageByDegree(degree uint8) string {
 	}
 	if degree == 5 {
 		return "https://bafybeiedxet5oez2j6epby2nxkyzgsbllflwwwrpzny37riie2iljzgydi.ipfs.dweb.link/diamond.png"
+	}
+	return ""
+}
+
+func GetLevelByDegree(degree uint8) string {
+	if degree == 1 {
+		return "Bronze"
+	}
+	if degree == 2 {
+		return "Silver"
+	}
+	if degree == 3 {
+		return "Gold"
+	}
+	if degree == 4 {
+		return "Platinum"
+	}
+	if degree == 5 {
+		return "Diamond"
+
 	}
 	return ""
 }
