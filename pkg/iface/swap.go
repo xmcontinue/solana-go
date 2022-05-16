@@ -17,6 +17,7 @@ type MarketService interface {
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
 	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
 	SwapCount(context.Context, *NilReq, *SwapCountResp) error
+	SwapCountNew(context.Context, *NilReq, *SwapCountResp) error
 	TvlOfSingleToken(context.Context, *TvlOfSingleTokenReq, *TvlOfSingleTokenResp) error
 	GetTokenConfig(context.Context, *NilReq, *JsonString) error
 }

@@ -47,6 +47,23 @@ func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *i
 	return nil
 }
 
+// SwapCountNew ...
+func (t *MarketService) SwapCountNew(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
+	defer rpcx.Recover(ctx)
+
+	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKeyNew().Key).Result()
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	err = json.Unmarshal([]byte(res), reply)
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	return nil
+}
+
 // GetTvl ...
 func (t *MarketService) GetTvl(ctx context.Context, args *iface.GetTvlReq, reply *iface.GetTvlResp) error {
 	defer rpcx.Recover(ctx)
@@ -178,7 +195,7 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 	return nil
 }
 
-//func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
+// func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
 //	defer rpcx.Recover(ctx)
 //	if err := validate(args); err != nil {
 //		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
@@ -194,7 +211,7 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 //	reply.List = list
 //	reply.Total = total
 //	return nil
-//}
+// }
 
 func (t *MarketService) QueryUserSwapTvlCountDay(ctx context.Context, args *iface.QueryUserSwapTvlCountDayReq, reply *iface.QueryUserSwapTvlCountDayResp) error {
 	defer rpcx.Recover(ctx)

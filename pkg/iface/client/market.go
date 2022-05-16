@@ -18,6 +18,10 @@ func (c *CremaMarketClient) SwapCount(ctx context.Context, args *iface.NilReq, r
 	return c.Call(ctx, "SwapCount", args, reply)
 }
 
+func (c *CremaMarketClient) SwapCountNew(ctx context.Context, args *iface.NilReq, reply *iface.SwapCountResp) error {
+	return c.Call(ctx, "SwapCountNew", args, reply)
+}
+
 func (c *CremaMarketClient) GetConfig(ctx context.Context, args *iface.GetConfigReq, reply *iface.JsonString) error {
 	return c.Call(ctx, "GetConfig", args, reply)
 }
