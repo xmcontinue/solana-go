@@ -180,7 +180,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		afterSignatures, afterBefore := make([]*rpc.TransactionSignature, 0), signatures[len(signatures)-1].Signature
 
 		for !isComplete {
-			logger.Info(fmt.Sprintf("sync signatures: swap account(%s) ,from(%s),to(%s) ", s.swapConfig.SwapAccount, until, afterBefore.String()))
+			logger.Info(fmt.Sprintf("sync signatures: swap account(%s) ,from(%s),to(%s) ", s.swapConfig.SwapAccount, afterBefore.String(), until))
 
 			newSignatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, &afterBefore, until, limit)
 			if err != nil {
@@ -198,10 +198,14 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 			}
 
 			afterSignatures = append(afterSignatures, newSignatures...)
+
+			if len(afterSignatures) > 15000 {
+				afterSignatures = afterSignatures[5000:]
+			}
 		}
 
-		signatures = append(signatures, afterSignatures...)
-
+		// signatures = append(signatures, afterSignatures...)
+		signatures = afterSignatures
 	}
 
 	// array inversion
@@ -218,6 +222,9 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 
 // writeTxToDb
 func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
+	if len(signatures) == 0 {
+		return errors.Wrap(errors.New(fmt.Sprintf("signatures is zero, swap_account: %s", s.swapConfig.SwapAccount)))
+	}
 	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
 	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
 	if err != nil {

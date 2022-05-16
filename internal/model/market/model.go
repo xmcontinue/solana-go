@@ -63,6 +63,7 @@ func autoMigrate() error {
 		&domain.SwapTransaction{},
 		&domain.SwapPairPriceKLine{},
 		&domain.SwapTokenPriceKLine{},
+		&domain.ActivityHistory{},
 	); err != nil {
 		return errors.Wrap(err)
 	}

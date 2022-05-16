@@ -38,12 +38,12 @@ func (u *UserCount) getBeginID() error {
 
 // ParserDate 按照区块时间顺序解析
 func (u *UserCount) ParserDate() error {
-	for {
-		ctx := context.Background()
-		if err := u.getBeginID(); err != nil {
-			return errors.Wrap(err)
-		}
+	ctx := context.Background()
+	if err := u.getBeginID(); err != nil {
+		return errors.Wrap(err)
+	}
 
+	for {
 		filters := []model.Filter{
 			model.NewFilter("id <= ?", u.LastTransactionID),
 			model.SwapAddress(u.SwapAccount),
@@ -87,8 +87,7 @@ func (u *UserCount) ParserDate() error {
 			return errors.Wrap(err)
 		}
 
-		logger.Info(fmt.Sprintf("parse swap, swap address: %u , current id is %d, target id is %d", u.SwapAccount, u.ID, u.LastTransactionID))
-
+		logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d,count:%d", u.SwapAccount, u.ID, u.LastTransactionID, len(swapTransactions)))
 	}
 
 	return nil

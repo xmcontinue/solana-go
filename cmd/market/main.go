@@ -5,9 +5,11 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/transport/rpcx"
 
-	handler "git.cplus.link/crema/backend/internal/services/market"
+	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/pkg/domain"
 
+	"git.cplus.link/crema/backend/internal/etcd"
+	handler "git.cplus.link/crema/backend/internal/services/market"
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
@@ -16,6 +18,16 @@ func main() {
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
 	domain.SetApiHost(configer.Get("api_host").(string))
+
+	// etcd初始化
+	if err := etcd.Init(configer); err != nil {
+		panic(err)
+	}
+
+	// sol初始化
+	if err := sol.Init(configer); err != nil {
+		panic(err)
+	}
 
 	serviceConf, err := configer.Service(iface.MarketServiceName)
 	if err != nil {
