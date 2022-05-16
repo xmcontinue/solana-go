@@ -109,6 +109,11 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
+	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), SwapTotalCountNew)
+	if err != nil {
+		panic(err)
+	}
+
 	// 统计相同币种的tvl
 	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), tvlOfToken)
 	if err != nil {
