@@ -375,8 +375,8 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 		swapHistogramMap := make(map[int64]*SwapHistogram, klineT.DataCount)
 		for _, v := range swapCountKlines {
 			swapHistogramMap[v.Date.Unix()] = &SwapHistogram{
-				Tvl:  v.TvlInUsd,
-				Vol:  v.VolInUsd,
+				Tvl:  v.TokenABalance.Mul(v.TokenAUSDForContract).Add(v.TokenBBalance.Mul(v.TokenBUSDForContract)),
+				Vol:  v.TokenAVolume.Mul(v.TokenAUSDForContract).Add(v.TokenBVolume.Mul(v.TokenBUSDForContract)),
 				Date: v.Date,
 			}
 		}
@@ -387,10 +387,11 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 			if swapCountKlines[len(swapCountKlines)-index-1].Date.After(*swapHistogramZ[0].Member.Date) {
 				break
 			}
+			v := swapCountKlines[len(swapCountKlines)-index-1]
 			lastHistogram = &SwapHistogram{
-				Tvl:  swapCountKlines[len(swapCountKlines)-index-1].TvlInUsd,
-				Vol:  swapCountKlines[len(swapCountKlines)-index-1].VolInUsd,
-				Date: swapCountKlines[len(swapCountKlines)-index-1].Date,
+				Tvl:  v.TokenABalance.Mul(v.TokenAUSDForContract).Add(v.TokenBBalance.Mul(v.TokenBUSDForContract)),
+				Vol:  v.TokenAVolume.Mul(v.TokenAUSDForContract).Add(v.TokenBVolume.Mul(v.TokenBUSDForContract)),
+				Date: v.Date,
 			}
 		}
 
@@ -418,7 +419,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 	}
 
 	// 注释，暂时不使用当前时间点这个坐标
-	//if len(swapHistogramZ) > 1 {
+	// if len(swapHistogramZ) > 1 {
 	//	swapHistogramZ = append(swapHistogramZ, &HistogramZ{
 	//		Score: now.Unix(),
 	//		Member: &SwapHistogram{
@@ -436,7 +437,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 	//
 	//	swapHistogramZ[0].Member.Tvl = decimal.Zero
 	//	swapHistogramZ[0].Member.Vol = decimal.Zero
-	//}
+	// }
 
 	// lua 通过脚本更新
 	newZ := make([]interface{}, 0, len(swapHistogramZ)+1)
