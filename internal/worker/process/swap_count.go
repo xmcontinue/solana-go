@@ -126,7 +126,7 @@ func SwapTotalCount() error {
 				VolInUsd:     tokenATotalVol.String(),
 				TxNum:        swapCountTotal.TxNum,
 				TvlInUsd:     tokenATvl.String(),
-				Price:        newTokenAPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenA.SwapTokenAccount))),
+				Price:        newTokenAPrice.String(), // TODO newTokenAPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenA.SwapTokenAccount))),
 				PriceRate24h: newTokenAPrice.Sub(beforeTokenAPrice).Div(beforeTokenAPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 			&domain.SwapCountToApiToken{
@@ -136,7 +136,7 @@ func SwapTotalCount() error {
 				VolInUsd:     tokenBTotalVol.String(),
 				TxNum:        swapCountTotal.TxNum,
 				TvlInUsd:     tokenBTvl.String(),
-				Price:        newTokenBPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenB.SwapTokenAccount))),
+				Price:        newTokenBPrice.String(), // TODO newTokenBPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenB.SwapTokenAccount))),
 				PriceRate24h: newTokenBPrice.Sub(beforeTokenBPrice).Div(beforeTokenBPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 		)
@@ -272,21 +272,23 @@ func SwapTotalCountNew() error {
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		swapCountToApiPool := &domain.SwapCountToApiPool{
-			Name:              v.Name,
-			SwapAccount:       v.SwapAccount,
-			TokenAReserves:    v.TokenA.SwapTokenAccount,
-			TokenBReserves:    v.TokenB.SwapTokenAccount,
-			VolInUsd24h:       volInUsd24h.String(),
-			TxNum24h:          swapCount24h.TxNum,
-			VolInUsd:          volInUsd.String(),
-			TxNum:             swapCountTotal.TxNum,
-			Apr:               apr,
-			TvlInUsd:          tvlInUsd.String(),
-			PriceInterval:     v.PriceInterval,
-			Price:             FormatFloat(newSwapPrice, countDecimal),
-			PriceRate24h:      newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
-			VolumeInTokenA24h: swapCount24h.TokenAVolume.Add(swapCount24h.TokenAQuoteVolume).Round(countDecimal).String(),
-			VolumeInTokenB24h: swapCount24h.TokenBVolume.Add(swapCount24h.TokenBQuoteVolume).Round(countDecimal).String(),
+			Name:                        v.Name,
+			SwapAccount:                 v.SwapAccount,
+			TokenAReserves:              v.TokenA.SwapTokenAccount,
+			TokenBReserves:              v.TokenB.SwapTokenAccount,
+			VolInUsd24h:                 volInUsd24h.String(),
+			TxNum24h:                    swapCount24h.TxNum,
+			VolInUsd:                    volInUsd.String(),
+			TxNum:                       swapCountTotal.TxNum,
+			Apr:                         apr,
+			TvlInUsd:                    tvlInUsd.String(),
+			PriceInterval:               v.PriceInterval,
+			Price:                       FormatFloat(newSwapPrice, countDecimal),
+			PriceRate24h:                newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
+			VolumeInTokenA24h:           newTokenAPrice.String(), // TODO swapCount24h.TokenAVolume.Add(swapCount24h.TokenAQuoteVolume).Round(countDecimal).String(),
+			VolumeInTokenB24h:           newTokenBPrice.String(), // TODO swapCount24h.TokenBVolume.Add(swapCount24h.TokenBQuoteVolume).Round(countDecimal).String(),
+			VolumeInTokenA24hUnilateral: swapCount24h.TokenAVolume.Round(countDecimal).String(),
+			VolumeInTokenB24hUnilateral: swapCount24h.TokenBVolume.Round(countDecimal).String(),
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
