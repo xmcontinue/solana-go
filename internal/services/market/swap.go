@@ -30,6 +30,36 @@ func (t *MarketService) SwapCountOld(ctx context.Context, args *iface.SwapCountR
 	return nil
 }
 
+// SwapCountList ...
+func (t *MarketService) SwapCountList(ctx context.Context, args *iface.SwapCountListReq, reply *iface.SwapCountListResp) error {
+	defer rpcx.Recover(ctx)
+
+	list, err := model.QuerySwapCountKLines(
+		ctx,
+		1440,
+		0,
+		model.NewFilter("date_type =", args.DateType),
+		model.NewFilter("date >=", args.BeginAt),
+		model.NewFilter("date <=", args.EndAt),
+	)
+
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	for _, v := range list {
+		reply.List = append(reply.List, &domain.SwapCountListInfo{
+			TokenAUSDForContract: v.TokenAUSDForContract,
+			TokenBUSDForContract: v.TokenBUSDForContract,
+			TokenAVolume:         v.TokenAVolume,
+			TokenBVolume:         v.TokenBVolume,
+			TxNum:                uint64(v.TxNum),
+			Date:                 v.Date,
+		})
+	}
+	return nil
+}
+
 // SwapCount ...
 func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
 	defer rpcx.Recover(ctx)

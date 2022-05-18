@@ -15,6 +15,7 @@ const MarketServiceName = "CremaMarketService"
 
 type MarketService interface {
 	GetConfig(context.Context, *GetConfigReq, *JsonString) error
+	SwapCountList(context.Context, *SwapCountListReq, *SwapCountListResp) error
 	GetTvl(context.Context, *GetTvlReq, *GetTvlResp) error
 	SwapCount(context.Context, *NilReq, *SwapCountResp) error
 	SwapCountNew(context.Context, *NilReq, *SwapCountResp) error
@@ -28,6 +29,16 @@ type SwapCountReq struct {
 
 type SwapCountResp struct {
 	*domain.SwapCountToApi
+}
+
+type SwapCountListReq struct {
+	BeginAt  int64 `json:"begin_at"                   binding:"omitempty"              gquery:"-"`
+	EndAt    int64 `json:"end_at"                     binding:"omitempty"              gquery:"-"`
+	DateType int64 `json:"date_type"                  binding:"omitempty"              gquery:"-"`
+}
+
+type SwapCountListResp struct {
+	List []*domain.SwapCountListInfo `json:"list"`
 }
 
 type SwapCountOldResp struct {
