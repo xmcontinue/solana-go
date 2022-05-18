@@ -38,9 +38,9 @@ func (t *MarketService) SwapCountList(ctx context.Context, args *iface.SwapCount
 		ctx,
 		1440,
 		0,
-		model.NewFilter("date_type =", args.DateType),
-		model.NewFilter("date >=", args.BeginAt),
-		model.NewFilter("date <=", args.EndAt),
+		model.NewFilter("date_type = ?", args.DateType),
+		model.NewFilter("date >= ?", args.BeginAt),
+		model.NewFilter("date <= ?", args.EndAt),
 	)
 
 	if err != nil {
