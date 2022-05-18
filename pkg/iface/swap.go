@@ -32,9 +32,9 @@ type SwapCountResp struct {
 }
 
 type SwapCountListReq struct {
-	BeginAt  int64 `json:"begin_at"                   binding:"omitempty"              gquery:"-"`
-	EndAt    int64 `json:"end_at"                     binding:"omitempty"              gquery:"-"`
-	DateType int64 `json:"date_type"                  binding:"omitempty"              gquery:"-"`
+	BeginAt  string `form:"begin_at"                   binding:"required"`
+	EndAt    string `form:"end_at"                     binding:"required"`
+	DateType string `form:"date_type"                  binding:"required"`
 }
 
 type SwapCountListResp struct {
