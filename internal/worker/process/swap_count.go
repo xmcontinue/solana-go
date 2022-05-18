@@ -302,7 +302,7 @@ func SwapTotalCountNew() error {
 				VolInUsd:     tokenATotalVol.String(),
 				TxNum:        swapCountTotal.TxNum,
 				TvlInUsd:     tokenATvl.String(),
-				Price:        newTokenAPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenA.SwapTokenAccount))),
+				Price:        newTokenAPrice.String(), // TODO newTokenAPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenA.SwapTokenAccount))),
 				PriceRate24h: newTokenAPrice.Sub(beforeTokenAPrice).Div(beforeTokenAPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 			&domain.SwapCountToApiToken{
@@ -312,7 +312,7 @@ func SwapTotalCountNew() error {
 				VolInUsd:     tokenBTotalVol.String(),
 				TxNum:        swapCountTotal.TxNum,
 				TvlInUsd:     tokenBTvl.String(),
-				Price:        newTokenBPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenB.SwapTokenAccount))),
+				Price:        newTokenBPrice.String(), // TODO newTokenBPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenB.SwapTokenAccount))),
 				PriceRate24h: newTokenBPrice.Sub(beforeTokenBPrice).Div(beforeTokenBPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 		)
