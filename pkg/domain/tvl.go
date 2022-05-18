@@ -117,6 +117,15 @@ type SwapCountKLineVolCount struct {
 	TxNum                   uint64          `json:"tx_num"`                       // swap token 总交易笔数
 }
 
+type SwapCountListInfo struct {
+	TokenAUSDForContract decimal.Decimal `json:"token_ausd_for_contract" gorm:"column:token_ausd_for_contract;type:decimal(36,18);default:0; Index: SwapCountKLine_id_token_ausd_for_contract_index"` // swap token a usd价格(合约内部价格)
+	TokenBUSDForContract decimal.Decimal `json:"token_busd_for_contract" gorm:"column:token_busd_for_contract;type:decimal(36,18);default:0"`                                                         // swap token b usd价格(合约内部价格)
+	TokenAVolume         decimal.Decimal `json:"token_a_volume"`                                                                                                                                      // swap token a 总交易额(发起方)
+	TokenBVolume         decimal.Decimal `json:"token_b_volume"`                                                                                                                                      // swap token b 总交易额(发起方)
+	TxNum                uint64          `json:"tx_num"`                                                                                                                                              // swap token 总交易笔数
+	Date                 *time.Time      `json:"date"`
+}
+
 type SwapCountToApi struct {
 	TvlInUsd    string                 `json:"tvl_in_usd"`
 	VolInUsd24h string                 `json:"vol_in_usd_24h"`
