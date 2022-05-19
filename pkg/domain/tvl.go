@@ -124,6 +124,7 @@ type SwapCountListInfo struct {
 	TokenBVolume         decimal.Decimal `json:"token_b_volume"`                                                                                                                                      // swap token b 总交易额(发起方)
 	TxNum                uint64          `json:"tx_num"`                                                                                                                                              // swap token 总交易笔数
 	Date                 *time.Time      `json:"date"`
+	SwapAddress          string          `json:"swap_address"`
 }
 
 type SwapCountToApi struct {

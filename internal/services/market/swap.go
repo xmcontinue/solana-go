@@ -36,7 +36,7 @@ func (t *MarketService) SwapCountList(ctx context.Context, args *iface.SwapCount
 
 	list, err := model.QuerySwapCountKLines(
 		ctx,
-		1440,
+		100000,
 		0,
 		model.NewFilter("date_type = ?", args.DateType),
 		model.NewFilter("date >= ?", args.BeginAt),
@@ -55,6 +55,7 @@ func (t *MarketService) SwapCountList(ctx context.Context, args *iface.SwapCount
 			TokenBVolume:         v.TokenBVolume,
 			TxNum:                uint64(v.TxNum),
 			Date:                 v.Date,
+			SwapAddress:          v.SwapAddress,
 		})
 	}
 	return nil
