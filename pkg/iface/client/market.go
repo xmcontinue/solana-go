@@ -44,6 +44,10 @@ func (c *CremaMarketClient) TvlOfSingleToken(ctx context.Context, args *iface.Tv
 	return c.Call(ctx, "TvlOfSingleToken", args, reply)
 }
 
+func (c *CremaMarketClient) GetTransactions(ctx context.Context, args *iface.GetTransactionsReq, reply *iface.GetTransactionsResp) error {
+	return c.Call(ctx, "GetTransactions", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

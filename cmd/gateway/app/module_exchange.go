@@ -38,6 +38,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.POST("/v1/kline", handler.GetKline)
 	engine.GET("/v1/histogram", handler.GetHistogram)
 	engine.GET("/v1/token/tvl", handler.TvlOfSingleToken)
+	engine.GET("/v1/transaction", handler.GetTransaction)
 
 	return nil
 }
