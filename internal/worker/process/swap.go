@@ -389,41 +389,6 @@ func (s *SwapCount) updateSwapCount(ctx context.Context, swapRecord *parse.SwapR
 	return nil
 }
 
-func SyncPriceToSwapKLine() error {
-	newInfo, err := model.QuerySwapCountKLine(context.TODO(), model.OrderFilter("id desc"))
-	if err != nil {
-		return errors.Wrap(err)
-	}
-	for {
-		info, err := model.QuerySwapCountKLine(
-			context.TODO(),
-			model.NewFilter("token_ausd_for_contract = ?", 0),
-			model.NewFilter("id <= ?", newInfo.ID),
-			model.OrderFilter("id asc"),
-		)
-		if err != nil {
-			break
-		}
-		tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(context.TODO(), info)
-		if err != nil {
-			break
-		}
-		// 更改记录
-		err = model.UpdateSwapCountKLine(
-			context.TODO(),
-			map[string]interface{}{
-				"token_ausd_for_contract": tokenAPrice,
-				"token_busd_for_contract": tokenBPrice,
-			},
-			model.IDFilter(info.ID),
-		)
-		if err == nil {
-			logger.Info("SyncPriceToSwapKLine success", logger.Int64("ID:", info.ID), logger.Int64("newID:", newInfo.ID))
-		}
-	}
-	return nil
-}
-
 func PriceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine) (decimal.Decimal, decimal.Decimal, error) {
 	var (
 		tokenAPrice decimal.Decimal
