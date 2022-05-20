@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
 
+	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/process"
 	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/iface"
@@ -22,42 +23,42 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 
 	var (
 		key = domain.KLineKey(args.DateType, args.SwapAccount)
-		//dateType = &process.KLineTyp{}
+		// dateType = &process.KLineTyp{}
 		offset = int64(0)
 		list   = make([]*process.Price, 0, limit(args.Limit))
-		//price    = &process.Num{}
+		// price    = &process.Num{}
 	)
 
-	//// 最后一个数据和前端给的时间比较
-	//lastKLine, err := t.redisClient.ZRange(ctx, key, -1, -1).Result()
-	//if err != nil {
+	// // 最后一个数据和前端给的时间比较
+	// lastKLine, err := t.redisClient.ZRange(ctx, key, -1, -1).Result()
+	// if err != nil {
 	//	return errors.Wrap(err)
-	//}
+	// }
 	//
-	//if len(lastKLine) == 0 {
+	// if len(lastKLine) == 0 {
 	//	return nil
-	//}
+	// }
 	//
-	//_ = json.Unmarshal([]byte(lastKLine[0]), price)
+	// _ = json.Unmarshal([]byte(lastKLine[0]), price)
 	//
-	//// 构造时间
-	//for _, v := range []process.KLineTyp{process.DateMin, process.DateTwelfth, process.DateQuarter, process.DateHalfAnHour, process.DateHour, process.DateDay, process.DateWek, process.DateMon} {
+	// // 构造时间
+	// for _, v := range []process.KLineTyp{process.DateMin, process.DateTwelfth, process.DateQuarter, process.DateHalfAnHour, process.DateHour, process.DateDay, process.DateWek, process.DateMon} {
 	//	if v.DateType == args.DateType {
 	//		dateType = &v
 	//		dateType.Date = price.Date
 	//		dateType.InnerTimeInterval = v.InnerTimeInterval
 	//		break
 	//	}
-	//}
+	// }
 
-	//for i := range list {
+	// for i := range list {
 	//	date := dateType.GetDate().Add(-dateType.TimeInterval * time.Duration(i))
 	//	list[len(list)-(i+1)] = &process.Num{
 	//		Date: &date,
 	//	}
-	//}
+	// }
 
-	//for _, v := range values {
+	// for _, v := range values {
 	//	_ = json.Unmarshal([]byte(v), price)
 	//	for i, l := range list {
 	//		if l.Date.After(*price.Date) || l.Date.Equal(*price.Date) {
@@ -68,7 +69,7 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 	//			list[i].Avg = price.Avg
 	//		}
 	//	}
-	//}
+	// }
 
 	if args.Offset == 0 {
 		offset = -1
@@ -107,6 +108,20 @@ func (t *MarketService) GetKline(ctx context.Context, args *iface.GetKlineReq, r
 	reply.Offset = args.Offset
 	reply.List = list
 	reply.Total = total
+	return nil
+}
+
+// GetTransactions ...
+func (t *MarketService) GetTransactions(ctx context.Context, args *iface.GetTransactionsReq, reply *iface.GetTransactionsResp) error {
+	defer rpcx.Recover(ctx)
+
+	var err error
+	reply.List, err = model.QuerySwapTransactions(ctx, 100, 0, model.OrderFilter("id asc"), model.NewFilter("id > ?", args.ID))
+
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	return nil
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 type SwapTransaction struct {
-	ID             int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	ID             int64           `json:"id" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	Signature      string          `json:"signature" gorm:"not null;type:varchar(128);  index; uniqueIndex:swap_transaction_signature_swap_address_unique_key"`   // 交易签名
@@ -30,7 +30,7 @@ type SwapTransaction struct {
 	TokenAUSD      decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"`                                                   // swap token a usd价格
 	TokenBUSD      decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                                   // swap token b usd价格
 	Status         bool            `json:"status"`                                                                                                                // 交易状态: false-失败，true-成功(废弃)
-	TxData         *TxData         `json:"-"               gorm:"type:text;" `                                                                                    // 原数据（json格式）
+	TxData         *TxData         `json:"tx_data"               gorm:"type:text;" `                                                                              // 原数据（json格式）
 }
 
 type SwapPairBase struct {

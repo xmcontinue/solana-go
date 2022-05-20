@@ -20,6 +20,7 @@ type MarketService interface {
 	SwapCount(context.Context, *NilReq, *SwapCountResp) error
 	TvlOfSingleToken(context.Context, *TvlOfSingleTokenReq, *TvlOfSingleTokenResp) error
 	GetTokenConfig(context.Context, *NilReq, *JsonString) error
+	GetTransactions(context.Context, *GetTransactionsReq, *GetTransactionsResp) error
 }
 
 type SwapCountReq struct {
@@ -154,4 +155,12 @@ type TvlOfSingleTokenReq struct {
 
 type TvlOfSingleTokenResp struct {
 	List []*process.SymbolPri `form:"list"`
+}
+
+type GetTransactionsReq struct {
+	ID uint64 `form:"id"`
+}
+
+type GetTransactionsResp struct {
+	List []*domain.SwapTransaction `form:"list"`
 }
