@@ -4,13 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
-	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
-	"github.com/go-resty/resty/v2"
-	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -119,48 +116,4 @@ func tvlOfToken() error {
 	}
 
 	return nil
-}
-
-func syncTransactions() error {
-	client := resty.New()
-
-	for {
-		info, err := model.QueryNewSwapTransaction(context.TODO(), model.OrderFilter("id desc"))
-
-		params := map[string]string{}
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				params["id"] = "0"
-			} else {
-				return nil
-			}
-		} else {
-			params["id"] = strconv.Itoa(int(info.ID))
-		}
-
-		resp, err := client.R().
-			SetQueryParams(params).
-			Get("https://api.crema.finance/v1/transaction") //
-		if err != nil {
-			return errors.Wrap(err)
-		}
-
-		var raw struct {
-			Data struct {
-				List []*domain.NewSwapTransaction `json:"list"`
-			}
-		}
-		err = json.Unmarshal(resp.Body(), &raw)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-
-		if len(raw.Data.List) == 0 {
-			return nil
-		}
-
-		model.CreateNewSwapTransactions(context.TODO(), raw.Data.List)
-
-		time.Sleep(time.Second)
-	}
 }
