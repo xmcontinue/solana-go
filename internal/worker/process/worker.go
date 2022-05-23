@@ -115,11 +115,6 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), syncTransactions)
-	if err != nil {
-		panic(err)
-	}
-
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncKline"] = syncTransactionJob
