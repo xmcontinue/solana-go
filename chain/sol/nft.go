@@ -29,7 +29,7 @@ func GetMetadata(mintAddress string) (*Metadata, error) {
 	)
 
 	if err != nil {
-		return &Metadata{}, errors.Wrap(err)
+		return &Metadata{}, errors.RecordNotFound
 	}
 
 	metadata, err := MetadataDeserialize(res.Value.Data.GetBinary())
@@ -59,7 +59,7 @@ func GetActivityMeta(mintAddress string) (*ActivityMetadata, error) {
 	)
 
 	if err != nil {
-		return nil, errors.Wrap(err)
+		return nil, errors.RecordNotFound
 	}
 
 	var metadata ActivityMetadata
