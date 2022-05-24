@@ -106,7 +106,7 @@ func sendHttpStatusMsgToPushGateway(status float64) {
 		LogHelp:  "all http api status",
 		JobName:  "api_status",
 		Tags: map[string]string{
-			"project": "crema",
+			"project": prometheus.GetProjectName(),
 		},
 	}
 	err := prometheus.ExamplePusherPush(log)
@@ -122,7 +122,7 @@ func sendExchangeSyncTimeMsgToPushGateway(time float64) {
 		LogHelp:  "crema exchange sync time lag difference (s)",
 		JobName:  "exchange_sync_time",
 		Tags: map[string]string{
-			"project": "crema",
+			"project": prometheus.GetProjectName(),
 		},
 	}
 	err := prometheus.ExamplePusherPush(log)
