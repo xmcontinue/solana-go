@@ -21,7 +21,7 @@ func (t *ExporterService) AddLog(ctx context.Context, args *iface.LogReq, _ *ifa
 		return errors.New("tags too long")
 	}
 	if _, ok := args.Tags["project"]; !ok {
-		args.Tags["project"] = "crema"
+		args.Tags["project"] = prometheus.GetProjectName()
 	}
 
 	if err := prometheus.CheckAuth(args); err != nil {

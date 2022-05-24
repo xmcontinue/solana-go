@@ -18,6 +18,7 @@ import (
 
 var (
 	pushGatewayHost = "http://127.0.0.1:9091"
+	projectName     = "crema"
 	configKey       = "/prometheus/auth"
 	wg              sync.WaitGroup
 	authConfig      map[string]AuthConfig
@@ -34,6 +35,12 @@ func Init(conf *config.Config) error {
 		return errors.New("etcd host not found")
 	}
 	pushGatewayHost = host.(string)
+
+	name := conf.Get("prometheus.project_name")
+	if host == nil {
+		return errors.New("name not found")
+	}
+	projectName = name.(string)
 
 	etcdSwapPairsKey := "/" + domain.GetPublicPrefix() + configKey
 	// 加载swap pairs配置
@@ -101,4 +108,8 @@ func CheckAuth(req *iface.LogReq) error {
 	}
 
 	return errors.ParameterError
+}
+
+func GetProjectName() string {
+	return projectName
 }
