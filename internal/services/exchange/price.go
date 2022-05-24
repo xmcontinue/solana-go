@@ -88,6 +88,8 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	}
 
 	reply.Prices = *prices
+	reply.Time = es.exchangerC.GetSyncTime().Format("2006-01-02 15:04:05")
+
 	setCache(string(cacheKey), *prices)
 
 	return nil

@@ -19,5 +19,6 @@ type GetPriceReq struct {
 }
 
 type GetPriceResp struct {
+	Time   string          `json:"time"`
 	Prices []*domain.Price `json:"prices"`
 }

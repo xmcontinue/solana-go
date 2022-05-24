@@ -13,15 +13,17 @@ import (
 )
 
 type Exchanger struct {
-	Market *market.Market
-	data   *Data
-	handle func()
+	Market   *market.Market
+	data     *Data
+	SyncTime *time.Time
+	handle   func()
 }
 
 func NewExchanger() *Exchanger {
 	e := &Exchanger{
 		market.NewMarket(),
 		NewData(),
+		nil,
 		nil,
 	}
 	return e
@@ -52,6 +54,9 @@ func (e *Exchanger) SyncPrice() error {
 	if e.handle != nil {
 		e.handle()
 	}
+
+	now := time.Now()
+	e.SyncTime = &now
 
 	return nil
 }
@@ -91,6 +96,10 @@ func (e *Exchanger) RunForViper(aConf *aConfig.Config) error {
 
 func (e *Exchanger) SetHandle(f func()) {
 	e.handle = f
+}
+
+func (e *Exchanger) GetSyncTime() *time.Time {
+	return e.SyncTime
 }
 
 func (e *Exchanger) watchConfigForViper(aConf *aConfig.Config) error {
