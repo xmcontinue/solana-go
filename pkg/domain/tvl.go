@@ -156,6 +156,8 @@ type SwapCountToApiPool struct {
 	VolumeInTokenB24h           string         `json:"volume_in_tokenB_24h"`
 	VolumeInTokenA24hUnilateral string         `json:"volume_in_tokenA_24h_unilateral"`
 	VolumeInTokenB24hUnilateral string         `json:"volume_in_tokenB_24h_unilateral"`
+	TokenAAddress               string         `json:"token_a_address"`
+	TokenBAddress               string         `json:"token_b_address"`
 }
 
 type SwapCountToApiToken struct {
