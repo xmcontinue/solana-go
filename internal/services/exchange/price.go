@@ -16,7 +16,7 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
-var dataCache = map[string][]*domain.Price{}
+var dataCache = map[string]iface.GetPriceResp{}
 
 // GetPrice ...
 func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq, reply *iface.GetPriceResp) error {
@@ -33,7 +33,7 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	}
 
 	if data, ok := getCache(string(cacheKey)); ok {
-		reply.Prices = data
+		*reply = data
 		return nil
 	}
 
@@ -90,20 +90,20 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 	reply.Prices = *prices
 	reply.Time = es.exchangerC.GetSyncTime().Format("2006-01-02 15:04:05")
 
-	setCache(string(cacheKey), *prices)
+	setCache(string(cacheKey), *reply)
 
 	return nil
 }
 
-func getCache(key string) ([]*domain.Price, bool) {
-	prices, ok := dataCache[key]
-	return prices, ok
+func getCache(key string) (iface.GetPriceResp, bool) {
+	res, ok := dataCache[key]
+	return res, ok
 }
 
-func setCache(key string, val []*domain.Price) {
+func setCache(key string, val iface.GetPriceResp) {
 	dataCache[key] = val
 }
 
 func cleanCache() {
-	dataCache = map[string][]*domain.Price{}
+	dataCache = map[string]iface.GetPriceResp{}
 }
