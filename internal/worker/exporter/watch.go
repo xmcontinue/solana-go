@@ -96,6 +96,8 @@ func WatchExchangeSyncTime() error {
 	if t < 0 {
 		return errors.New("time unusual")
 	}
+	fmt.Println("log: time :", now.Unix())
+	fmt.Println("log: time :", syncTime.Unix())
 	f, err := strconv.ParseFloat(strconv.FormatInt(t, 10), 64)
 	fmt.Println("log: time :", f)
 	sendExchangeSyncTimeMsgToPushGateway(f)
