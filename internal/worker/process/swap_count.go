@@ -113,8 +113,8 @@ func SwapTotalCount() error {
 			VolumeInTokenB24h:           swapCount24h.TokenBVolume.Add(swapCount24h.TokenBQuoteVolume).Round(countDecimal).String(),
 			VolumeInTokenA24hUnilateral: swapCount24h.TokenAVolume.Round(countDecimal).String(),
 			VolumeInTokenB24hUnilateral: swapCount24h.TokenBVolume.Round(countDecimal).String(),
-			TokenAAddress:               v.TokenA.SwapTokenAccount,
-			TokenBAddress:               v.TokenB.SwapTokenAccount,
+			TokenAAddress:               v.TokenA.TokenMint,
+			TokenBAddress:               v.TokenB.TokenMint,
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
