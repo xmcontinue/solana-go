@@ -88,6 +88,12 @@ func WatchExchangeSyncTime() error {
 	}
 
 	syncTime, err := time.Parse("2006-01-02 15:04:05", raw.Data.Time)
+	fmt.Println(resp.Body())
+	fmt.Println("log: time :", raw.Data.Time)
+	fmt.Println("log: time :", syncTime.Unix())
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	now, err := time.Parse("2006-01-02 15:04:05", time.Now().Format("2006-01-02 15:04:05"))
 	if err != nil {
 		return errors.Wrap(err)
@@ -96,8 +102,7 @@ func WatchExchangeSyncTime() error {
 	if t < 0 {
 		return errors.New("time unusual")
 	}
-	fmt.Println("log: time :", now.Unix())
-	fmt.Println("log: time :", syncTime.Unix())
+
 	f, err := strconv.ParseFloat(strconv.FormatInt(t, 10), 64)
 	fmt.Println("log: time :", f)
 	sendExchangeSyncTimeMsgToPushGateway(f)
