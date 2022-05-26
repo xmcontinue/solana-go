@@ -20,10 +20,11 @@ type Exchanger struct {
 }
 
 func NewExchanger() *Exchanger {
+	now := time.Now()
 	e := &Exchanger{
 		market.NewMarket(),
 		NewData(),
-		nil,
+		&now,
 		nil,
 	}
 	return e
