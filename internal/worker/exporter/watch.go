@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -94,7 +95,8 @@ func WatchExchangeSyncTime() error {
 	if t < 0 {
 		return errors.New("time unusual")
 	}
-	sendExchangeSyncTimeMsgToPushGateway(float64(t))
+	f, err := strconv.ParseFloat(strconv.FormatInt(t, 10), 64)
+	sendExchangeSyncTimeMsgToPushGateway(f)
 
 	return nil
 }
