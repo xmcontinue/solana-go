@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -96,6 +97,7 @@ func WatchExchangeSyncTime() error {
 		return errors.New("time unusual")
 	}
 	f, err := strconv.ParseFloat(strconv.FormatInt(t, 10), 64)
+	fmt.Println("log: time :", f)
 	sendExchangeSyncTimeMsgToPushGateway(f)
 
 	return nil
