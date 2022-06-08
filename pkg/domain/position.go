@@ -14,5 +14,5 @@ type PositionCountSnapshot struct {
 	TokenBAmount decimal.Decimal `json:"token_b_amount" gorm:"type:decimal(36,18);default:0"`                                                                          // tokenB数量
 	TokenAPrice  decimal.Decimal `json:"token_a_price" gorm:"type:decimal(36,18);default:0"`                                                                           // tokenA价格
 	TokenBPrice  decimal.Decimal `json:"token_b_price" gorm:"type:decimal(36,18);default:0"`                                                                           // tokenB价格
-	Raw          []byte          `json:"raw" gorm:"not null;type:varchar(255);"`                                                                                       // 原始数据
+	Raw          []byte          `json:"raw"`                                                                                                                          // 原始数据
 }

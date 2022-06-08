@@ -17,7 +17,7 @@ import (
 func syncPosition() error {
 
 	// 1.查询当天是否已同步
-	_, err := model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("created_at = ?", time.Now().Format("2006-01-02")))
+	_, err := model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("date = ?", time.Now().Format("2006-01-02")))
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
@@ -39,14 +39,14 @@ func syncPosition() error {
 		}
 
 		// 3.2 解析至model
-		err = positionsAccountToModel(swapPair, tokenPrices, positionsMode, swapAccountAndPositionsAccount)
+		positionsMode, err = positionsAccountToModel(swapPair, tokenPrices, positionsMode, swapAccountAndPositionsAccount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 	}
 
 	// 4.写入db
-	err = model.CreateSwapPositionCountSnapshots(context.Background(), &positionsMode)
+	err = model.CreateSwapPositionCountSnapshots(context.Background(), positionsMode)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -54,15 +54,18 @@ func syncPosition() error {
 	return nil
 }
 
-func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string]decimal.Decimal, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccount) error {
+func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string]decimal.Decimal, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccount) ([]*domain.PositionCountSnapshot, error) {
 	for k, v := range swapAccountAndPositionsAccount.Positions {
+		if k > 5 {
+			break
+		}
 		// 通过tokenID获取user address
 		userAddress, err := sol.GetUserAddressForTokenKey(v.NftTokenId)
 		if err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
 				continue
 			}
-			return errors.Wrap(err)
+			return nil, errors.Wrap(err)
 		}
 		// 计算 amount
 		tokenAPrice, tokenBPrice := tokenPrices[swapPair.TokenA.Symbol], tokenPrices[swapPair.TokenB.Symbol]
@@ -80,7 +83,7 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string
 		})
 	}
 
-	return nil
+	return positionsMode, nil
 }
 
 func getTokenPriceForPairList(swapList []*domain.SwapConfig) (map[string]decimal.Decimal, error) {
