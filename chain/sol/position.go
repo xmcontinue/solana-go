@@ -155,11 +155,10 @@ func GetPositionsAccountForPositionKey(positionKey solana.PublicKey) (*Positions
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-
 	start := int32(PositionsHeadLen)
+
 	for i := int32(0); i < positionsAccount.Len; i++ {
 		position, end := Position{}, start+PositionLen
-
 		err = bin.NewBinDecoder(resp.Value.Data.GetBinary()[start:end]).Decode(&position)
 		if err != nil {
 			return nil, errors.Wrap(err)
@@ -219,6 +218,7 @@ func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
 func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position) (amountA, amountB decimal.Decimal) {
 	lowerSqrtPrice := tick2SqrtPrice(position.LowerTick)
 	upperSqrtPrice := tick2SqrtPrice(position.UpperTick)
+
 	liquity, currentSqrtPrice := position.Liquity.Val(), sp.CurrentSqrtPrice.Val()
 
 	if currentSqrtPrice.LessThan(lowerSqrtPrice) {
@@ -226,7 +226,7 @@ func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position
 	} else if currentSqrtPrice.GreaterThan(upperSqrtPrice) {
 		return decimal.Decimal{}, liquity.Mul(upperSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
 	} else {
-		return liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), lowerSqrtPrice.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
+		return liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), liquity.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
 	}
 }
 

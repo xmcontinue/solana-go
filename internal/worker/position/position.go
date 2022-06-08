@@ -2,7 +2,6 @@ package position
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -10,11 +9,13 @@ import (
 	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	"git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 func syncPosition() error {
+
 	// 1.查询当天是否已同步
 	_, err := model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("created_at = ?", time.Now().Format("2006-01-02")))
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -67,13 +68,12 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string
 		tokenAPrice, tokenBPrice := tokenPrices[swapPair.TokenA.Symbol], tokenPrices[swapPair.TokenB.Symbol]
 
 		tokenAAmount, tokenBAmount := swapAccountAndPositionsAccount.CalculateTokenAmount(&v)
-		fmt.Println(tokenAAmount.String(), tokenBAmount.String())
 		positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
 			UserAddress:  userAddress,
 			SwapAddress:  swapAccountAndPositionsAccount.TokenSwapKey.String(),
 			Date:         time.Now().Format("2006-01-02"),
-			TokenAAmount: tokenAAmount,
-			TokenBAmount: tokenBAmount,
+			TokenAAmount: parse.PrecisionConversion(tokenAAmount, int(-swapPair.TokenA.Decimal)),
+			TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(-swapPair.TokenB.Decimal)),
 			TokenAPrice:  tokenAPrice,
 			TokenBPrice:  tokenBPrice,
 			Raw:          swapAccountAndPositionsAccount.PositionsRaw[k],
