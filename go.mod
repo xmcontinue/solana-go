@@ -11,6 +11,7 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rpcxio/libkv v0.5.0
+	github.com/shopspring/decimal v1.3.1
 	go.etcd.io/etcd/client/v2 v2.305.0
 	gorm.io/gorm v1.21.7
 )
