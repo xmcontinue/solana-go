@@ -8,7 +8,7 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func CreateSwapPositionCountSnapshots(ctx context.Context, positionCountSnapshots []*domain.PositionCountSnapshot) error {
+func CreateSwapPositionCountSnapshots(ctx context.Context, positionCountSnapshots *[]*domain.PositionCountSnapshot) error {
 	if err := wDB(ctx).Create(positionCountSnapshots).Error; err != nil {
 		return errors.Wrap(err)
 	}

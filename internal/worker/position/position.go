@@ -2,6 +2,7 @@ package position
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -27,24 +28,24 @@ func syncPosition() error {
 		return errors.Wrap(err)
 	}
 
-	// 2.同步仓位数据
+	// 3.同步仓位数据
 	positionsMode := make([]*domain.PositionCountSnapshot, 0)
 	for _, swapPair := range swapList {
-		// 2.1 获取池子仓位
-		positionsAccount, err := sol.GetPositionsAccountForSwapKey(swapPair.SwapPublicKey)
+		// 3.1 获取池子仓位
+		swapAccountAndPositionsAccount, err := sol.GetSwapAccountAndPositionsAccountForSwapKey(swapPair.SwapPublicKey)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
-		// 2.2 解析至model
-		err = positionsAccountToModel(swapPair, tokenPrices, positionsMode, positionsAccount)
+		// 3.2 解析至model
+		err = positionsAccountToModel(swapPair, tokenPrices, positionsMode, swapAccountAndPositionsAccount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 	}
 
 	// 4.写入db
-	err = model.CreateSwapPositionCountSnapshots(context.Background(), positionsMode)
+	err = model.CreateSwapPositionCountSnapshots(context.Background(), &positionsMode)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -52,27 +53,30 @@ func syncPosition() error {
 	return nil
 }
 
-func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string]decimal.Decimal, positionsMode []*domain.PositionCountSnapshot, positionsAccount *sol.PositionsAccount) error {
-	for k, v := range positionsAccount.Positions {
-		// 2.3 通过tokenID获取user address
+func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string]decimal.Decimal, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccount) error {
+	for k, v := range swapAccountAndPositionsAccount.Positions {
+		// 通过tokenID获取user address
 		userAddress, err := sol.GetUserAddressForTokenKey(v.NftTokenId)
 		if err != nil {
+			if errors.Is(err, errors.RecordNotFound) {
+				continue
+			}
 			return errors.Wrap(err)
 		}
-		// 2.5 计算
+		// 计算 amount
 		tokenAPrice, tokenBPrice := tokenPrices[swapPair.TokenA.Symbol], tokenPrices[swapPair.TokenB.Symbol]
-		// todo
-		TokenAAmount, TokenBAmount := decimal.Decimal{}, decimal.Decimal{}
 
+		tokenAAmount, tokenBAmount := swapAccountAndPositionsAccount.CalculateTokenAmount(&v)
+		fmt.Println(tokenAAmount.String(), tokenBAmount.String())
 		positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
 			UserAddress:  userAddress,
-			SwapAddress:  positionsAccount.TokenSwapKey.String(),
+			SwapAddress:  swapAccountAndPositionsAccount.TokenSwapKey.String(),
 			Date:         time.Now().Format("2006-01-02"),
-			TokenAAmount: TokenAAmount,
-			TokenBAmount: TokenBAmount,
+			TokenAAmount: tokenAAmount,
+			TokenBAmount: tokenBAmount,
 			TokenAPrice:  tokenAPrice,
 			TokenBPrice:  tokenBPrice,
-			Raw:          positionsAccount.PositionsRaw[k],
+			Raw:          swapAccountAndPositionsAccount.PositionsRaw[k],
 		})
 	}
 

@@ -56,12 +56,18 @@ type SwapAccount struct {
 	ManagerFee       decimalU6412
 	TickSpace        uint32
 	CurrentSqrtPrice decimalU12812
-	CurrentLiquity   uint64
-	FeeGrowthGlobal0 uint64
-	FeeGrowthGlobal1 uint64
-	ManagerFeeA      uint64
-	ManagerFeeB      uint64
+	CurrentLiquity   decimalU128
+	FeeGrowthGlobal0 decimalU12816
+	FeeGrowthGlobal1 decimalU12816
+	ManagerFeeA      decimalU128
+	ManagerFeeB      decimalU128
 }
+
+type SwapAccountAndPositionsAccount struct {
+	*SwapAccount
+	*PositionsAccount
+}
+
 type decimalU6412 [8]byte
 type decimalU128 [16]byte
 type decimalU12812 [16]byte
@@ -114,13 +120,24 @@ func GetSwapAccountForSwapKey(swapKey solana.PublicKey) (*SwapAccount, error) {
 	return &swapAccount, nil
 }
 
-func GetPositionsAccountForSwapKey(swapKey solana.PublicKey) (*PositionsAccount, error) {
+func GetSwapAccountAndPositionsAccountForSwapKey(swapKey solana.PublicKey) (*SwapAccountAndPositionsAccount, error) {
+
 	swapAccount, err := GetSwapAccountForSwapKey(swapKey)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
 
-	return GetPositionsAccountForPositionKey(swapAccount.PositionsKey)
+	positionsAccount, err := GetPositionsAccountForPositionKey(swapAccount.PositionsKey)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	swapAccountAndPositionsAccount := SwapAccountAndPositionsAccount{
+		swapAccount,
+		positionsAccount,
+	}
+
+	return &swapAccountAndPositionsAccount, nil
 }
 
 func GetPositionsAccountForPositionKey(positionKey solana.PublicKey) (*PositionsAccount, error) {
@@ -171,6 +188,9 @@ func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err)
 	}
+	if len(resp.Value) == 0 {
+		return "", errors.RecordNotFound
+	}
 
 	info, err := GetRpcClient().GetAccountInfoWithOpts(context.Background(), resp.Value[0].Address, &rpc.GetAccountInfoOpts{
 		Commitment: "",
@@ -194,4 +214,22 @@ func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
 	}
 
 	return account.Parsed.Info.Owner, nil
+}
+
+func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position) (amountA, amountB decimal.Decimal) {
+	lowerSqrtPrice := tick2SqrtPrice(position.LowerTick)
+	upperSqrtPrice := tick2SqrtPrice(position.UpperTick)
+	liquity, currentSqrtPrice := position.Liquity.Val(), sp.CurrentSqrtPrice.Val()
+
+	if currentSqrtPrice.LessThan(lowerSqrtPrice) {
+		return liquity.Div(lowerSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), decimal.Decimal{}
+	} else if currentSqrtPrice.GreaterThan(upperSqrtPrice) {
+		return decimal.Decimal{}, liquity.Mul(upperSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
+	} else {
+		return liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), lowerSqrtPrice.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
+	}
+}
+
+func tick2SqrtPrice(tick int32) decimal.Decimal {
+	return decimal.NewFromFloat(1.0001).Pow(decimal.NewFromInt32(tick).Div(decimal.NewFromInt32(2)))
 }
