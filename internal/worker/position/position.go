@@ -74,6 +74,7 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string
 		positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
 			UserAddress:  userAddress,
 			SwapAddress:  swapAccountAndPositionsAccount.TokenSwapKey.String(),
+			PositionID:   v.NftTokenId.String(),
 			Date:         time.Now().Format("2006-01-02"),
 			TokenAAmount: parse.PrecisionConversion(tokenAAmount, int(-swapPair.TokenA.Decimal)),
 			TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(-swapPair.TokenB.Decimal)),
