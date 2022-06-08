@@ -21,10 +21,9 @@ type Crema struct {
 }
 
 func NewCrema() *Crema {
-	crema := &Crema{
+	return &Crema{
 		client: resty.New(),
 	}
-	return crema
 }
 
 func (c *Crema) GetName() string {
