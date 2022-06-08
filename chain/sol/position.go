@@ -232,6 +232,6 @@ func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position
 }
 
 func tick2SqrtPrice(tick int32) decimal.Decimal {
-	f, _ := decimal.NewFromFloat(1.0001).Pow(decimal.NewFromInt32(tick)).Float64()
-	return decimal.NewFromFloat(math.Sqrt(f))
+	f, _ := decimal.NewFromInt32(tick).Float64()
+	return decimal.NewFromFloat(math.Sqrt(math.Pow(1.0001, f)))
 }
