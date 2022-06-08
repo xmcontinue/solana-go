@@ -2,9 +2,11 @@ package position
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	"gorm.io/gorm"
 
@@ -15,10 +17,12 @@ import (
 )
 
 func syncPosition() error {
+	logger.Info("sync start")
 
 	// 1.查询当天是否已同步
 	_, err := model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("date = ?", time.Now().Format("2006-01-02")))
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.Info("sync skipped today")
 		return nil
 	}
 
@@ -51,12 +55,14 @@ func syncPosition() error {
 		return errors.Wrap(err)
 	}
 
+	logger.Info("sync success")
 	return nil
 }
 
 func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string]decimal.Decimal, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccount) ([]*domain.PositionCountSnapshot, error) {
 	for k, v := range swapAccountAndPositionsAccount.Positions {
 		// 通过tokenID获取user address
+		logger.Info(fmt.Sprintf("sync user address: swap address(%s) ,total num(%d), now num(%d) ", swapAccountAndPositionsAccount.SwapAccount.TokenSwapKey.String(), len(swapAccountAndPositionsAccount.Positions), k))
 		userAddress, err := sol.GetUserAddressForTokenKey(v.NftTokenId)
 		if err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
