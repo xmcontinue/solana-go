@@ -3,6 +3,7 @@ package sol
 import (
 	"context"
 	"encoding/json"
+	"math"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
@@ -231,5 +232,6 @@ func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position
 }
 
 func tick2SqrtPrice(tick int32) decimal.Decimal {
-	return decimal.NewFromFloat(1.0001).Pow(decimal.NewFromInt32(tick).Div(decimal.NewFromInt32(2)))
+	f, _ := decimal.NewFromFloat(1.0001).Pow(decimal.NewFromInt32(tick)).Float64()
+	return decimal.NewFromFloat(math.Sqrt(f))
 }
