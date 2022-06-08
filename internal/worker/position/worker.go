@@ -70,7 +70,7 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
-	_, err = job.Cron.AddFunc(getSpec("sync_position"), syncPosition)
+	_, err = job.Cron.AddFunc(getSpec("swap_count_cache"), syncPosition)
 	if err != nil {
 		panic(err)
 	}
