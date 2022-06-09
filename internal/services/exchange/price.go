@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
+	"sync"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -16,7 +17,7 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
-var dataCache = map[string]iface.GetPriceResp{}
+var dataCache = sync.Map{}
 
 // GetPrice ...
 func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq, reply *iface.GetPriceResp) error {
@@ -96,14 +97,20 @@ func (es *ExchangeService) GetPrice(ctx context.Context, args *iface.GetPriceReq
 }
 
 func getCache(key string) (iface.GetPriceResp, bool) {
-	res, ok := dataCache[key]
-	return res, ok
+	val, ok := dataCache.Load(key)
+	if !ok {
+		return iface.GetPriceResp{}, ok
+	}
+	return val.(iface.GetPriceResp), ok
 }
 
 func setCache(key string, val iface.GetPriceResp) {
-	dataCache[key] = val
+	dataCache.Store(key, val)
 }
 
 func cleanCache() {
-	dataCache = map[string]iface.GetPriceResp{}
+	dataCache.Range(func(key, value interface{}) bool {
+		dataCache.Delete(key)
+		return true
+	})
 }
