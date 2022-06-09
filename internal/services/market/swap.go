@@ -209,6 +209,29 @@ func (t *MarketService) GetVolV2(ctx context.Context, args *iface.GetVolV2Req, r
 	return nil
 }
 
+// QuerySwapKline ...
+func (t *MarketService) QuerySwapKline(ctx context.Context, args *iface.QuerySwapKlineReq, reply *iface.QuerySwapKlineResp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	filters := []model.Filter{
+		model.OrderFilter("id asc"),
+	}
+	if args.DateType != "" {
+		filters = append(filters, model.NewFilter("date_type", args.DateType))
+	}
+
+	list, err := model.QuerySwapCountKLines(context.Background(), args.Limit, args.Offset, filters...)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	reply.List = list
+
+	return nil
+}
+
 // func (t *MarketService) QueryUserSwapCount(ctx context.Context, args *iface.QueryUserSwapTvlCountReq, reply *iface.QueryUserSwapTvlCountResp) error {
 //	defer rpcx.Recover(ctx)
 //	if err := validate(args); err != nil {

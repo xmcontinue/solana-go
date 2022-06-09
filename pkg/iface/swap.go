@@ -110,6 +110,16 @@ type GetNetRecordResp struct {
 	List   []*domain.NetRecode `json:"list"`
 }
 
+type QuerySwapKlineReq struct {
+	Limit    int             `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset   int             `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+	DateType domain.DateType `json:"date_type,omitempty"    form:"date_type"    gquery:"-"`
+}
+
+type QuerySwapKlineResp struct {
+	List []*domain.SwapCountKLine `json:"list"`
+}
+
 type QueryUserSwapTvlCountDayReq struct {
 	UserAddress string           `json:"user_address" binding:"omitempty"`
 	Limit       int              `json:"limit,omitempty"        form:"limit"        gquery:"-"`                        // limit

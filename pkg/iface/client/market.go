@@ -48,6 +48,10 @@ func (c *CremaMarketClient) GetTransactions(ctx context.Context, args *iface.Get
 	return c.Call(ctx, "GetTransactions", args, reply)
 }
 
+func (c *CremaMarketClient) QuerySwapKline(ctx context.Context, args *iface.QuerySwapKlineReq, reply *iface.QuerySwapKlineResp) error {
+	return c.Call(ctx, "QuerySwapKline", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)
