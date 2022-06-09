@@ -5,24 +5,41 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"github.com/gin-gonic/gin"
 
-	handler "git.cplus.link/crema/backend/cmd/gateway/modules/exchange"
+	handler "git.cplus.link/crema/backend/cmd/gateway/modules/market"
 )
 
-type cremaExchange struct{}
+type cremaMarket struct{}
 
-func (m *cremaExchange) Name() string {
-	return "exchange"
+func (m *cremaMarket) Name() string {
+	return "market"
 }
 
 func init() {
-	registerModule(&cremaExchange{})
+	registerModule(&cremaMarket{})
 }
 
-func (m *cremaExchange) Start(c *config.Config, engine *gin.Engine) error {
+func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	if err := handler.Init(c); err != nil {
 		return errors.Wrap(err)
 	}
-	engine.GET("/price", handler.GetPrices)
+
+	engine.GET("/config", handler.GetConfig)
+	engine.GET("/token/config", handler.GetTokenConfig)
+	engine.GET("/tvl/24hour", handler.GetTvl)
+	engine.GET("activity/nft/:Mint", handler.GetActivityNftMetadata)
+	engine.GET("activity/history/:User", handler.GetActivityHistoryByUser)
+
+	engine.GET("/v1/swap/count", handler.SwapCount)
+	engine.GET("/v1/swap/count/new", handler.SwapCount)
+	engine.GET("/v1/swap/count/list", handler.SwapCountList)
+	engine.GET("/v1/swap/count/kline", handler.QuerySwapKline)
+	engine.POST("/v1/tvl", handler.GetTvlV2)
+	engine.POST("/v1/vol/24h", handler.Get24hVolV2)
+	engine.POST("/v1/vol", handler.GetVolV2)
+	engine.POST("/v1/kline", handler.GetKline)
+	engine.GET("/v1/histogram", handler.GetHistogram)
+	engine.GET("/v1/token/tvl", handler.TvlOfSingleToken)
+	engine.GET("/v1/transaction", handler.GetTransaction)
 
 	return nil
 }

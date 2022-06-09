@@ -19,4 +19,5 @@ var (
 	GetActivityHistoryByUser = handleFunc(marketClient, "GetActivityHistoryByUser", &iface.GetActivityHistoryByUserReq{}, &iface.GetActivityHistoryByUserResp{})
 	GetActivityNftMetadata   = handleFuncForNft(marketClient, "GetActivityNftMetadata", &iface.GetActivityNftMetadataReq{}, &iface.GetActivityNftMetadataResp{})
 	GetTransaction           = handleFunc(marketClient, "GetTransactions", &iface.GetTransactionsReq{}, &iface.GetTransactionsResp{})
+	QuerySwapKline           = handleFunc(marketClient, "QuerySwapKline", &iface.QuerySwapKlineReq{}, &iface.QuerySwapKlineResp{})
 )
