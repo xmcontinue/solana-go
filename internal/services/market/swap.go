@@ -217,7 +217,7 @@ func (t *MarketService) QuerySwapKline(ctx context.Context, args *iface.QuerySwa
 	}
 
 	filters := []model.Filter{
-		model.OrderFilter("id asc"),
+		model.OrderFilter("date asc, id asc"),
 	}
 	if args.DateType != "" {
 		filters = append(filters, model.NewFilter("date_type", args.DateType))
