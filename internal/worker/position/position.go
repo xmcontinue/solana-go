@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	"gorm.io/gorm"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -16,11 +17,21 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+var (
+	before = time.Now().Add(-time.Hour * 24)
+)
+
 func syncPosition() error {
 	logger.Info("sync start")
 
+	err := randTime()
+	if err != nil {
+		return nil
+	}
+
+	logger.Info("rand sync time", logger.String("rand time：", before.String()))
 	// 1.查询当天是否已同步
-	_, err := model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("date = ?", time.Now().Format("2006-01-02")))
+	_, err = model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("date > ?", timeZero(time.Now())))
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
 		logger.Info("sync skipped today")
 		return nil
@@ -78,7 +89,7 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, tokenPrices map[string
 			UserAddress:  userAddress,
 			SwapAddress:  swapAccountAndPositionsAccount.TokenSwapKey.String(),
 			PositionID:   v.NftTokenId.String(),
-			Date:         time.Now().Format("2006-01-02"),
+			Date:         before.Format("2006-01-02 15:04:05"),
 			TokenAAmount: parse.PrecisionConversion(tokenAAmount, int(swapPair.TokenA.Decimal)),
 			TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(swapPair.TokenB.Decimal)),
 			TokenAPrice:  tokenAPrice,
@@ -111,4 +122,23 @@ func getTokenPriceForPairList(swapList []*domain.SwapConfig) (map[string]decimal
 		}
 	}
 	return tokenPrices, nil
+}
+
+func randTime() error {
+	now := time.Now()
+	zero := timeZero(now)
+	if before.Before(zero) {
+		r := rand.IntnRange(3600*17, 3600*24-1)
+		before = zero.Add(time.Duration(r) * time.Second)
+	}
+
+	if now.Before(before) {
+		return errors.New("the time has not come")
+	}
+
+	return nil
+}
+
+func timeZero(t time.Time) time.Time {
+	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 }
