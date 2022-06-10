@@ -25,11 +25,12 @@ func syncPosition() error {
 	logger.Info("sync start")
 
 	err := randTime()
+	logger.Info("rand sync time", logger.String("rand time：", before.String()))
 	if err != nil {
+		logger.Info("rand sync time", logger.Errorv(err))
 		return nil
 	}
 
-	logger.Info("rand sync time", logger.String("rand time：", before.String()))
 	// 1.查询当天是否已同步
 	_, err = model.QuerySwapPositionCountSnapshot(context.Background(), model.NewFilter("date > ?", timeZero(time.Now())))
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
