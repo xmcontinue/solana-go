@@ -45,7 +45,11 @@ func (m *Market) LoadConfig(eConfig *config.ExchangeConfig) error {
 		case ftx.BusinessName:
 			businesses = append(businesses, ftx.NewFtx(eConfig))
 		case crema.BusinessName:
-			businesses = append(businesses, crema.NewCrema())
+			cremaS, err := crema.NewCrema(eConfig)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+			businesses = append(businesses, cremaS)
 		default:
 			continue
 		}

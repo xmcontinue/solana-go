@@ -13,10 +13,11 @@ import (
 )
 
 const (
-	url            = "https://api.coingecko.com/api/v3"
-	simplePriceUrl = url + "/simple/price"
-	CoinsListUrl   = url + "/coins/list"
-	BusinessName   = "coingecko"
+	url              = "https://api.coingecko.com/api/v3"
+	simplePriceUrl   = url + "/simple/price"
+	contractPriceUrl = url + "/simple/token_price/solana"
+	CoinsListUrl     = url + "/coins/list"
+	BusinessName     = "coingecko"
 )
 
 type CoinGecko struct {
@@ -89,6 +90,34 @@ func (cg *CoinGecko) GetPrices() (map[string][]*domain.Price, error) {
 	}
 
 	return prices, nil
+}
+
+func (cg *CoinGecko) GetPriceForContract(contractAddresses string) (decimal.Decimal, error) {
+	resp, err := cg.client.R().
+		SetQueryParams(map[string]string{
+			"contract_addresses": contractAddresses,
+			"vs_currencies":      "usd",
+		}).
+		Get(contractPriceUrl)
+	if err != nil {
+		return decimal.Decimal{}, errors.Wrap(err)
+	}
+	raw := make(map[string]map[string]float64, 0)
+	err = json.Unmarshal(resp.Body(), &raw)
+	if err != nil {
+		return decimal.Decimal{}, errors.Wrap(err)
+	}
+
+	info, ok := raw[contractAddresses]
+	if !ok {
+		return decimal.Decimal{}, errors.RecordNotFound
+	}
+	price, ok := info["usd"]
+	if !ok {
+		return decimal.Decimal{}, errors.RecordNotFound
+	}
+
+	return decimal.NewFromFloat(price), nil
 }
 
 func (cg *CoinGecko) setQuoteSymbol(quoteSymbols []string) {
