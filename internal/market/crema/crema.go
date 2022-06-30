@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-resty/resty/v2"
 
@@ -79,7 +80,8 @@ func (c *Crema) GetPrices() (map[string][]*domain.Price, error) {
 	for k, v := range newPair {
 		p, err := c.coingecko.GetPriceForContract(v)
 		if err != nil {
-			continue
+			logger.Info("get contract price failed", logger.Errorv(err))
+			return nil, err
 		}
 		prices["USD"] = append(prices["USD"], &domain.Price{
 			BaseSymbol:  strings.ToUpper(k),
