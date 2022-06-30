@@ -11,7 +11,6 @@ import (
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
-	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -38,7 +37,8 @@ func swapAddressLast24HVol() error {
 
 	swapVolMap := make(map[string]string)
 	for _, v := range swapVols {
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenAAddress), coingecko.GetPriceForTokenAccount(v.TokenBAddress)
+		// tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenAAddress), coingecko.GetPriceForTokenAccount(v.TokenBAddress)
+		tokenAPrice, tokenBPrice := decimal.NewFromInt(1), decimal.NewFromInt(1)
 		v.Vol = v.TokenAVolume.Mul(tokenAPrice).Abs().Add(v.TokenBVolume.Mul(tokenBPrice).Abs())
 		volCount, _ := json.Marshal(v)
 		swapVolMap[domain.SwapVolCountLast24HKey(v.SwapAddress).Key] = string(volCount)

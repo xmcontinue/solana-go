@@ -9,7 +9,6 @@ import (
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
-	"git.cplus.link/crema/backend/pkg/coingecko"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -89,8 +88,14 @@ func SyncTotalVol() error {
 		if err != nil {
 			continue
 		}
+		// v.TokenA.Symbol
+		// 获取token价格
+		tokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
+		tokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
+		if err != nil || tokenAPrice.IsZero() || tokenBPrice.IsZero() {
+			continue
+		}
 
-		tokenAPrice, tokenBPrice := coingecko.GetPriceForTokenAccount(v.TokenA.SwapTokenAccount), coingecko.GetPriceForTokenAccount(v.TokenB.SwapTokenAccount)
 		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{"total_tx_num": vol.TxNum, "total_vol": vol.TokenATotalVol.Mul(tokenAPrice).Add(vol.TokenBTotalVol.Mul(tokenBPrice))}, model.SwapAddress(v.SwapAccount))
 		if err != nil {
 			continue
@@ -107,9 +112,12 @@ func SyncTotalVol() error {
 // compute 计算 tvl vol apr数量
 func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
 	tvlInUsd, volInUsd, apr := decimal.Decimal{}, decimal.Decimal{}, ""
-	// token 价格
-	tokenAPrice := coingecko.GetPriceForTokenAccount(count.TokenAPoolAddress)
-	tokenBPrice := coingecko.GetPriceForTokenAccount(count.TokenBPoolAddress)
+	// 获取token价格
+	tokenAPrice, err := model.GetPriceForSymbol(context.TODO(), count.TokenASymbol)
+	tokenBPrice, err := model.GetPriceForSymbol(context.TODO(), count.TokenBSymbol)
+	if err != nil || tokenAPrice.IsZero() || tokenBPrice.IsZero() {
+		return tvlInUsd, volInUsd, apr
+	}
 
 	// token 余额
 	tokenABalance := count.TokenABalance.Mul(tokenAPrice)
