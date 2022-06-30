@@ -33,7 +33,7 @@ func Init() {
 	syncPrice()
 	go func() {
 		for {
-			time.Sleep(time.Minute * 2)
+			time.Sleep(time.Hour)
 			syncPrice()
 		}
 	}()
