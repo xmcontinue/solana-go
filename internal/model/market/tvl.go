@@ -183,7 +183,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("vol_in_usd = swap_count_k_lines.vol_in_usd + ?,", swapCount.VolInUsd).
 		Suffix(avgFmt, swapCount.Avg).
 		Suffix("WHERE ").
-		Suffix("swap_count_k_lines.last_swap_transaction_id <= ?", swapCount.LastSwapTransactionID).
+		Suffix("swap_count_k_lines.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
