@@ -3,6 +3,7 @@ package sol
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math"
 
 	"git.cplus.link/go/akit/errors"
@@ -21,6 +22,21 @@ type Position struct {
 	FeeGrowthInsideBLast decimalU12816
 	TokenAFee            decimalU12816
 	TokenBFee            decimalU12816
+}
+
+type FarmingPosition struct {
+	Wrapper     solana.PublicKey
+	Owner       solana.PublicKey
+	Bump        uint8
+	Index       uint64
+	NftVault    solana.PublicKey
+	NftMint     solana.PublicKey
+	WrapBalance uint64
+	Liquity     decimalU128
+	LowerTick   int32
+	UpperTick   int32
+	Hold        bool
+	Reserved    uint64
 }
 
 type PositionsAccount struct {
@@ -171,12 +187,34 @@ func GetPositionsAccountForPositionKey(positionKey solana.PublicKey) (*Positions
 	}
 
 	// for _, v := range positionsAccount.Positions {
-	// 	i := big.Int{}
-	// 	fmt.Println(v.Liquity.Val(), i.SetBytes(v.Liquity[:]).String())
-	// 	fmt.Println(v.NftTokenId.String(), v.Liquity.Val(), v.FeeGrowthInsideALast.Val(), v.FeeGrowthInsideBLast.Val(), v.TokenAFee.Val(), v.TokenBFee.Val())
+
+	// i := big.Int{}
+	// fmt.Println(v.Liquity.Val(), i.SetBytes(v.Liquity[:]).String())
+	// fmt.Println(v.NftTokenId.String(), v.Liquity.Val(), v.FeeGrowthInsideALast.Val(), v.FeeGrowthInsideBLast.Val(), v.TokenAFee.Val(), v.TokenBFee.Val())
 	// }
 
 	return &positionsAccount, nil
+}
+
+func GetPositionWrapperInfo(positionID solana.PublicKey) {
+	p := "CPWdCBwzgC2MNQKz7AGAkZH51BskgA1LY9v8RPikQ2x1"
+	pKey, _ := solana.PublicKeyFromBase58(p)
+	// pm := "8TJqjSU9CqyucngJxUMT2HTEroM5tQdNSGxD881Pjc9G"
+	// pmKey, _ := solana.PublicKeyFromBase58(pm)
+	k, _, _ := solana.FindProgramAddress([][]byte{[]byte("Position"), positionID.Bytes()}, pKey)
+	resp, err := GetRpcClient().GetAccountInfo(
+		context.Background(),
+		k,
+	)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	info := FarmingPosition{}
+	err = bin.NewBinDecoder(resp.Value.Data.GetBinary()[8:]).Decode(&info)
+
+	fmt.Println(info.Owner.String(), info.Wrapper.String(), err)
+	return
 }
 
 func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
