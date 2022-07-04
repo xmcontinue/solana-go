@@ -316,6 +316,21 @@ func (t *MarketService) GetActivityNftMetadata(ctx context.Context, args *iface.
 	return nil
 }
 
+func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPositionsReq, reply *iface.QueryPositionsResp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	list, err := model.QueryPositions(ctx, limit(args.Limit), args.Offset)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	reply.List = list
+	return nil
+}
+
 func GetImageByDegree(degree uint8) string {
 	if degree == 1 {
 		return "https://bafybeidt2nojsctionflvt7xpitxrkmdca6pycp3aft2uhld57uqafn2bq.ipfs.dweb.link/bronze.png"

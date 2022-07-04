@@ -40,6 +40,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("/v1/histogram", handler.GetHistogram)
 	engine.GET("/v1/token/tvl", handler.TvlOfSingleToken)
 	engine.GET("/v1/transaction", handler.GetTransaction)
+	engine.GET("/v1/position", handler.GetPosition)
 
 	return nil
 }

@@ -21,6 +21,7 @@ type MarketService interface {
 	TvlOfSingleToken(context.Context, *TvlOfSingleTokenReq, *TvlOfSingleTokenResp) error
 	GetTokenConfig(context.Context, *NilReq, *JsonString) error
 	GetTransactions(context.Context, *GetTransactionsReq, *GetTransactionsResp) error
+	QueryPositions(ctx context.Context, req *QueryPositionsReq, resp *QueryPositionsResp) error
 }
 
 type SwapCountReq struct {
@@ -125,6 +126,14 @@ type QueryUserSwapTvlCountDayReq struct {
 	Limit       int              `json:"limit,omitempty"        form:"limit"        gquery:"-"`                        // limit
 	Offset      int              `json:"offset,omitempty"       form:"offset"       gquery:"-"`                        // offset
 	OrderBy     *gquery.GOrderBy `json:"order_by,omitempty"     form:"order_by"     gquery:"id,updated_at,created_at"` // 排序
+}
+
+type QueryPositionsReq struct {
+	Limit  int `json:"limit,omitempty"        form:"limit"        gquery:"-"` // limit
+	Offset int `json:"offset,omitempty"       form:"offset"       gquery:"-"` // offset
+}
+type QueryPositionsResp struct {
+	List []*domain.PositionCountSnapshot `json:"list"`
 }
 
 type QueryUserSwapTvlCountDayResp struct {

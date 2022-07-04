@@ -286,6 +286,21 @@ func QueryUserSwapCountDay(ctx context.Context, limit, offset int, filter ...Fil
 
 }
 
+func QueryPositions(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.PositionCountSnapshot, error) {
+	var (
+		db   = rDB(ctx)
+		list []*domain.PositionCountSnapshot
+		err  error
+	)
+
+	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return list, nil
+
+}
+
 func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount, error) {
 	var ids []int64
 	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
