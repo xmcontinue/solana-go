@@ -293,7 +293,7 @@ func QueryPositions(ctx context.Context, limit, offset int, filter ...Filter) ([
 		err  error
 	)
 
-	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Find(&list).Error; err != nil {
+	if err = db.Scopes(filter...).Limit(limit).Offset(offset).Order("id asc").Find(&list).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 
