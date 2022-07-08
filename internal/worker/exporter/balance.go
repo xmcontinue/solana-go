@@ -1,6 +1,8 @@
 package exporter
 
 import (
+	"strconv"
+
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
@@ -96,6 +98,7 @@ func sendBalanceRateMsgToPushGateway(value float64, swapAddress string, msg stri
 		Tags: map[string]string{
 			"project":  prometheus.GetProjectName(),
 			"swap_key": swapAddress,
+			"rate":     strconv.FormatFloat(value, 'f', 4, 64),
 			"msg":      msg,
 		},
 	}
