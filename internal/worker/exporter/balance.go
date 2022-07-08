@@ -46,20 +46,21 @@ func WatchBalance() error {
 		TokenBDifference := totalTokenBAmount.Sub(pair.TokenB.Balance)
 
 		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() {
-			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount, "swap pool balance is zero")
+			sendBalanceRateMsgToPushGateway(1, 1, 1, pair.SwapAccount, "swap pool balance is zero")
 			continue
 		}
 
 		tokenARate := TokenADifference.Div(totalTokenAAmount).Round(6)
-		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
-			f, _ := tokenARate.Float64()
-			sendBalanceRateMsgToPushGateway(f, pair.SwapAccount, "too much difference")
-		}
-		sendBalanceRateMsgToPushGateway(0.03, pair.SwapAccount, "too much difference")
 		tokenBRate := TokenBDifference.Div(totalTokenBAmount).Round(6)
+		fA, _ := tokenARate.Float64()
+		fB, _ := tokenBRate.Float64()
+		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
+			sendBalanceRateMsgToPushGateway(fA, fA, fB, pair.SwapAccount, "too much difference")
+		}
+		sendBalanceRateMsgToPushGateway(0.03, fA, fB, pair.SwapAccount, "too much difference")
+
 		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
-			f, _ := tokenBRate.Float64()
-			sendBalanceRateMsgToPushGateway(f, pair.SwapAccount, "too much difference")
+			sendBalanceRateMsgToPushGateway(fB, fA, fB, pair.SwapAccount, "too much difference")
 		}
 	}
 	return nil
@@ -89,17 +90,18 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, positionsMode []*domai
 	return positionsMode, nil
 }
 
-func sendBalanceRateMsgToPushGateway(value float64, swapAddress string, msg string) {
+func sendBalanceRateMsgToPushGateway(value, TokenA, valueB float64, swapAddress string, msg string) {
 	log := &iface.LogReq{
 		LogName:  "balance_rate",
 		LogValue: value,
 		LogHelp:  "Comparison of current balance with current liquidity",
 		JobName:  "balance_rate",
 		Tags: map[string]string{
-			"project":  prometheus.GetProjectName(),
-			"swap_key": swapAddress,
-			"rate":     strconv.FormatFloat(value, 'f', 4, 64),
-			"msg":      msg,
+			"project":      prometheus.GetProjectName(),
+			"swap_key":     swapAddress,
+			"token_a_rate": strconv.FormatFloat(TokenA, 'f', 4, 64),
+			"token_b_rate": strconv.FormatFloat(valueB, 'f', 4, 64),
+			"msg":          msg,
 		},
 	}
 	err := prometheus.ExamplePusherPush(log)
