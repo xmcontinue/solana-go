@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
 
+	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/internal/worker/exporter"
 	"git.cplus.link/crema/backend/pkg/prometheus"
@@ -47,6 +48,11 @@ func NewExporterService(conf *config.Config) (iface.ExporterService, error) {
 		// prometheus初始化
 		if rErr = prometheus.Init(conf); rErr != nil {
 			return
+		}
+
+		// sol 初始化
+		if err := sol.Init(conf); err != nil {
+			panic(err)
 		}
 
 		// cron初始化
