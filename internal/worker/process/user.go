@@ -58,7 +58,7 @@ func (u *UserCount) ParserDate() error {
 		}
 
 		if len(swapTransactions) == 0 {
-			logger.Info(fmt.Sprintf("parse swap, swap address: %u , current id is %d, target id is %d", u.SwapAccount, u.ID, u.LastTransactionID))
+			logger.Info(fmt.Sprintf("parse user swap, swap address: %u , current id is %d, target id is %d", u.SwapAccount, u.ID, u.LastTransactionID))
 			break
 		}
 
@@ -87,7 +87,7 @@ func (u *UserCount) ParserDate() error {
 			return errors.Wrap(err)
 		}
 
-		logger.Info(fmt.Sprintf("parse swap, swap address: %s , current id is %d, target id is %d,count:%d", u.SwapAccount, u.ID, u.LastTransactionID, len(swapTransactions)))
+		logger.Info(fmt.Sprintf("parse user swap, swap address: %s , current id is %d, target id is %d,count:%d", u.SwapAccount, u.ID, u.LastTransactionID, len(swapTransactions)))
 	}
 
 	return nil
