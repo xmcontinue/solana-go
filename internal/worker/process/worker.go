@@ -94,10 +94,10 @@ func Init(viperConf *config.Config) error {
 	//	panic(err)
 	// }
 
-	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
-	if err != nil {
-		panic(err)
-	}
+	//_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), swapAddressLast24HVol)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), sumTotalSwapAccount)
 	if err != nil {
