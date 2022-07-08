@@ -57,8 +57,6 @@ func WatchBalance() error {
 		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fA, fA, fB, pair.SwapAccount, "too much difference")
 		}
-		sendBalanceRateMsgToPushGateway(0.03, fA, fB, pair.SwapAccount, "too much difference")
-
 		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fB, fA, fB, pair.SwapAccount, "too much difference")
 		}
