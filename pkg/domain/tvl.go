@@ -77,7 +77,6 @@ type SwapCountKLine struct {
 	VolInUsd              decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                                                              // tvl（总交易量，单位usd）
 	TokenAUSDForContract  decimal.Decimal `json:"token_ausd_for_contract" gorm:"column:token_ausd_for_contract;type:decimal(36,18);default:0; Index: SwapCountKLine_id_token_ausd_for_contract_index"` // swap token a usd价格(合约内部价格)
 	TokenBUSDForContract  decimal.Decimal `json:"token_busd_for_contract" gorm:"column:token_busd_for_contract;type:decimal(36,18);default:0"`                                                         // swap token b usd价格(合约内部价格)
-
 }
 
 type Tvl struct {
