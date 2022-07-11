@@ -33,7 +33,7 @@ type SwapTransaction struct {
 }
 
 type SwapPairBase struct {
-	ID             int64           `json:"id" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	ID             int64           `json:"id" gorm:"primaryKey;auto_increment;index"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	SwapAddress    string          `json:"swap_address" gorm:"not null;type:varchar(64);  index"`    // swap地址
