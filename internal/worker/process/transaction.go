@@ -7,13 +7,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 
 	model "git.cplus.link/crema/backend/internal/model/market"
-)
-
-type syncType string
-
-var (
-	LastSwapTransactionID syncType = "crema:swap:transaction:last_id"
-	// 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 func transactionIDCache() error {
@@ -23,7 +17,7 @@ func transactionIDCache() error {
 		logger.Error("sync transaction id err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
-	err = redisClient.Set(context.TODO(), string(LastSwapTransactionID), lastSwapTransaction.ID, 0).Err()
+	err = redisClient.Set(context.TODO(), domain.LastSwapTransactionID().Key, lastSwapTransaction.ID, 0).Err()
 	if err != nil {
 		logger.Error("sync transaction id err", logger.Errorv(err))
 		return errors.Wrap(err)
@@ -33,7 +27,7 @@ func transactionIDCache() error {
 }
 
 func getTransactionID() (int64, error) {
-	res := redisClient.Get(context.TODO(), string(LastSwapTransactionID))
+	res := redisClient.Get(context.TODO(), domain.LastSwapTransactionID().Key)
 	if res.Err() != nil {
 		logger.Error("sync transaction id err", logger.Errorv(res.Err()))
 		return 0, errors.Wrap(res.Err())
