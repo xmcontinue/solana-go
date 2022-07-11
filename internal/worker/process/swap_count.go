@@ -89,15 +89,18 @@ func SwapTotalCount() error {
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date > ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id asc"))
-		if err != nil || newContractPrice.Settle.IsZero() {
+		if err != nil {
 			continue
-		}
-		if beforeContractPrice.Open.IsZero() {
-			beforeContractPrice.Open = newContractPrice.Settle
 		}
 
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
+		if newContractPrice.Settle.Round(countDecimal).IsZero() {
+			continue
+		}
+		if beforeContractPrice.Open.Round(countDecimal).IsZero() {
+			beforeContractPrice.Open = newContractPrice.Settle
+		}
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:                        v.Name,
 			SwapAccount:                 v.SwapAccount,
