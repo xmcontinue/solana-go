@@ -358,9 +358,9 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 	for _, swapConfig := range sol.SwapConfigList() {
 
 		swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
+			model.SwapAddress(swapConfig.SwapAccount),
 			model.NewFilter("date_type = ?", klineT.DateType),
 			model.OrderFilter("date desc"),
-			model.SwapAddress(swapConfig.SwapAccount),
 		)
 
 		if err != nil {

@@ -39,10 +39,10 @@ func (s *SwapCount) ParserDate() error {
 		}
 
 		filters := []model.Filter{
+			model.NewFilter("id > ?", s.ID),
 			model.NewFilter("id <= ?", s.LastTransactionID),
 			model.SwapAddress(s.SwapAccount),
 			model.OrderFilter("id asc"),
-			model.NewFilter("id > ?", s.ID),
 		}
 
 		swapTransactions, err := model.QuerySwapTransactions(context.TODO(), 100, 0, filters...)
