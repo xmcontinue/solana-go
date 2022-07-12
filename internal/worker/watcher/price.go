@@ -157,8 +157,8 @@ func updateSwapPairPrice(ctx context.Context, config *domain.SwapConfig, t *klin
 
 		InnerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
 			swapCountKLines, err := model.QuerySwapPairPriceKLines(ctx, t.Interval, 0,
-				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
 				model.SwapAddress(config.SwapAccount),
+				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
 				model.NewFilter("date < ?", endTime),
 				model.OrderFilter("date desc"),
 			)

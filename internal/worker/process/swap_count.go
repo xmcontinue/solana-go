@@ -89,8 +89,9 @@ func SwapTotalCount() error {
 
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
-		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date > ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id asc"))
+		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.NewFilter("date > ?", newContractPrice.Date.Add(-24*time.Hour)), model.OrderFilter("id asc"))
 		if err != nil {
+			logger.Info("SwapTotalCount", logger.Any("data:", err))
 			continue
 		}
 		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
