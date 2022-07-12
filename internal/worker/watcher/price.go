@@ -191,8 +191,9 @@ func updateSwapPairPrice(ctx context.Context, config *domain.SwapConfig, t *klin
 func updateSwapTokenPrice(ctx context.Context, t *kline.Type, swapPairPriceKLine *domain.SwapTokenPriceKLine) error {
 	swapPriceKline, err := model.QuerySwapTokenPriceKLine(ctx,
 		model.NewFilter("symbol = ?", swapPairPriceKLine.Symbol),
+		model.NewFilter("date_type = ?", t.DateType),
 		model.NewFilter("date = ?", t.Date),
-		model.NewFilter("date_type = ?", t.DateType))
+	)
 
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)

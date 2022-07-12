@@ -417,8 +417,8 @@ func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 	TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
 		ctx,
 		model.NewFilter("symbol = ?", symbol),
-		model.NewFilter("date <= ?", date),
 		model.NewFilter("date_type = ?", dateType),
+		model.NewFilter("date <= ?", date),
 		model.OrderFilter("id desc"),
 	)
 	if err != nil {
@@ -426,8 +426,8 @@ func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 		TokenPriceInfo, err = model.QuerySwapTokenPriceKLine(
 			ctx,
 			model.NewFilter("symbol = ?", symbol),
-			model.NewFilter("date > ?", date),
 			model.NewFilter("date_type = ?", dateType),
+			model.NewFilter("date > ?", date),
 			model.OrderFilter("id asc"),
 		)
 		if err != nil {
