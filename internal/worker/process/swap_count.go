@@ -50,7 +50,7 @@ func SwapTotalCount() error {
 		if err != nil || newTokenAPrice.IsZero() || newTokenBPrice.IsZero() {
 			continue
 		}
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
@@ -59,13 +59,13 @@ func SwapTotalCount() error {
 		if err != nil || newTokenBPrice.IsZero() {
 			beforeTokenBPrice = newTokenBPrice
 		}
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
@@ -93,7 +93,7 @@ func SwapTotalCount() error {
 		if err != nil {
 			continue
 		}
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
@@ -124,7 +124,7 @@ func SwapTotalCount() error {
 			TokenBAddress:               v.TokenB.TokenMint,
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
@@ -149,7 +149,7 @@ func SwapTotalCount() error {
 				PriceRate24h: newTokenBPrice.Sub(beforeTokenBPrice).Div(beforeTokenBPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 		)
-
+		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 		// 汇总处理
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
@@ -166,7 +166,7 @@ func SwapTotalCount() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
 	swapCountToApi.UserNum = total
 	// 总交易额
 	swapCountToApi.VolInUsd24h = totalVolInUsd24h.String()
