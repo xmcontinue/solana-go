@@ -94,7 +94,11 @@ func GetRefundPositionsCount() (map[string]RefundToken, error) {
 		if v.IsRefunded {
 			continue
 		}
-		swapKey := swaps[v.SwapAccount.String()].CremaSwap
+		cremaSwap, ok := swaps[v.SwapAccount.String()]
+		if !ok {
+			continue
+		}
+		swapKey := cremaSwap.CremaSwap
 		swapAccount, _ := swapConfigMap[swapKey.String()]
 		tokenAAmount, tokenBAmount := parse.PrecisionConversion(decimal.NewFromInt(int64(v.RefundTokenAAmount)), int(swapAccount.TokenA.Decimal)),
 			parse.PrecisionConversion(decimal.NewFromInt(int64(v.RefundTokenBAmount)), int(swapAccount.TokenB.Decimal))
