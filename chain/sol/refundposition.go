@@ -91,6 +91,9 @@ func GetRefundPositionsCount() (map[string]RefundToken, error) {
 	refundPositionsTvlForSymbol := make(map[string]RefundToken)
 
 	for _, v := range positions {
+		if v.IsRefunded {
+			continue
+		}
 		swapKey := swaps[v.SwapAccount.String()].CremaSwap
 		swapAccount, _ := swapConfigMap[swapKey.String()]
 		tokenAAmount, tokenBAmount := parse.PrecisionConversion(decimal.NewFromInt(int64(v.RefundTokenAAmount)), int(swapAccount.TokenA.Decimal)),
