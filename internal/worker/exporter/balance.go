@@ -67,24 +67,26 @@ func WatchBalance() error {
 }
 
 func positionsAccountToModel(swapPair *domain.SwapConfig, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccount) ([]*domain.PositionCountSnapshot, error) {
-	for _, v := range swapAccountAndPositionsAccount.Positions {
-		// 通过tokenID获取user address
-		userAddress, err := sol.GetUserAddressForTokenKey(v.NftTokenId)
-		if err != nil {
-			if errors.Is(err, errors.RecordNotFound) {
-				continue
+	for _, positionsAccount := range swapAccountAndPositionsAccount.PositionsAccount {
+		for _, v := range positionsAccount.Positions {
+			// 通过tokenID获取user address
+			userAddress, err := sol.GetUserAddressForTokenKey(v.NftTokenId)
+			if err != nil {
+				if errors.Is(err, errors.RecordNotFound) {
+					continue
+				}
+				return nil, errors.Wrap(err)
 			}
-			return nil, errors.Wrap(err)
+			// 计算 amount
+			tokenAAmount, tokenBAmount := swapAccountAndPositionsAccount.CalculateTokenAmount(&v)
+			positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
+				UserAddress:  userAddress,
+				SwapAddress:  swapAccountAndPositionsAccount.SwapAccount.TokenSwapKey.String(),
+				PositionID:   v.NftTokenId.String(),
+				TokenAAmount: parse.PrecisionConversion(tokenAAmount, int(swapPair.TokenA.Decimal)),
+				TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(swapPair.TokenB.Decimal)),
+			})
 		}
-		// 计算 amount
-		tokenAAmount, tokenBAmount := swapAccountAndPositionsAccount.CalculateTokenAmount(&v)
-		positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
-			UserAddress:  userAddress,
-			SwapAddress:  swapAccountAndPositionsAccount.TokenSwapKey.String(),
-			PositionID:   v.NftTokenId.String(),
-			TokenAAmount: parse.PrecisionConversion(tokenAAmount, int(swapPair.TokenA.Decimal)),
-			TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(swapPair.TokenB.Decimal)),
-		})
 	}
 
 	return positionsMode, nil
