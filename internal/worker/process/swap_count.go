@@ -32,6 +32,12 @@ const countDecimal = 6
 
 // SwapTotalCount 汇总统计
 func SwapTotalCount() error {
+	// get refundPositions
+	refundPositionsTvlForSymbol, err := sol.GetRefundPositionsCount()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	// 将要统计的数据
 	swapCountToApi := &domain.SwapCountToApi{
 		Pools:  make([]*domain.SwapCountToApiPool, 0),
@@ -71,7 +77,9 @@ func SwapTotalCount() error {
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 计算pairs vol,tvl 计算单边
-		tokenATvl, tokenBTvl := v.TokenA.Balance.Mul(newTokenAPrice).Round(countDecimal), v.TokenB.Balance.Mul(newTokenBPrice).Round(countDecimal)
+		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(refundPositionsTvlForSymbol[v.SwapAccount].TokenAAmount).Mul(newTokenAPrice).Round(countDecimal),
+			v.TokenB.Balance.Add(refundPositionsTvlForSymbol[v.SwapAccount].TokenBAmount).Mul(newTokenBPrice).Round(countDecimal)
+
 		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
 		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
