@@ -104,11 +104,10 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	//
-	//_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), SwapTotalCount)
-	//if err != nil {
-	//	panic(err)
-	//}
+	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), SwapTotalCount)
+	if err != nil {
+		panic(err)
+	}
 
 	// 统计相同币种的tvl
 	_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), tvlOfToken)
@@ -117,13 +116,13 @@ func Init(viperConf *config.Config) error {
 	}
 
 	//create sync transaction cron job
-	//syncTransactionJob := NewJobInfo("SyncTvl")
-	//job.JobList["SyncKline"] = syncTransactionJob
-	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
+	syncTransactionJob := NewJobInfo("SyncTvl")
+	job.JobList["SyncKline"] = syncTransactionJob
+	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
 
-	//userSyncTransactionJob := NewJobInfo("UserSync")
-	//job.JobList["UserSyncKline"] = userSyncTransactionJob
-	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
+	userSyncTransactionJob := NewJobInfo("UserSync")
+	job.JobList["UserSyncKline"] = userSyncTransactionJob
+	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
 
 	job.Cron.Start()
 
