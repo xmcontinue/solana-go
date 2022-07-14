@@ -11,6 +11,8 @@ import (
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	"github.com/palletone/go-palletone/common/uint128"
 )
 
 type Position struct {
@@ -81,8 +83,8 @@ type SwapAccount struct {
 }
 
 type SwapAccountAndPositionsAccount struct {
-	*SwapAccount
-	*PositionsAccount
+	SwapAccount      *SwapAccount
+	PositionsAccount []*PositionsAccount
 }
 
 type decimalU6412 [8]byte
@@ -102,21 +104,23 @@ func (d *decimalU6412) Val() decimal.Decimal {
 }
 
 func (d *decimalU128) Val() decimal.Decimal {
-	var v uint64
-	_ = bin.NewBorshDecoder(d[:]).Decode(&v)
-	return decimal.New(int64(v), 0)
+	return byteToUint128(d[:], 0)
 }
 
 func (d *decimalU12812) Val() decimal.Decimal {
-	var v uint64
-	_ = bin.NewBorshDecoder(d[:]).Decode(&v)
-	return decimal.New(int64(v), -12)
+	return byteToUint128(d[:], -12)
 }
 
 func (d *decimalU12816) Val() decimal.Decimal {
-	var v uint64
-	_ = bin.NewBorshDecoder(d[:]).Decode(&v)
-	return decimal.New(int64(v), -16)
+	return byteToUint128(d[:], -16)
+}
+
+// var v uint64
+// _ = bin.NewBorshDecoder(d[:]).Decode(&v)
+// return decimal.New(int64(v), -16)
+
+func byteToUint128(b []byte, exp int32) decimal.Decimal {
+	return decimal.NewFromBigInt(uint128.FromBytes(b).Big(), exp)
 }
 
 func GetSwapAccountForSwapKey(swapKey solana.PublicKey) (*SwapAccount, error) {
@@ -151,10 +155,68 @@ func GetSwapAccountAndPositionsAccountForSwapKey(swapKey solana.PublicKey) (*Swa
 
 	swapAccountAndPositionsAccount := SwapAccountAndPositionsAccount{
 		swapAccount,
-		positionsAccount,
+		[]*PositionsAccount{
+			positionsAccount,
+		},
 	}
 
 	return &swapAccountAndPositionsAccount, nil
+}
+
+func GetSwapAccountAndPositionsAccountForProgramAccounts(swapKey solana.PublicKey) (*SwapAccountAndPositionsAccount, error) {
+
+	swapAccount, err := GetSwapAccountForSwapKey(swapKey)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	positionsAccounts, err := getPositionsForProgramAccounts(swapKey)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	swapAccountAndPositionsAccount := SwapAccountAndPositionsAccount{
+		swapAccount,
+		positionsAccounts,
+	}
+
+	return &swapAccountAndPositionsAccount, nil
+}
+
+func getPositionsForProgramAccounts(swapKey solana.PublicKey) ([]*PositionsAccount, error) {
+	positionsAccounts := make([]*PositionsAccount, 0)
+	opt := rpc.GetProgramAccountsOpts{
+		Filters: []rpc.RPCFilter{
+			{
+				Memcmp: &rpc.RPCFilterMemcmp{
+					Offset: 1,
+					Bytes:  swapKey[:],
+				},
+			},
+		},
+	}
+	programKey, _ := solana.PublicKeyFromBase58("6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319")
+	res, err := GetRpcClient().GetProgramAccountsWithOpts(context.Background(), programKey, &opt)
+	if err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		if isPositionKeysAccount(v) {
+			pa, err := GetPositionsAccountForPositionKey(v.Pubkey)
+			if err != nil {
+				return nil, err
+			}
+			positionsAccounts = append(positionsAccounts, pa)
+		}
+	}
+	return positionsAccounts, nil
+
+}
+
+func isPositionKeysAccount(account *rpc.KeyedAccount) bool {
+	var v int8
+	_ = bin.NewBorshDecoder([]byte{account.Account.Data.GetBinary()[33]}).Decode(&v)
+	return v == 2
 }
 
 func GetPositionsAccountForPositionKey(positionKey solana.PublicKey) (*PositionsAccount, error) {
@@ -224,9 +286,17 @@ func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
 		rpc.CommitmentFinalized,
 	)
 	if err != nil {
+		if _, ok := err.(*jsonrpc.RPCError); ok {
+			if err.(*jsonrpc.RPCError).Code == -32602 {
+				return "", errors.RecordNotFound
+			}
+		}
 		return "", errors.Wrap(err)
 	}
 	if len(resp.Value) == 0 {
+		return "", errors.RecordNotFound
+	}
+	if resp.Value[0].Amount == "0" {
 		return "", errors.RecordNotFound
 	}
 
@@ -254,19 +324,35 @@ func GetUserAddressForTokenKey(tokenKey solana.PublicKey) (string, error) {
 	return account.Parsed.Info.Owner, nil
 }
 
-func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position) (amountA, amountB decimal.Decimal) {
+func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position) (decimal.Decimal, decimal.Decimal) {
 	lowerSqrtPrice := tick2SqrtPrice(position.LowerTick)
 	upperSqrtPrice := tick2SqrtPrice(position.UpperTick)
 
-	liquity, currentSqrtPrice := position.Liquity.Val(), sp.CurrentSqrtPrice.Val()
+	liquity, currentSqrtPrice := position.Liquity.Val(), sp.SwapAccount.CurrentSqrtPrice.Val()
 
 	if currentSqrtPrice.LessThan(lowerSqrtPrice) {
-		return liquity.Div(lowerSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), decimal.Decimal{}
+		amountA := liquity.Div(lowerSqrtPrice).Sub(liquity.Div(upperSqrtPrice))
+		return amountA, decimal.Decimal{}
 	} else if currentSqrtPrice.GreaterThan(upperSqrtPrice) {
-		return decimal.Decimal{}, liquity.Mul(upperSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
+		amountB := liquity.Mul(upperSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice))
+		return decimal.Decimal{}, amountB
 	} else {
-		return liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice)).Round(0), liquity.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)).Round(0)
+		amountA := liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice))
+		amountB := liquity.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice))
+		return amountA, amountB
 	}
+
+	// if currentSqrtPrice.LessThan(lowerSqrtPrice) {
+	// 	amountA := parse.FormatFloatCarry(liquity.Div(lowerSqrtPrice).Sub(liquity.Div(upperSqrtPrice)), 0)
+	// 	return amountA, decimal.Decimal{}
+	// } else if currentSqrtPrice.GreaterThan(upperSqrtPrice) {
+	// 	amountB := parse.FormatFloatCarry(liquity.Mul(upperSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)), 0)
+	// 	return decimal.Decimal{}, amountB
+	// } else {
+	// 	amountA := parse.FormatFloatCarry(liquity.Div(currentSqrtPrice).Sub(liquity.Div(upperSqrtPrice)), 0)
+	// 	amountB := parse.FormatFloatCarry(liquity.Mul(currentSqrtPrice).Sub(liquity.Mul(lowerSqrtPrice)), 0)
+	// 	return amountA, amountB
+	// }
 }
 
 func tick2SqrtPrice(tick int32) decimal.Decimal {
