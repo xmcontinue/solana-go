@@ -22,8 +22,8 @@ type SwapPairCount struct {
 	PairName          string          `json:"-" gorm:"type:varchar(64);"`
 	TokenASymbol      string          `json:"-" gorm:"type:varchar(32);"`
 	TokenBSymbol      string          `json:"-" gorm:"type:varchar(32);"`
-	TokenADecimal     int             `json:"-" gorm:"type:int2;"`
-	TokenBDecimal     int             `json:"-" gorm:"type:int2;"`
+	TokenADecimal     int             `json:"-" gorm:"type:integer;"`
+	TokenBDecimal     int             `json:"-" gorm:"type:integer;"`
 	TxNum             uint64          `json:"tx_num" gorm:""`
 }
 
