@@ -51,6 +51,7 @@ func SwapTotalCount() error {
 			continue
 		}
 		logger.Info("SwapTotalCount", logger.Any("data:", "GetPriceForSymbol"))
+		// todo SQL查询慢，如何优化
 		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
@@ -89,6 +90,7 @@ func SwapTotalCount() error {
 
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
+		// todo 查询较慢 如何优化
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.NewFilter("date > ?", newContractPrice.Date.Add(-24*time.Hour)), model.OrderFilter("id asc"))
 		if err != nil {
 			logger.Info("SwapTotalCount", logger.Any("data:", err))
