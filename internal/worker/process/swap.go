@@ -396,6 +396,7 @@ func PriceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine
 		err         error
 	)
 	// 查找tokenA,tokenB价格
+	// todo SQL很慢 如何优化
 	tokenAPrice, err = GetPriceInfo(ctx, swapInfo.Date, swapInfo.DateType, swapInfo.TokenASymbol)
 	if err != nil {
 		return tokenAPrice, tokenBPrice, errors.Wrap(err)
