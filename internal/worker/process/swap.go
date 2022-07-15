@@ -97,11 +97,11 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
 				continue
 			}
-
+			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("开始", swapRecord.SwapConfig.SwapAccount))
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
 			}
-
+			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("结束", swapRecord.SwapConfig.SwapAccount))
 			var (
 				tokenAVolume      decimal.Decimal
 				tokenBVolume      decimal.Decimal
