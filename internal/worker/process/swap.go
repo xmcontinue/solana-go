@@ -91,6 +91,7 @@ func (s *SwapCount) ParserDate() error {
 
 func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 	var err error
+	logger.Info("WriteToDB:updateSwapCount:", logger.Any("开始", ""))
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
 			// 仅当前swapAccount  可以插入
@@ -166,7 +167,7 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 	if err = model.Transaction(context.TODO(), trans); err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("WriteToDB:updateSwapCount:", logger.Any("结束", ""))
 	return nil
 }
 
