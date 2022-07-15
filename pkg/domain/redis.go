@@ -16,7 +16,7 @@ var publicPrefix = "crema"
 // SwapVolCountLast24HKey 最近24小时的总的交易额
 func SwapVolCountLast24HKey(accountAddress string) RedisKey {
 	key := fmt.Sprintf("%s:swap:vol:count:last24h:%s", publicPrefix, accountAddress)
-	return RedisKey{key, time.Hour * 1, 0}
+	return RedisKey{key, 0, 0}
 }
 
 // SwapTvlCountKey swap account 的锁仓量
