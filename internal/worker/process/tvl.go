@@ -31,6 +31,29 @@ func (s *SymbolPri) IsEmpty() bool {
 	return reflect.DeepEqual(s, SymbolPri{})
 }
 
+func sortTvlInUsd(tokenASymbolTvlPriceInUSDs, tokenBSymbolTvlPriceInUSDs []*model.DateAndPrice) []*model.DateAndPrice {
+	allSymbolInUSD := append(tokenASymbolTvlPriceInUSDs, tokenBSymbolTvlPriceInUSDs...)
+
+	if len(allSymbolInUSD) == 0 {
+		return nil
+	}
+
+	for i := range allSymbolInUSD {
+		if i == len(allSymbolInUSD)-1 {
+			break
+		}
+
+		if allSymbolInUSD[i].Date.Equal(allSymbolInUSD[i+1].Date) {
+			allSymbolInUSD = append(allSymbolInUSD[:i], allSymbolInUSD[i+1:]...)
+		}
+	}
+
+	if len(allSymbolInUSD) > 24 {
+		return allSymbolInUSD[:24]
+	}
+	return allSymbolInUSD
+}
+
 func tvlOfToken() error {
 	var now = time.Now()
 
@@ -43,17 +66,32 @@ func tvlOfToken() error {
 	ctx := context.Background()
 
 	for symbol := range symBolMap {
-		filters := []model.Filter{
-			model.NewFilter("token_a_symbol = ? or token_b_symbol = ?", symbol, symbol),
+		//filters := []model.Filter{
+		//	// todo 这里是否改成两个单独的SQL，将查询的数据结果在单独筛选
+		//	model.NewFilter("token_a_symbol = ? or token_b_symbol = ?", symbol, symbol),
+		//	model.NewFilter("date_type = ?", domain.DateHour),
+		//	model.OrderFilter("date desc"),
+		//}
+
+		tokenASymbolTvlPriceInUSDs, err := model.SumTvlPriceInUSD(ctx, 24, 0,
+			model.NewFilter("token_a_symbol = ?", symbol),
 			model.NewFilter("date_type = ?", domain.DateHour),
 			model.OrderFilter("date desc"),
-		}
-
-		tokenTvlPriceInUSDs, err := model.SumTvlPriceInUSD(ctx, 24, 0, filters...)
+		)
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
+		tokenBSymbolTvlPriceInUSDs, err := model.SumTvlPriceInUSD(ctx, 24, 0,
+			model.NewFilter("token_b_symbol = ?", symbol),
+			model.NewFilter("date_type = ?", domain.DateHour),
+			model.OrderFilter("date desc"),
+		)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		tokenTvlPriceInUSDs := sortTvlInUsd(tokenASymbolTvlPriceInUSDs, tokenBSymbolTvlPriceInUSDs)
 		if len(tokenTvlPriceInUSDs) == 0 {
 			continue
 		}
