@@ -57,7 +57,7 @@ func SwapTotalCount() error {
 			continue
 		}
 		logger.Info("SwapTotalCount", logger.Any("data:01", v.SwapAccount))
-		// todo SQL查询慢，如何优化
+		// todo SQL查询慢，如何优化, 如果将order by id desc 改成 order by date desc 慢日志会快一个数量级 大概在五秒内
 		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
