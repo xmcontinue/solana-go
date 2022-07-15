@@ -6,17 +6,23 @@ require (
 	git.cplus.link/go/akit v0.5.3
 	github.com/Masterminds/squirrel v1.5.1
 	github.com/gagliardetto/binary v0.6.1
-	github.com/gagliardetto/solana-go v1.0.4
+	github.com/gagliardetto/gofuzz v1.2.2
+	github.com/gagliardetto/solana-go v1.4.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/palletone/go-palletone v1.0.9
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rpcxio/libkv v0.5.0
+	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/client/v2 v2.305.0
 	gorm.io/gorm v1.21.7
 )
 
-require github.com/ethereum/go-ethereum v1.10.6 // indirect
+require (
+	github.com/ethereum/go-ethereum v1.10.6 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+)
 
 require (
 	cloud.google.com/go v0.97.0 // indirect
@@ -38,7 +44,7 @@ require (
 	github.com/cheekybits/genny v1.0.0 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dfuse-io/logging v0.0.0-20210109005628-b97a57253f70 // indirect
 	github.com/dgryski/go-jump v0.0.0-20170409065014-e1f439676b57 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -46,7 +52,7 @@ require (
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
 	github.com/fatih/color v1.11.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/gagliardetto/treeout v0.1.4 // indirect
+	github.com/gagliardetto/treeout v0.1.4
 	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
@@ -87,7 +93,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/json-iterator/go v1.1.11 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
 	github.com/kavu/go_reuseport v1.5.0 // indirect
@@ -112,7 +118,7 @@ require (
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/nacos-group/nacos-sdk-go v1.0.1 // indirect

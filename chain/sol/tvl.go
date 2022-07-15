@@ -197,7 +197,7 @@ func (tvl *TVL) pullLastSignature() {
 		}
 		key := value.Signature.String()
 
-		instructionLen := getInstructionLen(out.Transaction.Message.Instructions)
+		instructionLen := getInstructionLen(out.MustGetTransaction().Message.Instructions)
 		if instructionLen == 9 || instructionLen == 41 || instructionLen == 50 || instructionLen == 52 {
 			continue
 		}
@@ -251,7 +251,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 
 	for _, tokenBalance := range meta.Meta.PreTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.Message.AccountKeys[keyIndex]
+		key := meta.MustGetTransaction().Message.AccountKeys[keyIndex]
 		if key.Equals(tokenAPoolAddress) {
 			tokenAPreBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
@@ -264,7 +264,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 
 	for _, tokenBalance := range meta.Meta.PostTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.Message.AccountKeys[keyIndex]
+		key := meta.MustGetTransaction().Message.AccountKeys[keyIndex]
 		if key.Equals(tokenAPoolAddress) {
 			tokenAPostBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
