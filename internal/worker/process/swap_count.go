@@ -78,8 +78,8 @@ func SwapTotalCount() error {
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "mon"))
 		logger.Info("SwapTotalCount", logger.Any("data:06", v.SwapAccount))
 		// 计算pairs vol,tvl 计算单边
-		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(refundPositionsTvlForSymbol[v.SwapAccount].TokenAAmount).Mul(newTokenAPrice).Round(countDecimal),
-			v.TokenB.Balance.Add(refundPositionsTvlForSymbol[v.SwapAccount].TokenBAmount).Mul(newTokenBPrice).Round(countDecimal)
+		tokenATvl, tokenBTvl := refundPositionsTvlForSymbol[v.SwapAccount].TokenAAmount.Mul(newTokenAPrice).Round(countDecimal),
+			refundPositionsTvlForSymbol[v.SwapAccount].TokenBAmount.Mul(newTokenBPrice).Round(countDecimal) // v.TokenA.Balance.Add() v.TokenB.Balance.Add()
 
 		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
 		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
