@@ -104,6 +104,10 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 				v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
 				v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
 				v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
+				if v.TokenA.RefundAddress != "" {
+					v.TokenA.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.RefundAddress)
+					v.TokenB.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.RefundAddress)
+				}
 				swapMap[v.SwapAccount] = v
 				tokenMap[v.TokenA.SwapTokenAccount] = &v.TokenA
 				tokenMap[v.TokenB.SwapTokenAccount] = &v.TokenB
@@ -223,6 +227,17 @@ func watchBalance() {
 				panic(err)
 			}
 			v.Balance = parse.PrecisionConversion(decimal.NewFromInt(int64(tokenA.Amount)), int(v.Decimal))
+
+			if v.RefundAddress != "" {
+				refundResp, err := GetRpcClient().GetTokenAccountBalance(context.Background(), v.RefundAddressPublicKey, rpc.CommitmentConfirmed)
+				if err != nil {
+					panic(err)
+				}
+				refundAmount, err := decimal.NewFromString(refundResp.Value.Amount)
+				v.RefundBalance = parse.PrecisionConversion(refundAmount, int(v.Decimal))
+			} else {
+				v.RefundBalance = decimal.Decimal{}
+			}
 		}
 
 		for _, v := range swapConfigList {
