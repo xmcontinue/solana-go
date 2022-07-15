@@ -159,7 +159,7 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 					return errors.Wrap(err)
 				}
 			}
-
+			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("完成一次", swapRecord.SwapConfig.SwapAccount))
 		}
 		return nil
 	}
