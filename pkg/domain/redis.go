@@ -27,7 +27,7 @@ func SwapTvlCountKey(swapAddress string) RedisKey {
 
 // SwapTotalCountKey swap 总统计的redis key
 func SwapTotalCountKey() RedisKey {
-	return RedisKey{fmt.Sprintf("%s:swap:count:total", publicPrefix), time.Hour, 0}
+	return RedisKey{fmt.Sprintf("%s:swap:count:total", publicPrefix), 0, 0}
 }
 
 // LastSwapTransactionID 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
