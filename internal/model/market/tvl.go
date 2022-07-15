@@ -337,7 +337,7 @@ func UpdateUserCountKLine(ctx context.Context, updates map[string]interface{}, f
 
 func GetMaxUserCountKLineID(ctx context.Context, swapAccount string) (int64, error) {
 	var max sql.NullInt64
-	if err := rDB(ctx).Model(&domain.UserCountKLine{}).Select("max(last_swap_transaction_id)").Scopes(SwapAddress(swapAccount), NewFilter("date_type = 'mon'")).Take(&max).Error; err != nil {
+	if err := rDB(ctx).Model(&domain.UserCountKLine{}).Select("last_swap_transaction_id").Scopes(SwapAddress(swapAccount), NewFilter("date_type = 'mon'")).Order("last_swap_transaction_id desc").Take(&max).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, errors.Wrap(errors.RecordNotFound)
 		}
