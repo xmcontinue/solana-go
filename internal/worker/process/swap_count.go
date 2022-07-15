@@ -75,7 +75,7 @@ func SwapTotalCount() error {
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 		logger.Info("SwapTotalCount", logger.Any("data:05", v.SwapAccount))
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
-		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1Hour"))
+		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "hour"))
 		logger.Info("SwapTotalCount", logger.Any("data:06", v.SwapAccount))
 		// 计算pairs vol,tvl 计算单边
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(v.TokenA.RefundBalance).Mul(newTokenAPrice).Round(countDecimal),
