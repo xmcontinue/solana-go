@@ -90,6 +90,12 @@ func (s *SwapCount) ParserDate() error {
 }
 
 func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("Recovered in f", err)
+		}
+	}()
+
 	var err error
 	logger.Info("WriteToDB:updateSwapCount:", logger.Any("开始", ""))
 	trans := func(ctx context.Context) error {
@@ -99,7 +105,7 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 				continue
 			}
 			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("开始", swapRecord.SwapConfig.SwapAccount))
-			model.QuerySwapCount(ctx, model.OrderFilter(swapRecord.SwapConfig.SwapAccount))
+			_, _ = model.QuerySwapCount(ctx, model.OrderFilter(swapRecord.SwapConfig.SwapAccount))
 			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("查询", swapRecord.SwapConfig.SwapAccount))
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
