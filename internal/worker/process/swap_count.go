@@ -100,7 +100,7 @@ func SwapTotalCount() error {
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		logger.Info("SwapTotalCount", logger.Any("data:07", v.SwapAccount))
-		// todo 查询较慢 如何优化
+
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.OrderFilter("id desc"))
 		logger.Info("SwapTotalCount", logger.Any("data:08", v.SwapAccount))
 		if err != nil {

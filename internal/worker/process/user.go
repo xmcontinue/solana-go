@@ -28,7 +28,6 @@ type UserCount struct {
 }
 
 func (u *UserCount) getBeginID() error {
-	// todo sql 很慢 如何优化？
 	maxID, err := model.GetMaxUserCountKLineID(context.TODO(), u.SwapAccount)
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)

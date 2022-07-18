@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"sort"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -34,17 +35,30 @@ func (s *SymbolPri) IsEmpty() bool {
 func sortTvlInUsd(tokenASymbolTvlPriceInUSDs, tokenBSymbolTvlPriceInUSDs []*model.DateAndPrice) []*model.DateAndPrice {
 	allSymbolInUSD := append(tokenASymbolTvlPriceInUSDs, tokenBSymbolTvlPriceInUSDs...)
 
+	sort.Slice(allSymbolInUSD, func(i, j int) bool {
+		if allSymbolInUSD[i].Date.After(allSymbolInUSD[j].Date) {
+			return true
+		}
+		return false
+	})
+
 	if len(allSymbolInUSD) == 0 {
 		return nil
 	}
+	newSymbolInUSD := make([]*model.DateAndPrice, 0, 48)
 
-	for i := range allSymbolInUSD {
+	for i := 0; i < len(allSymbolInUSD); i++ {
 		if i == len(allSymbolInUSD)-1 {
+			newSymbolInUSD = append(newSymbolInUSD, allSymbolInUSD[i])
 			break
 		}
 
 		if allSymbolInUSD[i].Date.Equal(allSymbolInUSD[i+1].Date) {
-			allSymbolInUSD = append(allSymbolInUSD[:i], allSymbolInUSD[i+1:]...)
+			allSymbolInUSD[i].Tvl = allSymbolInUSD[i].Tvl.Add(allSymbolInUSD[i+1].Tvl)
+			newSymbolInUSD = append(newSymbolInUSD, allSymbolInUSD[i])
+			i++
+		} else {
+			newSymbolInUSD = append(newSymbolInUSD, allSymbolInUSD[i])
 		}
 	}
 
@@ -66,12 +80,6 @@ func tvlOfToken() error {
 	ctx := context.Background()
 
 	for symbol := range symBolMap {
-		//filters := []model.Filter{
-		//	// todo 这里是否改成两个单独的SQL，将查询的数据结果在单独筛选
-		//	model.NewFilter("token_a_symbol = ? or token_b_symbol = ?", symbol, symbol),
-		//	model.NewFilter("date_type = ?", domain.DateHour),
-		//	model.OrderFilter("date desc"),
-		//}
 
 		tokenASymbolTvlPriceInUSDs, err := model.SumTvlPriceInUSD(ctx, 24, 0,
 			model.NewFilter("token_a_symbol = ?", symbol),
