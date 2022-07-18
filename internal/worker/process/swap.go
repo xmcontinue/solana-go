@@ -105,7 +105,7 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 				continue
 			}
 			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("开始", swapRecord.SwapConfig.SwapAccount))
-			_, _ = model.QuerySwapCount(ctx, model.OrderFilter(swapRecord.SwapConfig.SwapAccount))
+			_, err = model.QuerySwapCount(ctx, model.SwapAddress(swapRecord.SwapConfig.SwapAccount))
 			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("查询", swapRecord.SwapConfig.SwapAccount))
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
