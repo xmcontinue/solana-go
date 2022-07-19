@@ -139,7 +139,7 @@ func send(pool, currentAmountA, currentAmountB, needAmountA, needAmountB string)
 	AccessSecret := smsConfig.AccessSecret
 	SignName := smsConfig.SignName
 	Template := "SMS_245645033"
-	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", AccessKeyId, AccessSecret)
+	smsClient, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", AccessKeyId, AccessSecret)
 
 	request := dysmsapi.CreateSendSmsRequest()
 	request.Scheme = "https"
@@ -153,7 +153,7 @@ func send(pool, currentAmountA, currentAmountB, needAmountA, needAmountB string)
 		needAmountA,
 		needAmountB,
 	)
-	_, err = client.SendSms(request)
+	_, err = smsClient.SendSms(request)
 	if err != nil {
 		return err
 	}
