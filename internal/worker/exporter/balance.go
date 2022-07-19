@@ -57,7 +57,7 @@ func WatchBalance() error {
 
 		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() {
 			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount)
-			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
 			if err != nil {
 				return err
 			}
@@ -70,7 +70,7 @@ func WatchBalance() error {
 		fB, _ := tokenBRate.Float64()
 		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount)
-			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
 			if err != nil {
 				return err
 			}
@@ -78,7 +78,7 @@ func WatchBalance() error {
 		}
 		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount)
-			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
 			if err != nil {
 				return err
 			}
