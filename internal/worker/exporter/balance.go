@@ -1,9 +1,12 @@
 package exporter
 
 import (
+	"fmt"
+
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
+	"github.com/aliyun/alibaba-cloud-sdk-go/services/dysmsapi"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -11,6 +14,15 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 	"git.cplus.link/crema/backend/pkg/prometheus"
 )
+
+type SmsConfig struct {
+	AccessKeyId  string
+	AccessSecret string
+	SignName     string
+	PhoneNumbers string
+}
+
+var smsConfig = SmsConfig{}
 
 func WatchBalance() error {
 	swapPairs := sol.SwapConfigList()
@@ -45,6 +57,10 @@ func WatchBalance() error {
 
 		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() {
 			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount)
+			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -54,10 +70,18 @@ func WatchBalance() error {
 		fB, _ := tokenBRate.Float64()
 		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount)
+			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
 			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount)
+			err = send(pair.SwapAccount, totalTokenAAmount.String(), totalTokenBAmount.String(), pair.TokenA.Balance.String(), pair.TokenB.Balance.String())
+			if err != nil {
+				return err
+			}
 			return nil
 		}
 
@@ -107,4 +131,31 @@ func sendBalanceRateMsgToPushGateway(value float64, swapAddress string) {
 	if err != nil {
 		logger.Error("send msg to push_gateway failed!", logger.Errorv(err))
 	}
+}
+
+// send 发送短信
+func send(pool, currentAmountA, currentAmountB, needAmountA, needAmountB string) error {
+	AccessKeyId := smsConfig.AccessKeyId
+	AccessSecret := smsConfig.AccessSecret
+	SignName := smsConfig.SignName
+	Template := "SMS_245645033"
+	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", AccessKeyId, AccessSecret)
+
+	request := dysmsapi.CreateSendSmsRequest()
+	request.Scheme = "https"
+	request.PhoneNumbers = smsConfig.PhoneNumbers
+	request.SignName = SignName
+	request.TemplateCode = Template
+	request.TemplateParam = fmt.Sprintf(`{"pool":"%s","currentAmountA":"%s","currentAmountB":"%s","needAmountA":"%s","needAmountB":"%s"}`,
+		pool,
+		currentAmountA,
+		currentAmountB,
+		needAmountA,
+		needAmountB,
+	)
+	_, err = client.SendSms(request)
+	if err != nil {
+		return err
+	}
+	return nil
 }

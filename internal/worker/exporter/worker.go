@@ -65,6 +65,11 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
+	err = conf.UnmarshalKey("sms", &smsConfig)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	job.CronConf.WithLogger(xlog.Config{}.Build())
 	job.Cron = job.CronConf.Build()
 
