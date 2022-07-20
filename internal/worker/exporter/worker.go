@@ -83,7 +83,7 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	_, err = job.Cron.AddFunc(getSpec("swap_count_cache"), WatchBalance)
+	_, err = job.Cron.AddFunc(getSpec("exporter_worker"), WatchBalance)
 	if err != nil {
 		panic(err)
 	}
