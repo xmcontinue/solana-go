@@ -44,7 +44,7 @@ func SyncGalleryJob() error {
 			continue
 		}
 
-		if repos.StatusCode() != 200 && repos.StatusCode() != 202 {
+		if repos.StatusCode() != 200 {
 			return errors.Wrap(errors.RecordNotFound)
 		}
 

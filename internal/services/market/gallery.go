@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -17,8 +18,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/iface"
 )
 
-// 先走属性筛选一次，然后内存过滤query 字段
 // GetGallery ...
+// 先走属性筛选一次，然后内存过滤query 字段
 func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
 	defer rpcx.Recover(ctx)
 
@@ -35,28 +36,25 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 		return errors.Wrap(returnFunc(gallery, args, reply))
 	}
 
+	returnGalleries := make([]*sol.Gallery, 0, len(gallery))
 	_, err = ag_solanago.PublicKeyFromBase58(args.Query)
 	if err != nil {
 		// 不是public account,是名字
-		returnGalleries := make([]*sol.Gallery, 0, len(gallery))
 		for i, v := range gallery {
 			if strings.Contains(v.Name, args.Query) {
 				returnGalleries = append(returnGalleries, gallery[i])
 			}
 		}
-
-		return errors.Wrap(returnFunc(returnGalleries, args, reply))
 	} else {
 		// 是public account
-		returnGalleries := make([]*sol.Gallery, 0, len(gallery))
 		for i, v := range gallery {
 			if strings.EqualFold(v.Mint, args.Query) || strings.EqualFold(v.Owner, args.Query) {
 				returnGalleries = append(returnGalleries, gallery[i])
 			}
 		}
-
-		return errors.Wrap(returnFunc(returnGalleries, args, reply))
 	}
+
+	return errors.Wrap(returnFunc(returnGalleries, args, reply))
 }
 
 func (t *MarketService) filterByQuery(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp, filterKey string) error {
@@ -96,18 +94,13 @@ func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.
 	}
 
 	if int64(len(gallery)) < args.Offset {
-		reply.Total = int64(len(gallery))
-		reply.Limit = args.Limit
-		reply.Offset = args.Offset
-		return nil
+		reply.List = gallery
 	} else if int64(len(gallery)) > args.Offset && int64(len(gallery)) < args.Offset+args.Limit {
 		reply.List = gallery[args.Offset:]
-		reply.Total = int64(len(gallery))
-		reply.Limit = args.Limit
-		reply.Offset = args.Offset
-		return nil
+	} else {
+		reply.List = gallery[args.Offset : args.Offset+args.Limit]
 	}
-	reply.List = gallery[args.Offset : args.Offset+args.Limit]
+
 	reply.Total = int64(len(gallery))
 	reply.Limit = args.Limit
 	reply.Offset = args.Offset
@@ -133,35 +126,46 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 	pipe := t.redisClient.TxPipeline()
 	fil := make([]string, 0, 2)
 
-	//tt := reflect.TypeOf(args)
-	//vv := reflect.ValueOf(args)
-	//for i := 0; i < tt.NumField(); i++ {
-	//	field := tt.Field(i)
-	//	vv.Field(i).NumField()
-	//	if field.Type.String() == "slice" {
-	//
-	//		fil = append(fil, domain.GalleryPrefix+":temp:"+field.Name)
-	//		_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+field.Name, getGalleryAttributeKey(field.Name, args.Level)...).Result()
-	//		if err != nil {
-	//			return nil, errors.Wrap(err)
-	//		}
-	//	}
-	//	fmt.Printf("name:%s index:%d type:%v json tag:%v\n", field.Name, field.Index, field.Type, field.Tag.Get("json"))
-	//}
+	valueOf := reflect.ValueOf(*args)
+	typeOf := reflect.TypeOf(args)
+	for i := 0; i < valueOf.NumField(); i++ {
 
-	if len(args.Level) != 0 {
-		fil = append(fil, domain.GalleryPrefix+":temp:Coffee Membership")
-		_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:Coffee Membership", getGalleryAttributeKey("Coffee Membership", args.Level)...).Result()
-		if err != nil {
-			return nil, errors.Wrap(err)
+		fieldV := valueOf.Field(i)
+
+		if fieldV.String() == "<[]string Value>" {
+			sliceValue := make([]string, 0)
+			for j := 0; j < fieldV.Len(); j++ {
+				sliceValue = append(sliceValue, fieldV.Index(j).String())
+			}
+
+			if len(sliceValue) == 0 {
+				continue
+			}
+
+			tt := typeOf.Elem().Field(i)
+			finalName := tt.Tag.Get("json")
+			fil = append(fil, domain.GalleryPrefix+":temp:"+finalName)
+			_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+finalName, getGalleryAttributeKey(tt.Tag.Get("json"), sliceValue)...).Result()
+			if err != nil {
+				return nil, errors.Wrap(err)
+			}
 		}
-	} else if len(args.Body) != 0 {
-		fil = append(fil, domain.GalleryPrefix+":temp:body")
-		_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:body", getGalleryAttributeKey("Body", args.Body)...).Result()
-		if err != nil {
-			return nil, errors.Wrap(err)
-		}
+
 	}
+
+	//if len(args.CoffeeMembership) != 0 {
+	//	fil = append(fil, domain.GalleryPrefix+":temp:Coffee Membership")
+	//	_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:Coffee Membership", getGalleryAttributeKey("Coffee Membership", args.CoffeeMembership)...).Result()
+	//	if err != nil {
+	//		return nil, errors.Wrap(err)
+	//	}
+	//} else if len(args.Body) != 0 {
+	//	fil = append(fil, domain.GalleryPrefix+":temp:body")
+	//	_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:body", getGalleryAttributeKey("Body", args.Body)...).Result()
+	//	if err != nil {
+	//		return nil, errors.Wrap(err)
+	//	}
+	//}
 
 	if len(fil) != 0 {
 		_, err = pipe.SInterStore(ctx, domain.GalleryPrefix+":temp:settle", fil...).Result()

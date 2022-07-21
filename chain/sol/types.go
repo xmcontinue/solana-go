@@ -37,11 +37,11 @@ type Files struct {
 }
 
 type Gallery struct {
-	*token_metadata.Metadata `json:"*_token___metadata_._metadata,omitempty"`
-	*MetadataJSON            `json:"*_metadata_json,omitempty"`
-	Name                     string `json:"name,omitempty" json:"name,omitempty"`
-	Owner                    string `json:"owner,omitempty"`
-	Mint                     string `json:"mint,omitempty"`
+	Metadata     *token_metadata.Metadata `json:"metadata,omitempty"`
+	MetadataJSON *MetadataJSON            `json:"metadata_json,omitempty"`
+	Name         string                   `json:"name,omitempty" json:"name,omitempty"`
+	Owner        string                   `json:"owner,omitempty"`
+	Mint         string                   `json:"mint,omitempty"`
 }
 
 type MainGallery struct {
