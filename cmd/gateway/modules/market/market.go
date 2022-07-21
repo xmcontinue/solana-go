@@ -21,4 +21,5 @@ var (
 	GetTransaction           = handleFunc(marketClient, "GetTransactions", &iface.GetTransactionsReq{}, &iface.GetTransactionsResp{})
 	QuerySwapKline           = handleFunc(marketClient, "QuerySwapKline", &iface.QuerySwapKlineReq{}, &iface.QuerySwapKlineResp{})
 	GetPosition              = handleFunc(marketClient, "QueryPositions", &iface.QueryPositionsReq{}, &iface.QueryPositionsResp{})
+	GetGallery               = handleFunc(marketClient, "GetGallery", &iface.GetGalleryReq{}, &iface.GetGalleryResp{})
 )

@@ -9,15 +9,18 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
+	akHttp "git.cplus.link/go/akit/transport/http"
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 )
 
 var (
 	redisClient     *redisV8.Client
+	httpClient      *akHttp.Client
 	conf            *config.Config
 	job             *Job
 	delAndAddByZSet *redis.Script
+	collectionMint  string
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -57,9 +60,16 @@ func Init(viperConf *config.Config) error {
 	conf = viperConf
 	var err error
 
+	httpClient = akHttp.DefaultClient()
+
 	job = NewJob()
 
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	err = conf.UnmarshalKey("collection_mint", &collectionMint)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -105,6 +115,11 @@ func Init(viperConf *config.Config) error {
 	}
 
 	_, err = job.Cron.AddFunc(getSpec("sync_total_swap_cache"), SwapTotalCount)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = job.Cron.AddFunc(getSpec("sum_total_swap_account"), SyncGalleryJob)
 	if err != nil {
 		panic(err)
 	}

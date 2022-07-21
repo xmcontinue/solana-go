@@ -97,7 +97,6 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 	}()
 
 	var err error
-	logger.Info("WriteToDB:updateSwapCount:", logger.Any("开始", ""))
 	trans := func(ctx context.Context) error {
 		for _, swapRecord := range s.SwapRecords {
 			// 仅当前swapAccount  可以插入

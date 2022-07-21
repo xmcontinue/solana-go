@@ -22,6 +22,7 @@ type MarketService interface {
 	GetTokenConfig(context.Context, *NilReq, *JsonString) error
 	GetTransactions(context.Context, *GetTransactionsReq, *GetTransactionsResp) error
 	QueryPositions(ctx context.Context, req *QueryPositionsReq, resp *QueryPositionsResp) error
+	GetGallery(ctx context.Context, req *GetGalleryReq, resp *GetGalleryResp) error
 }
 
 type SwapCountReq struct {

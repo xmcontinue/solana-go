@@ -218,7 +218,6 @@ func SwapTotalCount() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	logger.Info("写入swapCountKey", logger.Any("data:", data))
 
 	swapCountKey := domain.SwapTotalCountKey()
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {

@@ -336,7 +336,7 @@ func NewHTTP(
 func NewRPC(rpcEndpoint string) *rpc.Client {
 	var (
 		defaultMaxIdleConnsPerHost = 10
-		defaultTimeout             = 5 * time.Second
+		defaultTimeout             = 500 * time.Second
 		defaultKeepAlive           = 180 * time.Second
 	)
 	opts := &jsonrpc.RPCClientOpts{

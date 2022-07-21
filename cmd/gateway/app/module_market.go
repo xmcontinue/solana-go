@@ -42,5 +42,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("/v1/transaction", handler.GetTransaction)
 	engine.GET("/v1/position", handler.GetPosition)
 
+	engine.POST("/gallery", handler.GetGallery)
+
 	return nil
 }

@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.1
 	github.com/gagliardetto/binary v0.6.1
 	github.com/gagliardetto/gofuzz v1.2.2
+	github.com/gagliardetto/metaplex-go v0.2.1
 	github.com/gagliardetto/solana-go v1.4.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
