@@ -429,7 +429,7 @@ func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 		model.NewFilter("symbol = ?", symbol),
 		model.NewFilter("date_type = ?", dateType),
 		model.NewFilter("date <= ?", date),
-		model.OrderFilter("id desc"),
+		model.OrderFilter("date desc"),
 	)
 	if err != nil {
 		// 获取后一个时刻的价格
@@ -438,7 +438,7 @@ func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 			model.NewFilter("symbol = ?", symbol),
 			model.NewFilter("date_type = ?", dateType),
 			model.NewFilter("date > ?", date),
-			model.OrderFilter("id asc"),
+			model.OrderFilter("date asc"),
 		)
 		if err != nil {
 			return decimal.Zero, errors.Wrap(err)
