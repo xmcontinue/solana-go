@@ -119,7 +119,7 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	_, err = job.Cron.AddFunc(getSpec("sum_total_swap_account"), SyncGalleryJob)
+	_, err = job.Cron.AddFunc(getSpec("sync_gallery"), SyncGalleryJob)
 	if err != nil {
 		panic(err)
 	}
