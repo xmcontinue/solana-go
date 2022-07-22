@@ -84,9 +84,9 @@ func (t *MarketService) filterByQuery(ctx context.Context, args *iface.GetGaller
 }
 
 func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
-	if !args.ISPositive {
+	if args.ISPositive {
 		sort.Slice(gallery, func(i, j int) bool {
-			if strings.Compare(gallery[i].Name, gallery[j].Name) > 0 {
+			if strings.Compare(gallery[i].Name, gallery[j].Name) < 0 {
 				return false
 			}
 			return true
