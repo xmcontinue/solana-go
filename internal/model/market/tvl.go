@@ -303,7 +303,7 @@ func QueryPositions(ctx context.Context, limit, offset int, filter ...Filter) ([
 
 func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount, error) {
 	var ids []int64
-	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(ix)").Group("swap_address").Scan(&ids).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(last_swap_transaction_id)").Group("swap_address").Scan(&ids).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 

@@ -77,7 +77,7 @@ func GetPriceForSymbol(ctx context.Context, symbol string, filter ...Filter) (de
 	if len(filter) != 0 {
 		newFilters = append(newFilters, filter...)
 	}
-	newFilters = append(newFilters, OrderFilter("id desc"))
+	newFilters = append(newFilters, OrderFilter("date desc"))
 	if err := wDB(ctx).Model(&domain.SwapTokenPriceKLine{}).Scopes(newFilters...).Take(&info).Error; err != nil {
 		return price, errors.Wrap(err)
 	}
