@@ -55,10 +55,15 @@ func SyncGalleryJob() error {
 			return errors.Wrap(err)
 		}
 
+		owner, err := sol.GetUserAddressForTokenKey(metadata.Mint)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
 		gallery := &sol.Gallery{
 			Metadata:     metadata,
 			MetadataJSON: metadataJson,
-			Owner:        out.Account.Owner.String(),
+			Owner:        owner,
 			Mint:         metadata.Mint.String(),
 			Name:         metadataJson.Name,
 		}
