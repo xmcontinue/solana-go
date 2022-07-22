@@ -8,6 +8,7 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/go-redis/redis/v8"
 
 	"git.cplus.link/crema/backend/chain/sol"
@@ -30,81 +31,29 @@ func SyncGalleryJob() error {
 		return errors.Wrap(err)
 	}
 
-	sortGallery := make([]*redis.Z, 0, len(outs))
-	allGallery := make(map[string]interface{}, len(outs))
-	attributeMap := make(map[string][]interface{})
+	sortGalleryName := make([]*redis.Z, 0, len(outs))
+	fullGallery := make(map[string]interface{}, len(outs))
+	galleryAttributes := make(map[string][]interface{})
+	limitChan := make(chan struct{}, 10)
 
-	for _, out := range outs {
-
-		metadata, _ := sol.DecodeMetadata(out.Account.Data.GetBinary())
-
-		repos, err := httpClient.R().Get(metadata.Data.Uri)
-		if err != nil {
-			logger.Error("get metadata uri err", logger.Errorv(err))
-			continue
-		}
-
-		if repos.StatusCode() != 200 {
-			return errors.Wrap(errors.RecordNotFound)
-		}
-
-		metadataJson := &sol.MetadataJSON{}
-		_ = json.Unmarshal(repos.Body(), metadataJson)
-		score, err := strconv.ParseFloat(strings.Split(metadataJson.Name, "#")[1], 10)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-
-		owner, err := sol.GetUserAddressForTokenKey(metadata.Mint)
-		if err != nil {
-			return errors.Wrap(err)
-		}
-
-		gallery := &sol.Gallery{
-			Metadata:     metadata,
-			MetadataJSON: metadataJson,
-			Owner:        owner,
-			Mint:         metadata.Mint.String(),
-			Name:         metadataJson.Name,
-		}
-
-		sortGallery = append(sortGallery, &redis.Z{
-			Score:  score,
-			Member: metadataJson.Name,
-		})
-
-		if len(*metadataJson.Attributes) != 0 {
-			for _, v := range *metadataJson.Attributes {
-				if v.Value == "None" {
-					continue
-				}
-
-				key := v.TraitType + ":" + v.Value
-				_, ok := attributeMap[key]
-				if ok {
-					attributeMap[key] = append(attributeMap[key], metadataJson.Name)
-				} else {
-					attributeMap[key] = []interface{}{metadataJson.Name}
-				}
-			}
-		}
-
-		allGallery[metadataJson.Name] = gallery
+	for i := range outs {
+		limitChan <- struct{}{}
+		_ = makeGalleryValue(outs[i], limitChan, &sortGalleryName, galleryAttributes, fullGallery)
 	}
 
 	pipe := redisClient.TxPipeline()
 
-	err = pushGalleryAttributesByPipe(ctx, &pipe, &attributeMap)
+	err = pushGalleryAttributesByPipe(ctx, &pipe, &galleryAttributes)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	err = pushSortedGallery(ctx, &pipe, sortGallery)
+	err = pushSortedGallery(ctx, &pipe, sortGalleryName)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	err = pushAllGallery(ctx, &pipe, &allGallery)
+	err = pushAllGallery(ctx, &pipe, &fullGallery)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -113,6 +62,69 @@ func SyncGalleryJob() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
+	return nil
+}
+
+func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGalleryName *[]*redis.Z, galleryAttributes map[string][]interface{}, fullGallery map[string]interface{}) error {
+	defer func() {
+		<-limitChan
+	}()
+
+	metadata, _ := sol.DecodeMetadata(out.Account.Data.GetBinary())
+
+	repos, err := httpClient.R().Get(metadata.Data.Uri)
+	if err != nil {
+		logger.Error("get metadata uri err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
+	if repos.StatusCode() != 200 {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	metadataJson := &sol.MetadataJSON{}
+	_ = json.Unmarshal(repos.Body(), metadataJson)
+	score, err := strconv.ParseFloat(strings.Split(metadataJson.Name, "#")[1], 10)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	owner, err := sol.GetUserAddressForTokenKey(metadata.Mint)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	gallery := &sol.Gallery{
+		Metadata:     metadata,
+		MetadataJSON: metadataJson,
+		Owner:        owner,
+		Mint:         metadata.Mint.String(),
+		Name:         metadataJson.Name,
+	}
+
+	*sortGalleryName = append(*sortGalleryName, &redis.Z{
+		Score:  score,
+		Member: metadataJson.Name,
+	})
+
+	if len(*metadataJson.Attributes) != 0 {
+		for _, v := range *metadataJson.Attributes {
+			if v.Value == "None" {
+				continue
+			}
+
+			key := v.TraitType + ":" + v.Value
+			_, ok := galleryAttributes[key]
+			if ok {
+				galleryAttributes[key] = append(galleryAttributes[key], metadataJson.Name)
+			} else {
+				galleryAttributes[key] = []interface{}{metadataJson.Name}
+			}
+		}
+	}
+
+	fullGallery[metadataJson.Name] = gallery
 
 	return nil
 }
