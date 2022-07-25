@@ -174,10 +174,8 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 	}
 
 	if err = model.Transaction(context.TODO(), trans); err != nil {
-		logger.Info("WriteToDB:updateSwapCount:", logger.Any("结束", ""))
 		return errors.Wrap(err)
 	}
-	logger.Info("WriteToDB:updateSwapCount:", logger.Any("结束", ""))
 	return nil
 }
 
