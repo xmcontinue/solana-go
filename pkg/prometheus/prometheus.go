@@ -72,10 +72,11 @@ func WatchConfig(resChan <-chan *store.KVPair) {
 	}
 }
 
-func ExamplePusherPush(req *iface.LogReq) error {
+func ExamplePusherPush(req *iface.LogReq, labels map[string]string) error {
 	completionTime := prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: req.LogName,
-		Help: req.LogHelp,
+		Name:        req.LogName,
+		Help:        req.LogHelp,
+		ConstLabels: labels,
 	})
 	completionTime.SetToCurrentTime()
 	completionTime.Set(req.LogValue)

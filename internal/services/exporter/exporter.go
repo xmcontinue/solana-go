@@ -28,7 +28,7 @@ func (t *ExporterService) AddLog(ctx context.Context, args *iface.LogReq, _ *ifa
 		return errors.Wrap(err)
 	}
 
-	if err := prometheus.ExamplePusherPush(args); err != nil {
+	if err := prometheus.ExamplePusherPush(args, map[string]string{}); err != nil {
 		return errors.Wrapf(errors.NotReady, "logging failed:%v", err)
 	}
 	return nil

@@ -55,12 +55,17 @@ func WatchBalance() error {
 		TokenADifference := totalTokenAAmount.Sub(pair.TokenA.Balance)
 		TokenBDifference := totalTokenBAmount.Sub(pair.TokenB.Balance)
 
-		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() {
-			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount)
-			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
-			if err != nil {
-				return err
-			}
+		labels := map[string]string{
+			"pool":           pair.Name,
+			"currentAmountA": pair.TokenA.Balance.Round(6).String(),
+			"currentAmountB": pair.TokenB.Balance.Round(6).String(),
+			"needAmountA":    totalTokenAAmount.Round(6).String(),
+			"needAmountB":    totalTokenBAmount.Round(6).String(),
+		}
+		
+		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() ||
+			totalTokenAAmount.IsZero() || totalTokenBAmount.IsZero() {
+			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount, labels)
 			continue
 		}
 
@@ -69,23 +74,15 @@ func WatchBalance() error {
 		fA, _ := tokenARate.Float64()
 		fB, _ := tokenBRate.Float64()
 		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
-			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount)
-			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
-			if err != nil {
-				return err
-			}
+			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount, labels)
 			return nil
 		}
 		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
-			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount)
-			err = send(pair.Name, pair.TokenA.Balance.Round(6).String(), pair.TokenB.Balance.Round(6).String(), totalTokenAAmount.Round(6).String(), totalTokenBAmount.Round(6).String())
-			if err != nil {
-				return err
-			}
+			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount, labels)
 			return nil
 		}
 
-		sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount)
+		sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount, map[string]string{})
 	}
 	return nil
 }
@@ -116,7 +113,7 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, positionsMode []*domai
 	return positionsMode, nil
 }
 
-func sendBalanceRateMsgToPushGateway(value float64, swapAddress string) {
+func sendBalanceRateMsgToPushGateway(value float64, swapAddress string, labels map[string]string) {
 	log := &iface.LogReq{
 		LogName:  "balance_rate",
 		LogValue: value,
@@ -127,7 +124,7 @@ func sendBalanceRateMsgToPushGateway(value float64, swapAddress string) {
 			"swap_key": swapAddress,
 		},
 	}
-	err := prometheus.ExamplePusherPush(log)
+	err := prometheus.ExamplePusherPush(log, labels)
 	if err != nil {
 		logger.Error("send msg to push_gateway failed!", logger.Errorv(err))
 	}

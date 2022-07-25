@@ -48,7 +48,7 @@ var cremaApis = map[string]Api{
 
 // WatchCremaHttpStatus 监听crema http接口状态
 func WatchCremaHttpStatus() error {
-
+	// 异常，通知gateway
 	for i := 0; i < retryNum; i++ {
 		if getStatus() {
 			// 正常，通知push gateway
@@ -115,7 +115,7 @@ func sendHttpStatusMsgToPushGateway(status float64) {
 			"project": prometheus.GetProjectName(),
 		},
 	}
-	err := prometheus.ExamplePusherPush(log)
+	err := prometheus.ExamplePusherPush(log, map[string]string{})
 	if err != nil {
 		logger.Error("send msg to push_gateway failed!", logger.Errorv(err))
 	}
@@ -131,7 +131,7 @@ func sendExchangeSyncTimeMsgToPushGateway(time float64) {
 			"project": prometheus.GetProjectName(),
 		},
 	}
-	err := prometheus.ExamplePusherPush(log)
+	err := prometheus.ExamplePusherPush(log, map[string]string{})
 	if err != nil {
 		logger.Error("send msg to push_gateway failed!", logger.Errorv(err))
 	}
