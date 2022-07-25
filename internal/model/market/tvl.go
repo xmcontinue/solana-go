@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"time"
 
+	dbPool "git.cplus.link/go/akit/client/psql"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
-
-	dbPool "git.cplus.link/go/akit/client/psql"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -69,20 +68,6 @@ type UserSwapVol struct {
 	TokenBAddress string          `json:"token_b_address"`
 	Vol           decimal.Decimal `json:"vol"`
 	Num           int             `json:"num"`
-}
-
-func CreateSwapCount(ctx context.Context, swapCount *domain.SwapCount) error {
-	if err := wDB(ctx).Create(swapCount).Error; err != nil {
-		return errors.Wrap(err)
-	}
-	return nil
-}
-
-func UpdateSwapCount(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Updates(updates).Error; err != nil {
-		return errors.Wrap(err)
-	}
-	return nil
 }
 
 func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.SwapCount, error) {
@@ -341,6 +326,7 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, e
 	return swapCount, nil
 
 }
+
 func UpdateUserCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
 	db := wDB(ctx).Model(&domain.UserCountKLine{}).Scopes(filter...).Updates(updates)
 	if err := db.Error; err != nil {

@@ -8,7 +8,6 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
-	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -106,43 +105,9 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 				continue
 			}
 
-			_, err = model.QuerySwapCount(ctx, model.SwapAddressFilter(swapRecord.SwapConfig.SwapAccount))
-			if err != nil {
-				err = model.CreateSwapCount(ctx, &domain.SwapCount{
-					LastSwapTransactionID: 0,
-					SwapAddress:           swapRecord.SwapConfig.SwapAccount,
-					TokenAAddress:         swapRecord.SwapConfig.TokenA.SwapTokenAccount,
-					TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
-					TokenAVolume:          swapRecord.TokenCount.TokenAVolume,
-					TokenBVolume:          swapRecord.TokenCount.TokenBVolume,
-					TokenABalance:         swapRecord.TokenCount.TokenABalance,
-					TokenBBalance:         swapRecord.TokenCount.TokenBBalance,
-					TxNum:                 0,
-				})
-
-				if err != nil {
-					return errors.Wrap(err)
-				}
-			} else {
-				err = model.UpdateSwapCount(ctx,
-					map[string]interface{}{
-						"last_swap_transaction_id": s.ID,
-						"token_a_volume":           gorm.Expr("swap_counts.token_a_volume + ?", swapRecord.TokenCount.TokenAVolume),
-						"token_b_volume":           gorm.Expr("swap_counts.token_b_volume + ?", swapRecord.TokenCount.TokenBVolume.Abs()),
-						"token_a_balance":          swapRecord.TokenCount.TokenABalance,
-						"token_b_balance":          swapRecord.TokenCount.TokenBBalance,
-						"tx_num":                   gorm.Expr("swap_counts.tx_num + 1"),
-					},
-					model.SwapAddressFilter(swapRecord.SwapConfig.SwapAccount),
-				)
-				if err != nil {
-					return errors.Wrap(err)
-				}
+			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
+				return errors.Wrap(err)
 			}
-
-			//if err = s.updateSwapCount(ctx, swapRecord); err != nil {
-			//	return errors.Wrap(err)
-			//}
 
 			var (
 				tokenAVolume      decimal.Decimal
