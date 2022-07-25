@@ -105,10 +105,10 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 				continue
 			}
 
-			_, err = model.QuerySwapCount(ctx, model.SwapAddress(swapRecord.SwapConfig.SwapAccount))
-			if err != nil {
-				return errors.Wrap(err)
-			}
+			//_, err = model.QuerySwapCount(ctx, model.SwapAddress(swapRecord.SwapConfig.SwapAccount))
+			//if err != nil {
+			//	return errors.Wrap(err)
+			//}
 
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
