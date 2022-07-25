@@ -135,7 +135,7 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 		if fieldV.String() == "<[]string Value>" {
 			sliceValue := make([]string, 0)
 			for j := 0; j < fieldV.Len(); j++ {
-				sliceValue = append(sliceValue, fieldV.Index(j).String())
+				sliceValue = append(sliceValue, strings.Replace(fieldV.Index(j).String(), " ", "", -1))
 			}
 
 			if len(sliceValue) == 0 {
@@ -143,14 +143,13 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 			}
 
 			tt := typeOf.Elem().Field(i)
-			finalName := tt.Tag.Get("json")
+			finalName := tt.Tag.Get("redisKey")
 			fil = append(fil, domain.GalleryPrefix+":temp:"+finalName)
-			_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+finalName, getGalleryAttributeKey(tt.Tag.Get("json"), sliceValue)...).Result()
+			_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+finalName, getGalleryAttributeKey(finalName, sliceValue)...).Result()
 			if err != nil {
 				return nil, errors.Wrap(err)
 			}
 		}
-
 	}
 
 	//if len(args.CoffeeMembership) != 0 {

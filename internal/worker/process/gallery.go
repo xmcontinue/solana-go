@@ -90,6 +90,12 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		return errors.Wrap(err)
 	}
 
+	names := strings.Split(metadataJson.Name, " #")
+	if len(names) != 2 {
+		return nil
+	}
+	redisKeyName := names[0] + names[1]
+
 	owner, err := sol.GetUserAddressForTokenKey(metadata.Mint)
 	if err != nil {
 		return errors.Wrap(err)
@@ -103,9 +109,11 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		Name:         metadataJson.Name,
 	}
 
+	fullGallery[redisKeyName] = gallery
+
 	*sortGalleryName = append(*sortGalleryName, &redis.Z{
 		Score:  score,
-		Member: metadataJson.Name,
+		Member: redisKeyName,
 	})
 
 	if len(*metadataJson.Attributes) != 0 {
@@ -114,17 +122,15 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 				continue
 			}
 
-			key := v.TraitType + ":" + v.Value
+			key := strings.Replace(v.TraitType, " ", "", -1) + ":" + strings.Replace(v.Value, " ", "", -1)
 			_, ok := galleryAttributes[key]
 			if ok {
-				galleryAttributes[key] = append(galleryAttributes[key], metadataJson.Name)
+				galleryAttributes[key] = append(galleryAttributes[key], redisKeyName)
 			} else {
-				galleryAttributes[key] = []interface{}{metadataJson.Name}
+				galleryAttributes[key] = []interface{}{redisKeyName}
 			}
 		}
 	}
-
-	fullGallery[metadataJson.Name] = gallery
 
 	return nil
 }

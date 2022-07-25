@@ -32,7 +32,7 @@ func SwapTotalCountKey() RedisKey {
 
 // LastSwapTransactionID 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
 func LastSwapTransactionID() RedisKey {
-	return RedisKey{fmt.Sprintf("%s:swap:transaction:last_id", publicPrefix), time.Hour, 0}
+	return RedisKey{fmt.Sprintf("%s:swap:transaction:last:id", publicPrefix), time.Hour, 0}
 }
 
 // AccountSwapVolCountKey 总交易额
