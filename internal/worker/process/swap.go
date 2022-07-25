@@ -103,13 +103,16 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 			if swapRecord.SwapConfig.SwapAccount != s.SwapAccount {
 				continue
 			}
-			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("开始", swapRecord.SwapConfig.SwapAccount))
+
 			_, err = model.QuerySwapCount(ctx, model.SwapAddress(swapRecord.SwapConfig.SwapAccount))
-			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("查询", swapRecord.SwapConfig.SwapAccount))
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
 			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 				return errors.Wrap(err)
 			}
-			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("结束", swapRecord.SwapConfig.SwapAccount))
+
 			var (
 				tokenAVolume      decimal.Decimal
 				tokenBVolume      decimal.Decimal
@@ -166,7 +169,6 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 					return errors.Wrap(err)
 				}
 			}
-			logger.Info("updateSwapCount:"+swapRecord.SwapConfig.SwapAccount, logger.Any("完成一次", swapRecord.SwapConfig.SwapAccount))
 		}
 		return nil
 	}
