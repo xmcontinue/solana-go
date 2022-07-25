@@ -71,6 +71,20 @@ type UserSwapVol struct {
 	Num           int             `json:"num"`
 }
 
+func CreateSwapCount(ctx context.Context, swapCount *domain.SwapCount) error {
+	if err := wDB(ctx).Create(swapCount).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func UpdateSwapCount(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Updates(updates).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
 func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.SwapCount, error) {
 	var (
 		after   domain.SwapCount
@@ -337,7 +351,7 @@ func UpdateUserCountKLine(ctx context.Context, updates map[string]interface{}, f
 
 func GetMaxUserCountKLineID(ctx context.Context, swapAccount string) (int64, error) {
 	var max sql.NullInt64
-	if err := rDB(ctx).Model(&domain.UserCountKLine{}).Select("last_swap_transaction_id").Scopes(SwapAddress(swapAccount), NewFilter("date_type = 'mon'")).Order("last_swap_transaction_id desc").Take(&max).Error; err != nil {
+	if err := rDB(ctx).Model(&domain.UserCountKLine{}).Select("last_swap_transaction_id").Scopes(SwapAddressFilter(swapAccount), NewFilter("date_type = 'mon'")).Order("last_swap_transaction_id desc").Take(&max).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return 0, errors.Wrap(errors.RecordNotFound)
 		}
@@ -350,7 +364,7 @@ func GetMaxUserCountKLineID(ctx context.Context, swapAccount string) (int64, err
 	return 0, nil
 }
 func UpdateSwapCountBySwapAccount(ctx context.Context, swapAccount string, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, SwapAddress(swapAccount))...).Updates(updates).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, SwapAddressFilter(swapAccount))...).Updates(updates).Error; err != nil {
 		if dbPool.IsDuplicateKeyError(err) {
 			return errors.Wrap(errors.AlreadyExists)
 		}

@@ -72,7 +72,7 @@ func syncKLineByDateType(ctx context.Context, klineT KLineTyp, swapAccount strin
 	swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
 		model.NewFilter("date_type = ?", klineT.DateType),
 		model.OrderFilter("date desc"),
-		model.SwapAddress(swapAccount),
+		model.SwapAddressFilter(swapAccount),
 	)
 
 	if err != nil {
@@ -158,7 +158,7 @@ func syncVolAndTvlHistogram() error {
 	)
 
 	for _, swapConfig := range sol.SwapConfigList() {
-		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddress(swapConfig.SwapAccount))
+		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddressFilter(swapConfig.SwapAccount))
 		if err != nil {
 			logger.Error("query swap_pair_bases err", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -205,7 +205,7 @@ func syncSwapAccountVolAndTvlByDateType(ctx context.Context, klineT KLineTyp, sw
 	swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
 		model.NewFilter("date_type = ?", klineT.DateType),
 		model.OrderFilter("date desc"),
-		model.SwapAddress(swapAccount),
+		model.SwapAddressFilter(swapAccount),
 	)
 
 	if err != nil {
@@ -283,7 +283,7 @@ func syncKLineToRedis() error {
 	)
 	for _, swapConfig := range sol.SwapConfigList() {
 
-		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddress(swapConfig.SwapAccount))
+		swapPairBase, err := model.QuerySwapPairBase(ctx, model.SwapAddressFilter(swapConfig.SwapAccount))
 		if err != nil {
 			logger.Error("query swap_pair_bases err", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -358,7 +358,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 	for _, swapConfig := range sol.SwapConfigList() {
 
 		swapCountKlines, err := model.QuerySwapCountKLines(ctx, klineT.DataCount, 0,
-			model.SwapAddress(swapConfig.SwapAccount),
+			model.SwapAddressFilter(swapConfig.SwapAccount),
 			model.NewFilter("date_type = ?", klineT.DateType),
 			model.OrderFilter("date desc"),
 		)

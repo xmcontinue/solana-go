@@ -39,7 +39,7 @@ func (s *SyncKline) DeleteJobFunc(_ *JobInfo) error {
 
 func (s *SyncKline) Run() error {
 	var err error
-	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddress(s.swapConfig.SwapAccount))
+	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
 		logger.Error("query swap_pair_bases err", logger.Errorv(err))
 		return errors.Wrap(err)
@@ -90,7 +90,7 @@ func (s *UserSyncKline) DeleteJobFunc(_ *JobInfo) error {
 
 func (s *UserSyncKline) Run() error {
 	var err error
-	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddress(s.swapConfig.SwapAccount))
+	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
 		logger.Error("query swap_pair_bases err", logger.Errorv(err))
 		return errors.Wrap(err)

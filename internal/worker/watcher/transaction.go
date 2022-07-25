@@ -113,7 +113,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 		before *solana.Signature
 		until  *solana.Signature
 	)
-	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddress(s.swapConfig.SwapAccount))
+	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
@@ -162,7 +162,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 				map[string]interface{}{
 					"is_sync": true,
 				},
-				model.SwapAddress(s.swapConfig.SwapAccount),
+				model.SwapAddressFilter(s.swapConfig.SwapAccount),
 			)
 			if err != nil {
 				return signatures, errors.Wrap(err)
@@ -247,7 +247,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
 		}
 
-		err = model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddress(s.swapConfig.SwapAccount))
+		err = model.UpdateSwapPairBase(mCtx, swapPairBaseMap, model.SwapAddressFilter(s.swapConfig.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -290,7 +290,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 		// transactionsLen := len(swapTransactions)
 
 		for _, v := range swapTransactions {
-			_, err = model.QuerySwapTransaction(context.Background(), model.SwapAddress(v.SwapAddress), model.NewFilter("signature = ?", v.Signature))
+			_, err = model.QuerySwapTransaction(context.Background(), model.SwapAddressFilter(v.SwapAddress), model.NewFilter("signature = ?", v.Signature))
 			if err != nil {
 				err = model.CreateSwapTransactions(mCtx, []*domain.SwapTransaction{v})
 				if err != nil {

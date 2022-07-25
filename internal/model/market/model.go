@@ -137,8 +137,8 @@ func IDFilter(id int64) Filter {
 	return NewFilter("id = ?", id)
 }
 
-// SwapAddress swapAddress查询条件生成
-func SwapAddress(swapAddress string) Filter {
+// SwapAddressFilter swapAddress查询条件生成
+func SwapAddressFilter(swapAddress string) Filter {
 	return NewFilter("swap_address = ?", swapAddress)
 }
 

@@ -33,7 +33,7 @@ func SyncVol24H() error {
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		txNum = txNum + count.TxNum
 
-		swapInfo, err := model.QuerySwapPairBase(ctx, model.SwapAddress(v.SwapAccount))
+		swapInfo, err := model.QuerySwapPairBase(ctx, model.SwapAddressFilter(v.SwapAccount))
 
 		cumuTxNum = cumuTxNum + swapInfo.TotalTxNum
 		cumuVolInUsd = cumuVolInUsd.Add(swapInfo.TotalVol)
@@ -78,13 +78,13 @@ func SyncTotalVol() error {
 
 	for _, v := range keys {
 
-		info, err := model.QuerySwapPairBase(ctx, model.SwapAddress(v.SwapAccount))
+		info, err := model.QuerySwapPairBase(ctx, model.SwapAddressFilter(v.SwapAccount))
 		if err != nil || !info.IsSync {
 			logger.Info("vol sync Failed : the transaction did not complete synchronously", logger.String("swap_address:", v.SwapAccount))
 			continue
 		}
 
-		vol, err := model.CountTxNum(ctx, model.SwapAddress(v.SwapAccount), model.SwapTransferFilter())
+		vol, err := model.CountTxNum(ctx, model.SwapAddressFilter(v.SwapAccount), model.SwapTransferFilter())
 		if err != nil {
 			continue
 		}
@@ -96,7 +96,7 @@ func SyncTotalVol() error {
 			continue
 		}
 
-		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{"total_tx_num": vol.TxNum, "total_vol": vol.TokenATotalVol.Mul(tokenAPrice).Add(vol.TokenBTotalVol.Mul(tokenBPrice))}, model.SwapAddress(v.SwapAccount))
+		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{"total_tx_num": vol.TxNum, "total_vol": vol.TokenATotalVol.Mul(tokenAPrice).Add(vol.TokenBTotalVol.Mul(tokenBPrice))}, model.SwapAddressFilter(v.SwapAccount))
 		if err != nil {
 			continue
 		}

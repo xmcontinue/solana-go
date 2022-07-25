@@ -46,7 +46,7 @@ func (u *UserCount) ParserDate() error {
 	for {
 		filters := []model.Filter{
 			model.NewFilter("id <= ?", u.LastTransactionID),
-			model.SwapAddress(u.SwapAccount),
+			model.SwapAddressFilter(u.SwapAccount),
 			model.OrderFilter("id asc"),
 			model.NewFilter("id > ?", u.ID),
 		}
@@ -99,7 +99,7 @@ func (u *UserCount) UpdateLastTransActionID(ctx context.Context) error {
 		return errors.Wrap(err)
 	}
 
-	if err = model.UpdateUserCountKLine(ctx, map[string]interface{}{"last_swap_transaction_id": u.ID}, model.SwapAddress(u.SwapAccount), model.NewFilter("last_swap_transaction_id = ?", maxID)); err != nil {
+	if err = model.UpdateUserCountKLine(ctx, map[string]interface{}{"last_swap_transaction_id": u.ID}, model.SwapAddressFilter(u.SwapAccount), model.NewFilter("last_swap_transaction_id = ?", maxID)); err != nil {
 		return errors.Wrap(err)
 	}
 	return nil

@@ -68,13 +68,13 @@ func SwapTotalCount() error {
 		}
 
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
-		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
-		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
-		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
+		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
 
 		// 计算pairs vol,tvl 计算单边
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(v.TokenA.RefundBalance).Mul(newTokenAPrice).Round(countDecimal),
@@ -97,9 +97,9 @@ func SwapTotalCount() error {
 		}
 
 		// 查找合约内价格
-		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddress(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
+		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 
-		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddress(v.SwapAccount), model.OrderFilter("id desc"))
+		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 
 		if err != nil {
 			logger.Info("SwapTotalCount", logger.Any("err:", err))

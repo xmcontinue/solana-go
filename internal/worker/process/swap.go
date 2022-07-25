@@ -8,6 +8,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -29,7 +30,7 @@ type SwapCount struct {
 // ParserDate 按照区块时间顺序解析
 func (s *SwapCount) ParserDate() error {
 	for {
-		swapCount, err := model.QuerySwapCount(context.TODO(), model.SwapAddress(s.SwapAccount))
+		swapCount, err := model.QuerySwapCount(context.TODO(), model.SwapAddressFilter(s.SwapAccount))
 		if err != nil && !errors.Is(err, errors.RecordNotFound) {
 			return errors.Wrap(err)
 		}
@@ -41,7 +42,7 @@ func (s *SwapCount) ParserDate() error {
 		filters := []model.Filter{
 			model.NewFilter("id > ?", s.ID),
 			model.NewFilter("id <= ?", s.LastTransactionID),
-			model.SwapAddress(s.SwapAccount),
+			model.SwapAddressFilter(s.SwapAccount),
 			model.OrderFilter("id asc"),
 		}
 
@@ -105,14 +106,43 @@ func (s *SwapCount) WriteToDB(tx *domain.SwapTransaction) error {
 				continue
 			}
 
-			//_, err = model.QuerySwapCount(ctx, model.SwapAddress(swapRecord.SwapConfig.SwapAccount))
-			//if err != nil {
+			_, err = model.QuerySwapCount(ctx, model.SwapAddressFilter(swapRecord.SwapConfig.SwapAccount))
+			if err != nil {
+				err = model.CreateSwapCount(ctx, &domain.SwapCount{
+					LastSwapTransactionID: 0,
+					SwapAddress:           swapRecord.SwapConfig.SwapAccount,
+					TokenAAddress:         swapRecord.SwapConfig.TokenA.SwapTokenAccount,
+					TokenBAddress:         swapRecord.SwapConfig.TokenB.SwapTokenAccount,
+					TokenAVolume:          swapRecord.TokenCount.TokenAVolume,
+					TokenBVolume:          swapRecord.TokenCount.TokenBVolume,
+					TokenABalance:         swapRecord.TokenCount.TokenABalance,
+					TokenBBalance:         swapRecord.TokenCount.TokenBBalance,
+					TxNum:                 0,
+				})
+
+				if err != nil {
+					return errors.Wrap(err)
+				}
+			} else {
+				err = model.UpdateSwapCount(ctx,
+					map[string]interface{}{
+						"last_swap_transaction_id": s.ID,
+						"token_a_volume":           gorm.Expr("swap_counts.token_a_volume + ?", swapRecord.TokenCount.TokenAVolume),
+						"token_b_volume":           gorm.Expr("swap_counts.token_b_volume + ?", swapRecord.TokenCount.TokenBVolume.Abs()),
+						"token_a_balance":          swapRecord.TokenCount.TokenABalance,
+						"token_b_balance":          swapRecord.TokenCount.TokenBBalance,
+						"tx_num":                   gorm.Expr("swap_counts.tx_num + 1"),
+					},
+					model.SwapAddressFilter(swapRecord.SwapConfig.SwapAccount),
+				)
+				if err != nil {
+					return errors.Wrap(err)
+				}
+			}
+
+			//if err = s.updateSwapCount(ctx, swapRecord); err != nil {
 			//	return errors.Wrap(err)
 			//}
-
-			if err = s.updateSwapCount(ctx, swapRecord); err != nil {
-				return errors.Wrap(err)
-			}
 
 			var (
 				tokenAVolume      decimal.Decimal
@@ -205,7 +235,7 @@ func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 		innerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
 			swapCountKLines, err := model.QuerySwapCountKLines(ctx, t.Interval, 0,
 				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
-				model.SwapAddress(swapCountKLine.SwapAddress),
+				model.SwapAddressFilter(swapCountKLine.SwapAddress),
 				model.NewFilter("date < ?", endTime),
 				model.OrderFilter("date desc"),
 			)
@@ -326,7 +356,7 @@ func (m *KLineTyp) calculateAvg(ctx context.Context, swapAccount string) (decima
 
 		swapCountKLines, err := model.QuerySwapCountKLines(ctx, m.Interval, 0,
 			model.NewFilter("date_type = ?", m.BeforeIntervalDateType),
-			model.SwapAddress(swapAccount),
+			model.SwapAddressFilter(swapAccount),
 			model.NewFilter("date < ?", endTime),
 			model.OrderFilter("date desc"),
 		)
