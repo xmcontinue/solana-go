@@ -73,6 +73,7 @@ func (s *SwapCount) ParserDate() error {
 			s.BlockDate = transaction.BlockTime
 
 			if err = s.WriteToDB(transaction); err != nil {
+				logger.Error("write to db error:", logger.Errorv(err))
 				return errors.Wrap(err)
 			}
 		}
