@@ -48,9 +48,9 @@ type SwapCount struct {
 }
 
 type SwapCountKLine struct {
-	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment; Index:SwapCountKLine_id_token_ausd_for_contract_index"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment; Index:SwapCountKLine_id_token_ausd_for_contract_index"`                                                                                                                                            // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6)"`                                                                                                                                                                                                  // 始终不会用到这个索引
+	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6)"`                                                                                                                                                                                                  // 始终不会用到这个索引
 	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0; index"`                                                                                                                                                                            // 最后同步的transaction id
 	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index;index:swap_count_k_line_date_type_swap_address_date,priority:2;index:swap_count_k_line_swap_address_date_type_date"` // swap地址
 	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);"`                                                                                                                                                                                    // swap token a 地址
