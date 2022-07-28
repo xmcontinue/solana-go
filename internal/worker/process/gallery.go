@@ -8,8 +8,11 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	ag_solanago "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/go-redis/redis/v8"
+	"go.etcd.io/etcd/client/v3/concurrency"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -90,30 +93,20 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		return errors.Wrap(err)
 	}
 
-	names := strings.Split(metadataJson.Name, " #")
-	if len(names) != 2 {
-		return nil
-	}
-	redisKeyName := names[0] + names[1]
-
-	owner, err := sol.GetUserAddressForTokenKey(metadata.Mint)
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	redisKeyMintAccount := metadata.Mint.String()
 
 	gallery := &sol.Gallery{
 		Metadata:     metadata,
 		MetadataJSON: metadataJson,
-		Owner:        owner,
 		Mint:         metadata.Mint.String(),
 		Name:         metadataJson.Name,
 	}
 
-	fullGallery[redisKeyName] = gallery
+	fullGallery[redisKeyMintAccount] = gallery
 
 	*sortGalleryName = append(*sortGalleryName, &redis.Z{
 		Score:  score,
-		Member: redisKeyName,
+		Member: redisKeyMintAccount,
 	})
 
 	if len(*metadataJson.Attributes) != 0 {
@@ -125,14 +118,130 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 			key := strings.Replace(v.TraitType, " ", "", -1) + ":" + strings.Replace(v.Value, " ", "", -1)
 			_, ok := galleryAttributes[key]
 			if ok {
-				galleryAttributes[key] = append(galleryAttributes[key], redisKeyName)
+				galleryAttributes[key] = append(galleryAttributes[key], redisKeyMintAccount)
 			} else {
-				galleryAttributes[key] = []interface{}{redisKeyName}
+				galleryAttributes[key] = []interface{}{redisKeyMintAccount}
 			}
 		}
 	}
 
 	return nil
+}
+
+func getUriJson(uri string) (string, error) {
+	if len(uri) == 0 {
+		return "", nil
+	}
+
+	repos, err := httpClient.R().Get(uri)
+	if err != nil {
+		return "", errors.Wrap(err)
+	}
+
+	if repos.StatusCode() != 200 {
+		return "", errors.Wrap(errors.RecordNotFound)
+	}
+
+	return string(repos.Body()), nil
+}
+
+type SubMetadata struct {
+	account        string
+	collectionMint string
+}
+
+func (s *SubMetadata) Sub() error {
+	collectionBase58 := ag_solanago.MustPublicKeyFromBase58(s.collectionMint).Bytes()
+	filters := []rpc.RPCFilter{
+		{
+			DataSize: sol.CassavaMetadataDataSize,
+		},
+		{
+			Memcmp: &rpc.RPCFilterMemcmp{
+				Offset: sol.CassavaMetadataCollectionIndex,
+				Bytes:  collectionBase58[:],
+			},
+		},
+	}
+
+	sub, err := sol.GetWsClient().ProgramSubscribeWithOpts(ag_solanago.MustPublicKeyFromBase58(s.account), rpc.CommitmentConfirmed, ag_solanago.EncodingBase64, filters)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	defer sub.Unsubscribe()
+
+	for {
+		recV, err := sub.Recv()
+		if err != nil {
+			return errors.Wrap(err)
+		}
+		go processMetadataResultData(recV)
+
+	}
+}
+
+func processMetadataResultData(recV *ws.ProgramResult) error {
+	// 解码metadata
+	metadata, err := sol.DecodeMetadata(recV.Value.Account.Data.GetBinary())
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	lock, err := addPolymerizationLock(metadata.Mint.String())
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	defer lock.Unlock(context.TODO())
+
+	sortGalleryName := make([]*redis.Z, 0, 1)
+	fullGallery := make(map[string]interface{}, 1)
+	galleryAttributes := make(map[string][]interface{})
+	limitChan := make(chan struct{}, 10)
+	limitChan <- struct{}{}
+	err = makeGalleryValue(&recV.Value, limitChan, &sortGalleryName, galleryAttributes, fullGallery)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	ctx := context.Background()
+	pipe := redisClient.TxPipeline()
+
+	err = pushGalleryAttributesByPipe(ctx, &pipe, &galleryAttributes)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	err = pushSortedGallery(ctx, &pipe, sortGalleryName)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	err = pushAllGallery(ctx, &pipe, &fullGallery)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
+}
+
+func addPolymerizationLock(key string) (*concurrency.Mutex, error) {
+	session, err := concurrency.NewSession(etcdClient)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	lock := concurrency.NewMutex(session, "/crema/ws/lock"+key)
+	err = lock.Lock(context.TODO())
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return lock, nil
 }
 
 func pushSortedGallery(ctx context.Context, pipe *redis.Pipeliner, sortedGallery []*redis.Z) error {

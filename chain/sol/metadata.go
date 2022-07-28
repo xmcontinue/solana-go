@@ -91,7 +91,8 @@ func getAccountDataByAccount(resultAccount []ag_solanago.PublicKey) (rpc.GetProg
 }
 
 const (
-	CassavaMetadataCollectionIndex = 368
+	//CassavaMetadataCollectionIndex = 368
+	CassavaMetadataCollectionIndex = 402
 	CassavaMetadataDataSize        = 679
 )
 

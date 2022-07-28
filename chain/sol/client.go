@@ -18,6 +18,7 @@ import (
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
+	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/rpcxio/libkv/store"
 
 	event "git.cplus.link/crema/backend/chain/event/activity"
@@ -34,6 +35,7 @@ var etcdSwapPairsKey = "/swap-pairs"
 
 var (
 	chainNet            *domain.ChainNet
+	wsClient            *ws.Client
 	chainNets           []*domain.ChainNet
 	chainNetsConfig     []string
 	swapConfigList      []*domain.SwapConfig
@@ -50,6 +52,17 @@ func Init(conf *config.Config) error {
 
 	var err error
 	once.Do(func() {
+		var wsNet string
+		err = conf.UnmarshalKey("solana_ws_net", &wsNet)
+		if err != nil {
+			panic(err.Error())
+		}
+
+		wsClient, err = ws.Connect(context.Background(), wsNet)
+		if err != nil {
+			panic(err)
+		}
+
 		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
 		stopChan := make(chan struct{})
@@ -268,6 +281,10 @@ func GetRpcClient() *rpc.Client {
 
 func GetRpcSlot() uint64 {
 	return chainNet.Slot
+}
+
+func GetWsClient() *ws.Client {
+	return wsClient
 }
 
 func GetAcEventParser() *event.EventParser {

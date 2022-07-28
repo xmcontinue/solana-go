@@ -47,9 +47,31 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 		}
 	} else {
 		// 是public account
-		for i, v := range gallery {
-			if strings.EqualFold(v.Mint, args.Query) || strings.EqualFold(v.Owner, args.Query) {
-				returnGalleries = append(returnGalleries, gallery[i])
+		_, err := t.redisClient.Get(ctx, domain.GetAllGalleryKey(args.Query)).Result()
+		if err != nil {
+			// 是wallet account
+			if !t.redisClient.ErrIsNil(err) {
+				return errors.Wrap(err)
+			}
+			mints, err := sol.GetMintsByTokenOwner(ctx, args.Query)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			for _, v := range gallery {
+				for _, mint := range mints {
+					if v.Mint == mint {
+						returnGalleries = append(returnGalleries, v)
+					}
+				}
+			}
+
+		} else {
+			for _, v := range gallery {
+				if v.Mint == args.Query {
+					returnGalleries = append(returnGalleries, v)
+					break
+				}
 			}
 		}
 	}
@@ -151,20 +173,6 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 			}
 		}
 	}
-
-	//if len(args.CoffeeMembership) != 0 {
-	//	fil = append(fil, domain.GalleryPrefix+":temp:Coffee Membership")
-	//	_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:Coffee Membership", getGalleryAttributeKey("Coffee Membership", args.CoffeeMembership)...).Result()
-	//	if err != nil {
-	//		return nil, errors.Wrap(err)
-	//	}
-	//} else if len(args.Body) != 0 {
-	//	fil = append(fil, domain.GalleryPrefix+":temp:body")
-	//	_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:body", getGalleryAttributeKey("Body", args.Body)...).Result()
-	//	if err != nil {
-	//		return nil, errors.Wrap(err)
-	//	}
-	//}
 
 	if len(fil) != 0 {
 		_, err = pipe.SInterStore(ctx, domain.GalleryPrefix+":temp:settle", fil...).Result()
