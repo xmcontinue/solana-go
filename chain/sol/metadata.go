@@ -91,13 +91,12 @@ func getAccountDataByAccount(resultAccount []ag_solanago.PublicKey) (rpc.GetProg
 }
 
 const (
-	//CassavaMetadataCollectionIndex = 368
-	CassavaMetadataCollectionIndex = 402
-	CassavaMetadataDataSize        = 679
+	CremaMetadataCollectionIndex = 402
+	CremaMetadataDataSize        = 679
 )
 
 func PubMetadataAccount(collectionMintAccount string) (rpc.GetProgramAccountsResult, error) {
-	resultAccount, err := getProgramAccountsResultAccount(CassavaMetadataDataSize, ag_solanago.TokenMetadataProgramID, collectionMintAccount, CassavaMetadataCollectionIndex)
+	resultAccount, err := getProgramAccountsResultAccount(CremaMetadataDataSize, ag_solanago.TokenMetadataProgramID, collectionMintAccount, CremaMetadataCollectionIndex)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
