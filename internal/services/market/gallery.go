@@ -79,32 +79,6 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 	return errors.Wrap(returnFunc(returnGalleries, args, reply))
 }
 
-func (t *MarketService) filterByQuery(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp, filterKey string) error {
-	names, cla, err := t.redisClient.ZScan(ctx, domain.GetSortedGalleryKey(), 0, filterKey, -1).Result()
-	if cla == 0 {
-		return nil
-	}
-
-	galleries, err := t.redisClient.MGet(ctx, names...).Result()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
-	// 不是public account,是名字
-	newGalleries := make([]*sol.Gallery, 0, len(galleries))
-	for _, v := range galleries {
-
-		vStr, _ := v.(string)
-
-		gallery := &sol.Gallery{}
-		_ = json.Unmarshal([]byte(vStr), gallery)
-
-		newGalleries = append(newGalleries, gallery)
-	}
-
-	return errors.Wrap(returnFunc(newGalleries, args, reply))
-}
-
 func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
 	if args.ISPositive {
 		sort.Slice(gallery, func(i, j int) bool {
@@ -115,7 +89,9 @@ func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.
 		})
 	}
 
-	if int64(len(gallery)) < args.Offset {
+	if len(gallery) == 0 {
+		reply.List = nil
+	} else if int64(len(gallery)) < args.Offset {
 		reply.List = gallery
 	} else if int64(len(gallery)) > args.Offset && int64(len(gallery)) < args.Offset+args.Limit {
 		reply.List = gallery[args.Offset:]
