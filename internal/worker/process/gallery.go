@@ -87,6 +87,11 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		return errors.Wrap(err)
 	}
 
+	owner, err := sol.GetOwnerByMintAccount(metadata.Mint)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	redisKeyMintAccount := metadata.Mint.String()
 
 	gallery := &sol.Gallery{
@@ -94,6 +99,7 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		MetadataJSON: metadataJson,
 		Mint:         metadata.Mint.String(),
 		Name:         metadataJson.Name,
+		Owner:        owner,
 	}
 
 	fullGallery[redisKeyMintAccount] = gallery

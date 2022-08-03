@@ -42,3 +42,32 @@ func GetMintsByTokenOwner(ctx context.Context, wallet string) ([]string, error) 
 
 	return mints, nil
 }
+
+func GetOwnerByMintAccount(mintAccount ag_solanago.PublicKey) (string, error) {
+
+	out, err := GetRpcClient().GetTokenLargestAccounts(context.Background(), mintAccount, rpc.CommitmentConfirmed)
+	if err != nil {
+		return "", errors.Wrap(err)
+	}
+
+	if len(out.Value) == 0 {
+		return "", nil
+	}
+
+	info, err := GetRpcClient().GetAccountInfoWithOpts(context.Background(), out.Value[0].Address, &rpc.GetAccountInfoOpts{
+		Encoding:   ag_solanago.EncodingBase64,
+		Commitment: rpc.CommitmentConfirmed,
+	})
+	if err != nil {
+		return "", errors.Wrap(err)
+	}
+
+	account := &token.Account{}
+	accountDecoder := ag_binary.NewDecoderWithEncoding(info.Value.Data.GetBinary(), ag_binary.EncodingBorsh)
+	err = account.UnmarshalWithDecoder(accountDecoder)
+	if err != nil {
+		return "", errors.Wrap(err)
+	}
+
+	return account.Owner.String(), nil
+}

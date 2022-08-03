@@ -61,6 +61,7 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 			for _, v := range gallery {
 				for _, mint := range mints {
 					if v.Mint == mint {
+						v.Owner = args.Query // 因为同步时间间隔问题，此处将owner替换为实际钱包地址
 						returnGalleries = append(returnGalleries, v)
 					}
 				}
