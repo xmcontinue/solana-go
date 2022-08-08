@@ -128,8 +128,8 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 	pipe := t.redisClient.TxPipeline()
 	fil := make([]string, 0, 2)
 
-	valueOf := reflect.ValueOf(*args)
-	typeOf := reflect.TypeOf(args)
+	valueOf := reflect.ValueOf(*args.GalleryType)
+	typeOf := reflect.TypeOf(args.GalleryType)
 	for i := 0; i < valueOf.NumField(); i++ {
 
 		fieldV := valueOf.Field(i)
@@ -145,7 +145,7 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 			}
 
 			tt := typeOf.Elem().Field(i)
-			finalName := tt.Tag.Get("redisKey")
+			finalName := tt.Tag.Get("yaml")
 			fil = append(fil, domain.GalleryPrefix+":temp:"+finalName)
 			_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+finalName, getGalleryAttributeKey(finalName, sliceValue)...).Result()
 			if err != nil {
