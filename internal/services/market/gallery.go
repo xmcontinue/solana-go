@@ -22,6 +22,9 @@ import (
 // 先走属性筛选一次，然后内存过滤query 字段
 func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
 	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
 
 	gallery, err := t.getGallery(ctx, args)
 	if err != nil {
@@ -206,4 +209,12 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 		newGalleries = append(newGalleries, gallery)
 	}
 	return newGalleries, nil
+}
+
+func (t *MarketService) GetGalleryType(ctx context.Context, _ *iface.NilReq, reply *iface.GetGalleryTypeResp) error {
+	defer rpcx.Recover(ctx)
+
+	reply.GalleryType = galleryType
+
+	return nil
 }

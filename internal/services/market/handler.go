@@ -6,6 +6,7 @@ import (
 	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/types"
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
@@ -26,6 +27,7 @@ var (
 	instance         *MarketService
 	once             sync.Once
 	defaultValidator *validator.Validate
+	galleryType      *iface.GalleryType
 )
 
 const (
@@ -47,6 +49,23 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 	once.Do(func() {
 		instance = &MarketService{
 			conf: conf,
+		}
+
+		galleryType = &iface.GalleryType{
+			CoffeeMembership: make([]string, 0, 8),
+			Body:             make([]string, 0, 8),
+			FacialFeatures:   make([]string, 0, 8),
+			Head:             make([]string, 0, 8),
+			FacialAccessory:  make([]string, 0, 8),
+			Clothes:          make([]string, 0, 8),
+			Accessory:        make([]string, 0, 8),
+			Shell:            make([]string, 0, 8),
+			Cup:              make([]string, 0, 8),
+			Background:       make([]string, 0, 8),
+		}
+		if rErr = conf.UnmarshalKey("gallery_type", galleryType); rErr != nil {
+			logger.Error("", logger.Errorv(rErr))
+			return
 		}
 
 		// etcd初始化
