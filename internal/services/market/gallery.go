@@ -128,7 +128,7 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 	pipe := t.redisClient.TxPipeline()
 	fil := make([]string, 0, 2)
 
-	valueOf := reflect.ValueOf(*args.GalleryType)
+	valueOf := reflect.ValueOf(args.GalleryType)
 	typeOf := reflect.TypeOf(args.GalleryType)
 	for i := 0; i < valueOf.NumField(); i++ {
 

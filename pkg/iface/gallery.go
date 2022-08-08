@@ -6,7 +6,7 @@ import (
 
 type GetGalleryReq struct {
 	Query string `json:"query"                      redisKey:"-"                   binding:"omitempty"`
-	*GalleryType
+	GalleryType
 	ISPositive bool  `json:"is_positive"                redisKey:"-"                   binding:"omitempty"`
 	Offset     int64 `json:"offset"                     redisKey:"-"                form:"offset"           binding:"omitempty"`
 	Limit      int64 `json:"limit"                      redisKey:"-"                form:"limit"            binding:"required"`
