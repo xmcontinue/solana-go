@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
-	"sort"
 	"strings"
 
 	"git.cplus.link/go/akit/errors"
@@ -84,15 +83,6 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 }
 
 func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
-	if args.ISPositive {
-		sort.Slice(gallery, func(i, j int) bool {
-			if strings.Compare(gallery[i].Name, gallery[j].Name) < 0 {
-				return false
-			}
-			return true
-		})
-	}
-
 	if len(gallery) == 0 {
 		reply.List = nil
 	} else if int64(len(gallery)) < args.Offset {
@@ -179,7 +169,12 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 		}
 	}
 
-	result := pipe.ZRange(ctx, domain.GalleryPrefix+":temp:final", 0, -1)
+	result := &redis.StringSliceCmd{}
+	if args.ISPositive {
+		result = pipe.ZRange(ctx, domain.GalleryPrefix+":temp:final", 0, -1)
+	} else {
+		result = pipe.ZRevRange(ctx, domain.GalleryPrefix+":temp:final", 0, -1)
+	}
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
