@@ -5,18 +5,20 @@ import (
 	"time"
 )
 
-var GalleryPrefix = fmt.Sprintf("%s:gallery", publicPrefix)
+func GetGalleryPrefix() string {
+	return fmt.Sprintf("%s:gallery", publicPrefix)
+}
 
 func GetGalleryAttributeKey(attribute string) string {
-	return fmt.Sprintf("%s:%s", GalleryPrefix, attribute)
+	return fmt.Sprintf("%s:%s", GetGalleryPrefix(), attribute)
 }
 
 func GetSortedGalleryKey() string {
-	return fmt.Sprintf("%s:sorted", GalleryPrefix)
+	return fmt.Sprintf("%s:sorted", GetGalleryPrefix())
 }
 
 func GetAllGalleryKey(name string) string {
-	return fmt.Sprintf("%s:name:%s", GalleryPrefix, name)
+	return fmt.Sprintf("%s:name:%s", GetGalleryPrefix(), name)
 }
 
 type MetadataJsonDate struct {

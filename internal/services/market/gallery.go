@@ -108,7 +108,7 @@ func getGalleryAttributeKey(pre string, key []string) []string {
 
 func getGalleryNameKey(key []string) []string {
 	for i := range key {
-		key[i] = fmt.Sprintf(domain.GalleryPrefix + ":name:" + key[i])
+		key[i] = fmt.Sprintf(domain.GetGalleryPrefix() + ":name:" + key[i])
 	}
 	return key
 }
@@ -136,8 +136,8 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 
 			tt := typeOf.Elem().Field(i)
 			finalName := tt.Tag.Get("yaml")
-			fil = append(fil, domain.GalleryPrefix+":temp:"+finalName)
-			_, err = pipe.SUnionStore(ctx, domain.GalleryPrefix+":temp:"+finalName, getGalleryAttributeKey(finalName, sliceValue)...).Result()
+			fil = append(fil, domain.GetGalleryPrefix()+":temp:"+finalName)
+			_, err = pipe.SUnionStore(ctx, domain.GetGalleryPrefix()+":temp:"+finalName, getGalleryAttributeKey(finalName, sliceValue)...).Result()
 			if err != nil {
 				return nil, errors.Wrap(err)
 			}
@@ -145,16 +145,16 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 	}
 
 	if len(fil) != 0 {
-		_, err = pipe.SInterStore(ctx, domain.GalleryPrefix+":temp:settle", fil...).Result()
+		_, err = pipe.SInterStore(ctx, domain.GetGalleryPrefix()+":temp:settle", fil...).Result()
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
 
 		store := &redis.ZStore{
-			Keys:    []string{domain.GalleryPrefix + ":temp:settle", domain.GetSortedGalleryKey()},
+			Keys:    []string{domain.GetGalleryPrefix() + ":temp:settle", domain.GetSortedGalleryKey()},
 			Weights: []float64{0, 1},
 		}
-		_, err = pipe.ZInterStore(ctx, domain.GalleryPrefix+":temp:final", store).Result()
+		_, err = pipe.ZInterStore(ctx, domain.GetGalleryPrefix()+":temp:final", store).Result()
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
@@ -163,7 +163,7 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 			Keys:    []string{domain.GetSortedGalleryKey()},
 			Weights: []float64{1},
 		}
-		_, err = pipe.ZInterStore(ctx, domain.GalleryPrefix+":temp:final", store).Result()
+		_, err = pipe.ZInterStore(ctx, domain.GetGalleryPrefix()+":temp:final", store).Result()
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
@@ -171,9 +171,9 @@ func (t *MarketService) getGallery(ctx context.Context, args *iface.GetGalleryRe
 
 	result := &redis.StringSliceCmd{}
 	if args.ISPositive {
-		result = pipe.ZRange(ctx, domain.GalleryPrefix+":temp:final", 0, -1)
+		result = pipe.ZRange(ctx, domain.GetGalleryPrefix()+":temp:final", 0, -1)
 	} else {
-		result = pipe.ZRevRange(ctx, domain.GalleryPrefix+":temp:final", 0, -1)
+		result = pipe.ZRevRange(ctx, domain.GetGalleryPrefix()+":temp:final", 0, -1)
 	}
 
 	_, err = pipe.Exec(ctx)
