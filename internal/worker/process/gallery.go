@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sync"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -13,6 +14,8 @@ import (
 	"github.com/go-redis/redis/v8"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 func SyncGalleryJob() error {
@@ -35,12 +38,17 @@ func parser(outs []*rpc.KeyedAccount) error {
 	sortGalleryName := make([]*redis.Z, 0, len(outs))
 	fullGallery := make(map[string]interface{}, len(outs))
 	galleryAttributes := make(map[string][]interface{})
-	limitChan := make(chan struct{}, 10)
+	limitChan := make(chan struct{}, 5)
+
+	wg := &sync.WaitGroup{}
+	wg.Add(len(outs))
 
 	for i := range outs {
 		limitChan <- struct{}{}
-		_ = makeGalleryValue(outs[i], limitChan, &sortGalleryName, galleryAttributes, fullGallery)
+		go makeGalleryValue(wg, outs[i], limitChan, &sortGalleryName, galleryAttributes, fullGallery)
 	}
+
+	wg.Wait()
 
 	pipe := redisClient.TxPipeline()
 
@@ -67,9 +75,10 @@ func parser(outs []*rpc.KeyedAccount) error {
 	return nil
 }
 
-func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGalleryName *[]*redis.Z, galleryAttributes map[string][]interface{}, fullGallery map[string]interface{}) error {
+func makeGalleryValue(wg *sync.WaitGroup, out *rpc.KeyedAccount, limitChan chan struct{}, sortGalleryName *[]*redis.Z, galleryAttributes map[string][]interface{}, fullGallery map[string]interface{}) error {
 	defer func() {
 		<-limitChan
+		wg.Done()
 	}()
 
 	metadata, _ := sol.DecodeMetadata(out.Account.Data.GetBinary())
@@ -102,6 +111,9 @@ func makeGalleryValue(out *rpc.KeyedAccount, limitChan chan struct{}, sortGaller
 		Owner:        owner,
 	}
 
+	lock.Lock()
+	defer lock.Unlock()
+
 	fullGallery[redisKeyMintAccount] = gallery
 
 	*sortGalleryName = append(*sortGalleryName, &redis.Z{
@@ -133,6 +145,11 @@ func getUriJson(uri string) ([]byte, error) {
 		return nil, nil
 	}
 
+	metadataJson, err := model.QueryMetadataJson(context.TODO(), model.NewFilter("uri = ?", uri))
+	if err == nil {
+		return []byte(metadataJson.Data), nil
+	}
+
 	repos, err := httpClient.R().Get(uri)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -141,6 +158,11 @@ func getUriJson(uri string) ([]byte, error) {
 	if repos.StatusCode() != 200 {
 		return nil, errors.Wrap(errors.RecordNotFound)
 	}
+
+	_ = model.CreateMetadataJson(context.TODO(), &domain.MetadataJsonDate{
+		URI:  uri,
+		Data: string(repos.Body()),
+	})
 
 	return repos.Body(), nil
 }

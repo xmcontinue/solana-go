@@ -2,7 +2,6 @@ package process
 
 import (
 	"sync"
-	"time"
 
 	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
@@ -14,18 +13,16 @@ import (
 	ag_solanago "github.com/gagliardetto/solana-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
-	"go.etcd.io/etcd/client/v3"
 )
 
 var (
 	redisClient     *redisV8.Client
 	httpClient      *akHttp.Client
-	etcdConf        clientv3.Config
-	etcdClient      *clientv3.Client
 	conf            *config.Config
 	job             *Job
 	delAndAddByZSet *redis.Script
 	collectionMint  string
+	lock            sync.Mutex
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -66,17 +63,6 @@ func Init(viperConf *config.Config) error {
 	var err error
 
 	httpClient = akHttp.DefaultClient()
-
-	host := conf.Get("config_center.host")
-	if host == nil {
-		return errors.Wrap(err)
-	}
-	etcdConf.Endpoints = []string{host.(string)}
-	etcdConf.DialTimeout = time.Second * 3
-	etcdClient, err = clientv3.New(etcdConf)
-	if err != nil {
-		return errors.Wrap(err)
-	}
 
 	job = NewJob()
 
