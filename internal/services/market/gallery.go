@@ -100,7 +100,6 @@ func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.
 }
 
 func getGalleryAttributeKey(pre string, key []string) []string {
-	fmt.Println("domain.GetGalleryPrefix():", domain.GetGalleryPrefix())
 	for i := range key {
 		key[i] = domain.GetGalleryAttributeKey(pre + ":" + key[i])
 	}
@@ -108,7 +107,6 @@ func getGalleryAttributeKey(pre string, key []string) []string {
 }
 
 func getGalleryNameKey(key []string) []string {
-	fmt.Println("domain.GetGalleryPrefix():", domain.GetGalleryPrefix())
 	for i := range key {
 		key[i] = fmt.Sprintf(domain.GetGalleryPrefix() + ":name:" + key[i])
 	}
