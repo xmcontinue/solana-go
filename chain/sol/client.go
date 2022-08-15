@@ -23,6 +23,7 @@ import (
 
 	event "git.cplus.link/crema/backend/chain/event/activity"
 	"git.cplus.link/crema/backend/chain/sol/parse"
+	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -62,19 +63,19 @@ func Init(conf *config.Config) error {
 			panic(err)
 		}
 
-		//etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
-		//// 加载swap pairs配置
-		//stopChan := make(chan struct{})
-		//resChan, err := etcd.Watch(etcdSwapPairsKey, stopChan)
-		//if err != nil {
-		//	return
-		//}
+		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
+		// 加载swap pairs配置
+		stopChan := make(chan struct{})
+		resChan, err := etcd.Watch(etcdSwapPairsKey, stopChan)
+		if err != nil {
+			return
+		}
 
-		//activityEventParser = event.NewActivityEventParser()
-		//
-		//wg.Add(1)
-		//go watchSwapPairsConfig(resChan)
-		//wg.Wait()
+		activityEventParser = event.NewActivityEventParser()
+
+		wg.Add(1)
+		go watchSwapPairsConfig(resChan)
+		wg.Wait()
 
 		// 加载网络配置
 		err = initNet(conf)
@@ -82,13 +83,13 @@ func Init(conf *config.Config) error {
 			return
 		}
 
-		//// Watch Balance
-		//wg.Add(1)
-		//go watchBalance()
-		//wg.Wait()
-		//
-		//// watchNet 监测网络
-		//go watchNet()
+		// Watch Balance
+		wg.Add(1)
+		go watchBalance()
+		wg.Wait()
+
+		// watchNet 监测网络
+		go watchNet()
 	})
 
 	return errors.Wrap(err)
