@@ -29,7 +29,7 @@ func SyncGalleryJob() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("sync gallery job finished......")
 	return nil
 }
 
@@ -198,6 +198,7 @@ func (s *SubMetadata) Sub() error {
 		if err != nil {
 			return errors.Wrap(err)
 		}
+		logger.Info("sub metadata", logger.String("public key:", recV.Value.Pubkey.String()))
 		go parser([]*rpc.KeyedAccount{&recV.Value})
 
 	}
