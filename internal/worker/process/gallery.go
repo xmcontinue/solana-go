@@ -69,6 +69,7 @@ func parser(outs []*rpc.KeyedAccount) error {
 
 	_, err = pipe.Exec(ctx)
 	if err != nil {
+		logger.Error("push into redis zset error", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
@@ -93,11 +94,13 @@ func makeGalleryValue(wg *sync.WaitGroup, out *rpc.KeyedAccount, limitChan chan 
 	_ = json.Unmarshal(repos, metadataJson)
 	score, err := strconv.ParseFloat(strings.Split(metadataJson.Name, "#")[1], 10)
 	if err != nil {
+		logger.Error("parse nft name error", logger.String("nft name", metadataJson.Name), logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
 	owner, err := sol.GetOwnerByMintAccount(metadata.Mint)
 	if err != nil {
+		logger.Error("get owner by mint account error", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
