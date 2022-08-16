@@ -192,7 +192,7 @@ func (s *SubMetadata) Sub() error {
 	sub, err := sol.GetWsClient().ProgramSubscribeWithOpts(ag_solanago.MustPublicKeyFromBase58(s.account), rpc.CommitmentConfirmed, ag_solanago.EncodingBase64, filters)
 	if err != nil {
 		logger.Error("sub metadata err:", logger.Errorv(err))
-		panic(err)
+		return errors.Wrap(err)
 	}
 
 	defer sub.Unsubscribe()
@@ -201,7 +201,7 @@ func (s *SubMetadata) Sub() error {
 		recV, err := sub.Recv()
 		if err != nil {
 			logger.Error("sub metadata err:", logger.Errorv(err))
-			panic(err)
+			return errors.Wrap(err)
 		}
 		logger.Info("sub metadata", logger.String("public key:", recV.Value.Pubkey.String()))
 		go parser([]*rpc.KeyedAccount{&recV.Value})

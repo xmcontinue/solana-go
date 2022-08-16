@@ -25,7 +25,10 @@ var (
 	lock            sync.Mutex
 )
 
-const defaultBaseSpec = "0 * * * * *"
+const (
+	defaultBaseSpec = "0 * * * * *"
+	defaultSubSpec  = "0 */1 * * * *"
+)
 
 type Job struct {
 	CronConf *xcron.Config
@@ -132,8 +135,13 @@ func Init(viperConf *config.Config) error {
 		account:        ag_solanago.TokenMetadataProgramID.String(),
 		collectionMint: collectionMint,
 	}
+	_, err = job.Cron.AddFunc(getSpec("defaultSubSpec"), func() error {
+		return subMetadata.Sub()
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	go subMetadata.Sub()
 	return nil
 }
 
