@@ -135,7 +135,7 @@ func Init(viperConf *config.Config) error {
 		account:        ag_solanago.TokenMetadataProgramID.String(),
 		collectionMint: collectionMint,
 	}
-	_, err = job.Cron.AddFunc(getSpec("defaultSubSpec"), func() error {
+	_, err = job.Cron.AddFunc(defaultSubSpec, func() error {
 		return subMetadata.Sub()
 	})
 	if err != nil {
