@@ -3,9 +3,11 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -66,13 +68,14 @@ func parser(outs []*rpc.KeyedAccount) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	t := time.Now()
+	fmt.Println("开始更新：", t.String())
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		logger.Error("push into redis zset error", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
-
+	fmt.Println("更新完成：", time.Now().Sub(t).String())
 	return nil
 }
 
