@@ -59,7 +59,6 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 	)
 
 	// 构造初始零值数据
-	//swapHistogramZ = swapHistogramZ[:0]
 	for index := range swapHistogramZ {
 		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
 		swapHistogramZ[index] = &HistogramZ{
