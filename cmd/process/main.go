@@ -1,9 +1,6 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -19,13 +16,7 @@ import (
 )
 
 func main() {
-	go func() {
-		// 启动一个 http server，注意 pprof 相关的 handler 已经自动注册过了
-		if err := http.ListenAndServe(":6061", nil); err != nil {
-			log.Fatal(err)
-		}
-		os.Exit(0)
-	}()
+
 	configer := config.NewConfiger()
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
