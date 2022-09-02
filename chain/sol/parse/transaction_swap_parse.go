@@ -26,8 +26,8 @@ type SwapRecord struct {
 }
 
 type AmountCount struct {
-	TokenAIndex   int64
-	TokenBIndex   int64
+	TokenAIndex   uint16
+	TokenBIndex   uint16
 	TokenAVolume  decimal.Decimal
 	TokenBVolume  decimal.Decimal
 	TokenABalance decimal.Decimal
@@ -35,27 +35,19 @@ type AmountCount struct {
 }
 
 type Index struct {
-	SwapAddressIndex int64
-	UserTokenAIndex  int64
+	SwapAddressIndex uint16
+	UserTokenAIndex  uint16
 	UserTokenBIndex  int64
 	TokenAIndex      int64
 	TokenBIndex      int64
 }
 
-// ParseTxALl 解析TX内的所有类型
-func (t *Tx) ParseTxALl() error {
-	if t.ParseTxToSwap() != nil && t.ParseTxToLiquidity() != nil && t.ParseTxToClaim() != nil {
-		return errors.RecordNotFound
-	}
-	return nil
-}
-
 // ParseTxToSwap 解析TX到swap
 func (t *Tx) ParseTxToSwap() error {
 	// parser instructions
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
-	for k, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
+	for k, instruction := range t.TransAction.Message.Instructions {
 		swapRecord, err := t.parseInstructionToSwapCount(
 			accountKeys[instruction.ProgramIDIndex].String(),
 			instruction.Data,
@@ -83,7 +75,7 @@ func (t *Tx) ParseTxToSwap() error {
 			swapRecord, err := t.parseInstructionToSwapCount(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
 				compiledInstruction.Data,
-				uint16ListToInt64List(compiledInstruction.Accounts),
+				compiledInstruction.Accounts,
 			)
 			if err != nil {
 				continue
@@ -114,7 +106,7 @@ func (t *Tx) ParseTxToSwap() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, instructionAccounts []int64) (*SwapRecord, error) {
+func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, instructionAccounts []uint16) (*SwapRecord, error) {
 	if programAddress != cremaSwapProgramAddress {
 		return nil, errors.New("not crema program")
 	}
@@ -123,7 +115,7 @@ func (t *Tx) parseInstructionToSwapCount(programAddress string, data []byte, ins
 		return nil, errors.New("not swap instruction")
 	}
 
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
 	cremaSwapIndex := &Index{0, 3, 4, 5, 6}
 
@@ -182,18 +174,18 @@ func (t *Tx) calculate(k int, amountCount *AmountCount, config *domain.SwapConfi
 	)
 
 	for _, postVal := range t.Data.Meta.PostTokenBalances {
-		if amountCount.TokenAIndex == int64(postVal.AccountIndex) {
+		if amountCount.TokenAIndex == postVal.AccountIndex {
 			TokenAPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
 
-		if amountCount.TokenBIndex == int64(postVal.AccountIndex) {
+		if amountCount.TokenBIndex == postVal.AccountIndex {
 			TokenBPostBalance, _ = decimal.NewFromString(postVal.UiTokenAmount.Amount)
 			continue
 		}
 	}
 
-	accounts := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accounts := t.TransAction.Message.AccountKeys
 	var innerInstructions []solana.CompiledInstruction
 	if len(t.ClaimRecords) > 0 {
 		innerInstructions = t.ClaimRecords[k].InnerInstructions
@@ -240,4 +232,44 @@ func getSwapInnerInstructionsForInstructionIndex(index int, innerInstructions []
 		}
 	}
 	return nil, errors.RecordNotFound
+}
+
+func (sr *SwapRecord) GetSwapConfig() *domain.SwapConfig {
+
+	return sr.SwapConfig
+}
+
+func (sr *SwapRecord) GetUserOwnerAccount() string {
+
+	return sr.UserOwnerAddress
+}
+
+func (sr *SwapRecord) GetPrice() decimal.Decimal {
+
+	return sr.Price
+}
+
+func (sr *SwapRecord) GetTokenAVolume() decimal.Decimal {
+
+	return sr.UserCount.TokenAVolume
+}
+
+func (sr *SwapRecord) GetTokenBVolume() decimal.Decimal {
+
+	return sr.UserCount.TokenBVolume
+}
+
+func (sr *SwapRecord) GetTokenABalance() decimal.Decimal {
+
+	return sr.TokenCount.TokenABalance
+}
+
+func (sr *SwapRecord) GetTokenBBalance() decimal.Decimal {
+
+	return sr.TokenCount.TokenBBalance
+}
+
+func (sr *SwapRecord) GetDirection() int8 {
+
+	return sr.Direction
 }

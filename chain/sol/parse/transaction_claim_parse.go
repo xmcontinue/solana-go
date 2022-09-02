@@ -2,6 +2,7 @@ package parse
 
 import (
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
@@ -23,9 +24,9 @@ type ClaimRecord struct {
 // ParseTxToClaim 解析TX到Claim
 func (t *Tx) ParseTxToClaim() error {
 	// parser instructions
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
-	for k, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
+	for k, instruction := range t.TransAction.Message.Instructions {
 		claimRecord, err := t.parseInstructionToClaimCount(
 			accountKeys[instruction.ProgramIDIndex].String(),
 			instruction.Data,
@@ -50,7 +51,7 @@ func (t *Tx) ParseTxToClaim() error {
 			claimRecord, err := t.parseInstructionToClaimCount(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
 				compiledInstruction.Data,
-				uint16ListToInt64List(compiledInstruction.Accounts),
+				compiledInstruction.Accounts,
 			)
 			if err != nil {
 				continue
@@ -81,7 +82,7 @@ func (t *Tx) ParseTxToClaim() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToClaimCount(programAddress string, data []byte, instructionAccounts []int64) (*ClaimRecord, error) {
+func (t *Tx) parseInstructionToClaimCount(programAddress string, data []byte, instructionAccounts []uint16) (*ClaimRecord, error) {
 	if programAddress != cremaSwapProgramAddress {
 		return nil, errors.New("not crema program")
 	}
@@ -90,7 +91,7 @@ func (t *Tx) parseInstructionToClaimCount(programAddress string, data []byte, in
 		return nil, errors.New("not claim instruction")
 	}
 
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
 	cremaClaimIndex := &Index{0, 7, 8, 5, 6}
 
@@ -138,4 +139,20 @@ func (t *Tx) calculateClaim() error {
 	}
 
 	return nil
+}
+
+func (c *ClaimRecord) GetSwapConfig() *domain.SwapConfig {
+	return c.SwapConfig
+}
+
+func (c *ClaimRecord) GetUserOwnerAccount() string {
+	return c.UserOwnerAddress
+}
+
+func (c *ClaimRecord) GetTokenACollectVolume() decimal.Decimal {
+	return c.UserCount.TokenAVolume
+}
+
+func (c *ClaimRecord) GetTokenBCollectVolume() decimal.Decimal {
+	return c.UserCount.TokenBVolume
 }

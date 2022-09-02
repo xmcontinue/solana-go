@@ -195,7 +195,7 @@ func (inst *InitializePosition) Validate() error {
 			return errors.New("accounts.PositionAccount is not set")
 		}
 		if inst.AccountMetaSlice[2] == nil {
-			return errors.New("accounts.SwapAccount is not set")
+			return errors.New("accounts.SwapAddress is not set")
 		}
 		if inst.AccountMetaSlice[3] == nil {
 			return errors.New("accounts.CremaPositionNftMint is not set")

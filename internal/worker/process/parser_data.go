@@ -3,14 +3,26 @@ package process
 import (
 	"context"
 	"sync"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
+
+type parserIface interface {
+	GetBeginId() (int64, error)
+	GetParsingCutoffID() int64
+	GetSwapAccount() string
+	GetTransactions(limit, offset int, filters ...model.Filter) error
+	ParserSwapInstruction() error
+	ParserAllInstructionType() error
+	UpdateLastTransActionID() error
+}
 
 type ParserTransaction interface {
 	GetSyncPoint() error
@@ -18,26 +30,35 @@ type ParserTransaction interface {
 	ParserDate() error
 }
 
-// SyncKline sync transaction
-type SyncKline struct {
+type WriteTyp struct {
+	ID               int64
+	SwapAccount      string
+	BlockDate        *time.Time
+	swapRecords      []parse.SwapRecordIface
+	liquidityRecords []parse.LiquidityRecordIface
+	claimRecords     []parse.CollectRecordIface
+}
+
+// swapKline sync transaction
+type swapKline struct {
 	name       string
 	spec       string
 	swapConfig *domain.SwapConfig
 }
 
-func (s *SyncKline) Name() string {
+func (s *swapKline) Name() string {
 	return s.name
 }
 
-func (s *SyncKline) GetSpecFunc() string {
+func (s *swapKline) GetSpecFunc() string {
 	return s.spec
 }
 
-func (s *SyncKline) DeleteJobFunc(_ *JobInfo) error {
+func (s *swapKline) DeleteJobFunc(_ *JobInfo) error {
 	return nil
 }
 
-func (s *SyncKline) Run() error {
+func (s *swapKline) Run() error {
 	var err error
 	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
@@ -57,38 +78,85 @@ func (s *SyncKline) Run() error {
 		return errors.Wrap(err)
 	}
 
-	swapAndUserCount := &SwapCount{
-		LastTransactionID: lastSwapTransactionID,
-		SwapAccount:       s.swapConfig.SwapAccount,
+	if s.swapConfig.Version == "v2" {
+		swapV2 := &parserV2{
+			LastTransactionID: lastSwapTransactionID,
+			SwapAccount:       s.swapConfig.SwapAccount,
+			Version:           s.swapConfig.Version,
+		}
+		err = ParserSwapInstruction(swapV2)
+	} else {
+		swapCount := &parserV1{
+			LastTransactionID: lastSwapTransactionID,
+			SwapAccount:       s.swapConfig.SwapAccount,
+		}
+		err = ParserSwapInstruction(swapCount)
 	}
 
-	if err = swapAndUserCount.ParserDate(); err != nil {
-		return errors.Wrap(err)
+	if err != nil {
+		logger.Error("parser data err", logger.Errorv(err))
 	}
 
 	return nil
 }
 
-// UserSyncKline sync transaction
-type UserSyncKline struct {
+func ParserSwapInstruction(iface parserIface) error {
+	beginID, err := getBeginID(iface.GetSwapAccount())
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	for {
+		filters := []model.Filter{
+			model.NewFilter("id <= ?", iface.GetParsingCutoffID()),
+			model.SwapAddressFilter(iface.GetSwapAccount()),
+			model.OrderFilter("id asc"),
+			model.NewFilter("id > ?", beginID),
+		}
+
+		if err = iface.GetTransactions(100, 0, filters...); err != nil {
+			if errors.Is(err, errors.RecordNotFound) {
+				break
+			}
+			return errors.Wrap(err)
+		}
+
+		if err = iface.ParserSwapInstruction(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		if err = iface.UpdateLastTransActionID(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		beginID, err = iface.GetBeginId()
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+// UserKline sync transaction
+type UserKline struct {
 	name       string
 	spec       string
 	swapConfig *domain.SwapConfig
 }
 
-func (s *UserSyncKline) Name() string {
+func (s *UserKline) Name() string {
 	return s.name
 }
 
-func (s *UserSyncKline) GetSpecFunc() string {
+func (s *UserKline) GetSpecFunc() string {
 	return s.spec
 }
 
-func (s *UserSyncKline) DeleteJobFunc(_ *JobInfo) error {
+func (s *UserKline) DeleteJobFunc(_ *JobInfo) error {
 	return nil
 }
 
-func (s *UserSyncKline) Run() error {
+func (s *UserKline) Run() error {
 	var err error
 	swapPairBase, err := model.QuerySwapPairBase(context.TODO(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
@@ -108,13 +176,74 @@ func (s *UserSyncKline) Run() error {
 		return errors.Wrap(err)
 	}
 
-	userCount := &UserCount{
-		LastTransactionID: lastSwapTransactionID,
-		SwapAccount:       s.swapConfig.SwapAccount,
+	if s.swapConfig.Version == "v2" {
+		swapV2 := &parserV2{
+			LastTransactionID: lastSwapTransactionID,
+			SwapAccount:       s.swapConfig.SwapAccount,
+			Version:           s.swapConfig.Version,
+		}
+		err = ParserAllInstructionType(swapV2)
+	} else {
+		swapV1 := &parserV1{
+			LastTransactionID: lastSwapTransactionID,
+			SwapAccount:       s.swapConfig.SwapAccount,
+		}
+		err = ParserAllInstructionType(swapV1)
 	}
-	if err = userCount.ParserDate(); err != nil {
+	if err != nil {
+		logger.Error("parser data err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
+
+	return nil
+}
+
+func getUserMaxID(swapAccount string) (int64, error) {
+	maxID, err := model.GetMaxUserCountKLineID(context.TODO(), swapAccount)
+	if err != nil {
+		if !errors.Is(err, errors.RecordNotFound) {
+			return 0, errors.Wrap(err)
+		}
+		return 0, nil
+	}
+	return maxID, nil
+}
+
+func ParserAllInstructionType(iface parserIface) error {
+	beginID, err := getUserMaxID(iface.GetSwapAccount())
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	for {
+		filters := []model.Filter{
+			model.NewFilter("id <= ?", iface.GetParsingCutoffID()),
+			model.SwapAddressFilter(iface.GetSwapAccount()),
+			model.OrderFilter("id asc"),
+			model.NewFilter("id > ?", beginID),
+		}
+
+		if err = iface.GetTransactions(100, 0, filters...); err != nil {
+			if errors.Is(err, errors.RecordNotFound) {
+				break
+			}
+			return errors.Wrap(err)
+		}
+
+		if err = iface.ParserAllInstructionType(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		if err = iface.UpdateLastTransActionID(); err != nil {
+			return errors.Wrap(err)
+		}
+
+		beginID, err = iface.GetBeginId()
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	}
+
 	return nil
 }
 
@@ -126,8 +255,8 @@ func CreateSyncKLine() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("SyncKline", &m, func(value interface{}) JobInterface {
-		return &SyncKline{
+	err := job.WatchJobForMap("swapKline", &m, func(value interface{}) JobInterface {
+		return &swapKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),
 			swapConfig: value.(*domain.SwapConfig),
@@ -148,8 +277,8 @@ func CreateUserSyncKLine() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("UserSyncKline", &m, func(value interface{}) JobInterface {
-		return &UserSyncKline{
+	err := job.WatchJobForMap("UserKline", &m, func(value interface{}) JobInterface {
+		return &UserKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),
 			swapConfig: value.(*domain.SwapConfig),

@@ -73,7 +73,7 @@ func (inst *UnpauseSwapRefund) Validate() error {
 			return errors.New("accounts.Admin is not set")
 		}
 		if inst.AccountMetaSlice[1] == nil {
-			return errors.New("accounts.SwapAccount is not set")
+			return errors.New("accounts.SwapAddress is not set")
 		}
 	}
 	return nil

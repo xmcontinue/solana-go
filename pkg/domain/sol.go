@@ -23,6 +23,7 @@ type SwapConfig struct {
 	TokenA        Token          `json:"token_a" mapstructure:"token_a"`
 	TokenB        Token          `json:"token_b" mapstructure:"token_b"`
 	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
+	Version       string         `json:"version"    mapstructure:"version"`
 }
 
 type TokenConfig struct {

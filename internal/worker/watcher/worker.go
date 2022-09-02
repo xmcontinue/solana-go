@@ -9,6 +9,8 @@ import (
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
 	"github.com/robfig/cron/v3"
+
+	event "git.cplus.link/crema/backend/chain/event/parser"
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -52,6 +54,8 @@ type JobInterface interface {
 func Init(viperConf *config.Config) error {
 	job = NewJob()
 	conf = viperConf
+
+	event.Init()
 
 	err := conf.UnmarshalKey("cron_job_conf", &job.CronConf)
 

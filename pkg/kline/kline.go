@@ -194,6 +194,10 @@ func (m *Type) CalculateAvg(f func(time.Time, *[]*InterTime) error) (*InterTime,
 		}
 	}
 
+	if count == 0 {
+		return nil, errors.RecordNotFound
+	}
+
 	return &InterTime{
 		Avg:       sumAvg.Div(decimal.NewFromInt32(count)),
 		TokenAUSD: sumTokenAUSD.Div(decimal.NewFromInt32(count)),

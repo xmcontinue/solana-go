@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	dbPool "git.cplus.link/go/akit/client/psql"
 	"git.cplus.link/go/akit/errors"
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
@@ -218,4 +219,27 @@ func CountUserNumber(ctx context.Context) (int64, error) {
 		return 0, errors.Wrap(err)
 	}
 	return total, nil
+}
+
+func GetSwapTransactionV2(ctx context.Context, filter ...Filter) (*domain.SwapTransactionV2, error) {
+	var (
+		info domain.SwapTransactionV2
+	)
+	if err := rDB(ctx).Scopes(filter...).First(&info).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.RecordNotFound
+		}
+		return nil, errors.Wrap(err)
+	}
+	return &info, nil
+}
+
+func CreatedSwapTransactionV2(ctx context.Context, programData *domain.SwapTransactionV2) error {
+	if err := wDB(ctx).Create(programData).Error; err != nil {
+		if dbPool.IsDuplicateKeyError(err) {
+			return errors.Wrap(errors.AlreadyExists)
+		}
+		return errors.Wrap(err)
+	}
+	return nil
 }

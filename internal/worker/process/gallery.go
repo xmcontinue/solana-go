@@ -3,11 +3,9 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -68,14 +66,13 @@ func parser(outs []*rpc.KeyedAccount) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	t := time.Now()
-	fmt.Println("开始更新：", t.String())
+
 	_, err = pipe.Exec(ctx)
 	if err != nil {
 		logger.Error("push into redis zset error", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
-	fmt.Println("更新完成：", time.Now().Sub(t).String())
+
 	return nil
 }
 
@@ -195,7 +192,7 @@ func (s *SubMetadata) Sub() error {
 	sub, err := sol.GetWsClient().ProgramSubscribeWithOpts(ag_solanago.MustPublicKeyFromBase58(s.account), rpc.CommitmentConfirmed, ag_solanago.EncodingBase64, filters)
 	if err != nil {
 		logger.Error("sub metadata err:", logger.Errorv(err))
-		return errors.Wrap(err)
+		panic(err)
 	}
 
 	defer sub.Unsubscribe()
@@ -207,7 +204,11 @@ func (s *SubMetadata) Sub() error {
 			return errors.Wrap(err)
 		}
 		logger.Info("sub metadata", logger.String("public key:", recV.Value.Pubkey.String()))
-		go parser([]*rpc.KeyedAccount{&recV.Value})
+		go func() {
+			if err = parser([]*rpc.KeyedAccount{&recV.Value}); err != nil {
+				logger.Error("parser err", logger.Errorv(err))
+			}
+		}()
 
 	}
 }

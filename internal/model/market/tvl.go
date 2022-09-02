@@ -120,40 +120,41 @@ func UpdateSwapCountKLine(ctx context.Context, updates map[string]interface{}, f
 	return nil
 }
 
-func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, blockDate *time.Time) (*domain.SwapCountKLine, error) {
+func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, tokenABalance, tokenBBalance decimal.Decimal, maxBlockTimeWithDateType *time.Time) (*domain.SwapCountKLine, error) {
 	var (
 		after   domain.SwapCountKLine
 		now     = time.Now().UTC()
 		avgFmt  string
 		inserts = map[string]interface{}{
-			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
-			"swap_address":             swapCount.SwapAddress,
-			"token_a_address":          swapCount.TokenAAddress,
-			"token_b_address":          swapCount.TokenBAddress,
-			"token_a_volume":           swapCount.TokenAVolume.Abs(),
-			"token_b_volume":           swapCount.TokenBVolume.Abs(),
-			"token_a_quote_volume":     swapCount.TokenAQuoteVolume.Abs(),
-			"token_b_quote_volume":     swapCount.TokenBQuoteVolume.Abs(),
-			"token_a_balance":          swapCount.TokenABalance,
-			"token_b_balance":          swapCount.TokenBBalance,
-			"date_type":                swapCount.DateType,
-			"open":                     swapCount.Open,
-			"high":                     swapCount.High,
-			"low":                      swapCount.Low,
-			"settle":                   swapCount.Settle,
-			"avg":                      swapCount.Avg,
-			"updated_at":               &now,
-			"created_at":               &now,
-			"date":                     blockDate,
-			"tx_num":                   1,
-			"token_a_usd":              swapCount.TokenAUSD,
-			"token_b_usd":              swapCount.TokenBUSD,
-			"token_a_symbol":           swapCount.TokenASymbol,
-			"token_b_symbol":           swapCount.TokenBSymbol,
-			"tvl_in_usd":               swapCount.TvlInUsd,
-			"vol_in_usd":               swapCount.VolInUsd,
-			"token_ausd_for_contract":  swapCount.TokenAUSDForContract,
-			"token_busd_for_contract":  swapCount.TokenBUSDForContract,
+			"last_swap_transaction_id":      swapCount.LastSwapTransactionID,
+			"swap_address":                  swapCount.SwapAddress,
+			"token_a_address":               swapCount.TokenAAddress,
+			"token_b_address":               swapCount.TokenBAddress,
+			"token_a_volume":                swapCount.TokenAVolume.Abs(),
+			"token_b_volume":                swapCount.TokenBVolume.Abs(),
+			"token_a_quote_volume":          swapCount.TokenAQuoteVolume.Abs(),
+			"token_b_quote_volume":          swapCount.TokenBQuoteVolume.Abs(),
+			"token_a_balance":               tokenABalance,
+			"token_b_balance":               tokenBBalance,
+			"date_type":                     swapCount.DateType,
+			"open":                          swapCount.Open,
+			"high":                          swapCount.High,
+			"low":                           swapCount.Low,
+			"settle":                        swapCount.Settle,
+			"avg":                           swapCount.Avg,
+			"updated_at":                    &now,
+			"created_at":                    &now,
+			"date":                          swapCount.Date,
+			"tx_num":                        1,
+			"token_a_usd":                   swapCount.TokenAUSD,
+			"token_b_usd":                   swapCount.TokenBUSD,
+			"token_a_symbol":                swapCount.TokenASymbol,
+			"token_b_symbol":                swapCount.TokenBSymbol,
+			"tvl_in_usd":                    swapCount.TvlInUsd,
+			"vol_in_usd":                    swapCount.VolInUsd,
+			"token_ausd_for_contract":       swapCount.TokenAUSDForContract,
+			"token_busd_for_contract":       swapCount.TokenBUSDForContract,
+			"max_block_time_with_date_type": maxBlockTimeWithDateType,
 		}
 	)
 
@@ -170,14 +171,15 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
 		Suffix("token_a_quote_volume = swap_count_k_lines.token_a_quote_volume + ?,", swapCount.TokenAQuoteVolume.Abs()).
 		Suffix("token_b_quote_volume = swap_count_k_lines.token_b_quote_volume + ?,", swapCount.TokenBQuoteVolume.Abs()).
-		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
-		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
+		Suffix("token_a_balance = ?,", tokenABalance).
+		Suffix("token_b_balance = ?,", tokenBBalance).
 		Suffix("high = ?,", swapCount.High).
 		Suffix("low = ?,", swapCount.Low).
 		Suffix("settle = ?,", swapCount.Settle).
 		Suffix("token_a_usd = ?,", swapCount.TokenAUSD). // 不求平均值是因为价格本身就是一分钟更新一次，在一分钟内，其值都是相同的，不用求平均值了
 		Suffix("token_b_usd = ?,", swapCount.TokenBUSD).
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
+		Suffix("max_block_time_with_date_type = ?,", maxBlockTimeWithDateType).
 		Suffix("tx_num = swap_count_k_lines.tx_num + 1,").
 		Suffix("vol_in_usd = swap_count_k_lines.vol_in_usd + ?,", swapCount.VolInUsd).
 		Suffix(avgFmt, swapCount.Avg).
@@ -215,8 +217,6 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 			"user_token_b_volume":               userSwapCount.UserTokenBVolume.Abs(),
 			"token_a_quote_volume":              userSwapCount.TokenAQuoteVolume,
 			"token_b_quote_volume":              userSwapCount.TokenBQuoteVolume,
-			"user_token_a_balance":              userSwapCount.UserTokenABalance,
-			"user_token_b_balance":              userSwapCount.UserTokenBBalance,
 			"updated_at":                        &now,
 			"created_at":                        &now,
 			"tx_num":                            1,
@@ -236,8 +236,6 @@ func UpsertUserSwapCountKLine(ctx context.Context, userSwapCount *domain.UserCou
 		Suffix("user_token_b_volume = user_count_k_lines.user_token_b_volume + ?,", userSwapCount.UserTokenBVolume.Abs()).
 		Suffix("token_a_quote_volume = user_count_k_lines.token_a_quote_volume + ?,", userSwapCount.TokenAQuoteVolume).
 		Suffix("token_b_quote_volume = user_count_k_lines.token_b_quote_volume + ?,", userSwapCount.TokenBQuoteVolume).
-		Suffix("user_token_a_balance = ?,", userSwapCount.UserTokenABalance).
-		Suffix("user_token_b_balance = ?,", userSwapCount.UserTokenBBalance).
 		Suffix("token_a_withdraw_liquidity_volume = user_count_k_lines.token_a_withdraw_liquidity_volume + ?,", userSwapCount.TokenAWithdrawLiquidityVolume).
 		Suffix("token_b_withdraw_liquidity_volume = user_count_k_lines.token_b_withdraw_liquidity_volume + ?,", userSwapCount.TokenBWithdrawLiquidityVolume).
 		Suffix("token_a_deposit_liquidity_volume = user_count_k_lines.token_a_deposit_liquidity_volume + ?,", userSwapCount.TokenADepositLiquidityVolume).
@@ -325,6 +323,13 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, e
 	}
 	return swapCount, nil
 
+}
+
+func CreateSwapCount(ctx context.Context, swapCount *domain.SwapCount) error {
+	if err := wDB(ctx).Create(swapCount).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
 }
 
 func UpdateUserCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {

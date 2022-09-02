@@ -13,6 +13,8 @@ import (
 	ag_solanago "github.com/gagliardetto/solana-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
+
+	event "git.cplus.link/crema/backend/chain/event/parser"
 )
 
 var (
@@ -27,7 +29,6 @@ var (
 
 const (
 	defaultBaseSpec = "0 * * * * *"
-	defaultSubSpec  = "0 */1 * * * *"
 )
 
 type Job struct {
@@ -66,6 +67,8 @@ func Init(viperConf *config.Config) error {
 	var err error
 
 	httpClient = akHttp.DefaultClient()
+
+	event.Init()
 
 	job = NewJob()
 
@@ -122,12 +125,15 @@ func Init(viperConf *config.Config) error {
 
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
-	job.JobList["SyncKline"] = syncTransactionJob
+	job.JobList["swapKline"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
 
 	userSyncTransactionJob := NewJobInfo("UserSync")
-	job.JobList["UserSyncKline"] = userSyncTransactionJob
+	job.JobList["UserKline"] = userSyncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
+	if err != nil {
+		panic(err)
+	}
 
 	job.Cron.Start()
 
@@ -135,12 +141,7 @@ func Init(viperConf *config.Config) error {
 		account:        ag_solanago.TokenMetadataProgramID.String(),
 		collectionMint: collectionMint,
 	}
-	_, err = job.Cron.AddFunc(defaultSubSpec, func() error {
-		return subMetadata.Sub()
-	})
-	if err != nil {
-		panic(err)
-	}
+	go subMetadata.Sub()
 
 	return nil
 }

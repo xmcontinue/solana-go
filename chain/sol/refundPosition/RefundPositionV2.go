@@ -177,7 +177,7 @@ func (inst *RefundPositionV2) Validate() error {
 			return errors.New("accounts.User is not set")
 		}
 		if inst.AccountMetaSlice[1] == nil {
-			return errors.New("accounts.SwapAccount is not set")
+			return errors.New("accounts.SwapAddress is not set")
 		}
 		if inst.AccountMetaSlice[2] == nil {
 			return errors.New("accounts.PositionAccount is not set")

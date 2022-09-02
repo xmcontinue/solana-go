@@ -36,7 +36,7 @@ func (obj Position) MarshalWithEncoder(encoder *ag_binary.Encoder) (err error) {
 	if err != nil {
 		return err
 	}
-	// Serialize `SwapAccount` param:
+	// Serialize `SwapAddress` param:
 	err = encoder.Encode(obj.SwapAccount)
 	if err != nil {
 		return err
@@ -138,7 +138,7 @@ func (obj *Position) UnmarshalWithDecoder(decoder *ag_binary.Decoder) (err error
 				fmt.Sprint(discriminator[:]))
 		}
 	}
-	// Deserialize `SwapAccount`:
+	// Deserialize `SwapAddress`:
 	err = decoder.Decode(&obj.SwapAccount)
 	if err != nil {
 		return err

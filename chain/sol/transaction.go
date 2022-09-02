@@ -39,7 +39,7 @@ func GetTransactionsForSignature(signatures []*rpc.TransactionSignature) ([]*rpc
 	transactions := make([]*rpc.GetTransactionResult, 0, len(signatures))
 
 	opts := rpc.GetTransactionOpts{
-		Encoding:   solana.EncodingJSON,
+		Encoding:   solana.EncodingBase64,
 		Commitment: rpc.CommitmentFinalized,
 	}
 

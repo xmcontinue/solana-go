@@ -2,6 +2,7 @@ package parse
 
 import (
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/util/decimal"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
@@ -22,12 +23,33 @@ type LiquidityRecord struct {
 	InnerInstructionIndex int64
 }
 
+func (l *LiquidityRecord) GetSwapConfig() *domain.SwapConfig {
+	return l.SwapConfig
+}
+
+func (l *LiquidityRecord) GetUserOwnerAccount() string {
+	return l.UserOwnerAddress
+}
+
+func (l *LiquidityRecord) GetDirection() int8 {
+	return l.Direction
+}
+
+func (l *LiquidityRecord) GetTokenALiquidityVolume() decimal.Decimal {
+
+	return l.UserCount.TokenAVolume
+}
+
+func (l *LiquidityRecord) GetTokenBLiquidityVolume() decimal.Decimal {
+	return l.UserCount.TokenBVolume
+}
+
 // ParseTxToLiquidity 解析TX到流动性
 func (t *Tx) ParseTxToLiquidity() error {
 	// parser instructions
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
-	for k, instruction := range t.Data.Transaction.GetParsedTransaction().Message.Instructions {
+	for k, instruction := range t.TransAction.Message.Instructions {
 
 		liquidityRecord, err := t.parseInstructionToLiquidityRecord(
 			accountKeys[instruction.ProgramIDIndex].String(),
@@ -58,7 +80,7 @@ func (t *Tx) ParseTxToLiquidity() error {
 			liquidityRecord, err := t.parseInstructionToLiquidityRecord(
 				accountKeys[compiledInstruction.ProgramIDIndex].String(),
 				compiledInstruction.Data,
-				uint16ListToInt64List(compiledInstruction.Accounts),
+				compiledInstruction.Accounts,
 			)
 			if err != nil {
 				continue
@@ -103,7 +125,7 @@ func (t *Tx) ParseTxToLiquidity() error {
 	return nil
 }
 
-func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byte, instructionAccounts []int64) (*LiquidityRecord, error) {
+func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byte, instructionAccounts []uint16) (*LiquidityRecord, error) {
 	if programAddress != cremaSwapProgramAddress {
 		return nil, errors.New("not crema program")
 	}
@@ -123,7 +145,7 @@ func (t *Tx) parseInstructionToLiquidityRecord(programAddress string, data []byt
 		return nil, errors.New("not liquidity instruction")
 	}
 
-	accountKeys := t.Data.Transaction.GetParsedTransaction().Message.AccountKeys
+	accountKeys := t.TransAction.Message.AccountKeys
 
 	swapConfig, ok := swapConfigMap[accountKeys[instructionAccounts[cremaLiquidityIndex.SwapAddressIndex]].String()]
 	if !ok {

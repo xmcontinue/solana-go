@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
+	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"gorm.io/gorm"
@@ -97,12 +99,14 @@ func (s *SyncTransaction) SyncTransaction(complete *bool) error {
 		return errors.Wrap(err)
 	}
 
-	// update data to pgsql
-	err = s.writeTxToDb(before, until, signatures, transactions)
+	if s.swapConfig.Version == "v2" {
+		err = s.writeTxToDbV2(before, until, signatures, transactions)
+	} else {
+		err = s.writeTxToDb(before, until, signatures, transactions)
+	}
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
 	return nil
 }
 
@@ -148,7 +152,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 // getSignatures
 func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.Signature, complete *bool) ([]*rpc.TransactionSignature, error) {
 	// get signature list (max limit is 1000 )
-	limit := 1000
+	limit := 100
 	signatures, err := sol.PullSignatures(s.swapConfig.SwapPublicKey, before, until, limit)
 	if err != nil {
 		return signatures, errors.Wrap(err)
@@ -205,7 +209,10 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		}
 
 		// signatures = append(signatures, afterSignatures...)
-		signatures = afterSignatures
+		//signatures = afterSignatures
+		if len(afterSignatures) != 0 {
+			signatures = afterSignatures
+		}
 	}
 
 	// array inversion
@@ -218,6 +225,99 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 	// }
 
 	return signatures, nil
+}
+
+func (s *SyncTransaction) parserTx(transactions []*rpc.GetTransactionResult) []*domain.SwapTransactionV2 {
+	if len(transactions) == 0 {
+		return nil
+	}
+
+	swapTransactionV2 := make([]*domain.SwapTransactionV2, 0, len(transactions))
+	for _, transaction := range transactions {
+		if transaction.Meta.Err != nil {
+			continue
+		}
+
+		tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(transaction.Transaction.GetBinary()))
+		if err != nil {
+			logger.Error("TransactionFromDecoder error", logger.Errorv(err))
+			continue
+		}
+
+		blockTime := transaction.BlockTime.Time()
+
+		logs, _ := json.Marshal(transaction.Meta.LogMessages)
+		swapTransactionV2 = append(swapTransactionV2, &domain.SwapTransactionV2{
+			SwapAddress: s.swapConfig.SwapAccount,
+			Signature:   tx.Signatures[0].String(),
+			FeePayer:    tx.Message.AccountKeys[0].String(),
+			Slot:        transaction.Slot,
+			BlockTime:   &blockTime,
+			Msg:         string(logs),
+		})
+	}
+	return swapTransactionV2
+}
+
+func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
+	swapTransactionV2s := s.parserTx(transactions)
+
+	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
+	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	trans := func(ctx context.Context) error {
+		// update schedule
+		swapPairBaseMap := map[string]interface{}{}
+		if before == nil {
+			swapPairBaseMap["end_signature"] = signatures[len(signatures)-1].Signature.String()
+		}
+
+		if until == nil {
+			swapPairBaseMap["start_signature"] = signatures[0].Signature.String()
+		}
+
+		failedNum := len(signatures) - len(transactions)
+		if failedNum > 0 {
+			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
+		}
+
+		err := model.UpdateSwapPairBase(ctx, swapPairBaseMap, model.SwapAddressFilter(s.swapConfig.SwapAccount))
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if len(swapTransactionV2s) == 0 {
+			return nil
+		}
+
+		for _, v := range swapTransactionV2s {
+			logger.Info("writeTxToDb", logger.Any("v:", v))
+			_, err = model.GetSwapTransactionV2(ctx, model.NewFilter("signature = ?", v.Signature))
+			if !errors.Is(err, errors.RecordNotFound) {
+				continue
+			}
+
+			v.TokenAUSD = tokenAUSD
+			v.TokenBUSD = tokenBUSD
+
+			err = model.CreatedSwapTransactionV2(ctx, v)
+			if err != nil {
+				return errors.Wrap(err)
+			}
+		}
+
+		return nil
+	}
+
+	err = model.Transaction(context.Background(), trans)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	return nil
 }
 
 // writeTxToDb
@@ -264,15 +364,20 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 			data := domain.TxData(*v)
 
-			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v)
+			tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(v.Transaction.GetBinary()))
+			if err != nil {
+				panic(err)
+			}
+
+			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v, tx)
 
 			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
-				Signature:      v.Transaction.GetParsedTransaction().Signatures[0].String(),
+				Signature:      tx.Signatures[0].String(),
 				Fee:            parse.PrecisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
 				BlockTime:      &blockTime,
 				Slot:           v.Slot,
 				UserAddress:    "",
-				InstructionLen: getInstructionLen(v.Transaction.GetParsedTransaction().Message.Instructions),
+				InstructionLen: getCompiledInstructionLen(tx.Message.Instructions),
 				SwapAddress:    s.swapConfig.SwapAccount,
 				TokenAAddress:  s.swapConfig.TokenA.SwapTokenAccount,
 				TokenBAddress:  s.swapConfig.TokenB.SwapTokenAccount,
@@ -329,7 +434,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	return nil
 }
 
-func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
+func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult, tx *solana.Transaction) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
 	var (
 		tokenAPreBalanceStr  string
 		tokenBPreBalanceStr  string
@@ -339,7 +444,8 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 
 	for _, tokenBalance := range meta.Meta.PreTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.GetParsedTransaction().Message.AccountKeys[keyIndex]
+
+		key := tx.Message.AccountKeys[keyIndex]
 		if key.Equals(s.swapConfig.TokenA.SwapTokenPublicKey) {
 			tokenAPreBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
@@ -352,7 +458,8 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 
 	for _, tokenBalance := range meta.Meta.PostTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.GetParsedTransaction().Message.AccountKeys[keyIndex]
+
+		key := tx.Message.AccountKeys[keyIndex]
 		if key.Equals(s.swapConfig.TokenA.SwapTokenPublicKey) {
 			tokenAPostBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
@@ -378,6 +485,16 @@ func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult) (decimal
 
 // getInstructionLen 获取第一个Instruction data长度
 func getInstructionLen(instructions []rpc.ParsedInstruction) uint64 {
+	for _, v := range instructions {
+		dataLen := len(v.Data)
+		if dataLen > 0 {
+			return uint64(dataLen)
+		}
+	}
+	return 0
+}
+
+func getCompiledInstructionLen(instructions []solana.CompiledInstruction) uint64 {
 	for _, v := range instructions {
 		dataLen := len(v.Data)
 		if dataLen > 0 {

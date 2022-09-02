@@ -13,6 +13,11 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+var (
+	swapHistogramZ = make([]*HistogramZ, 500+1, 500+1)
+	newZ           = make([]interface{}, 0, 2*len(swapHistogramZ))
+)
+
 func sumTotalSwapAccount() error {
 	var (
 		ctx = context.Background()
@@ -32,7 +37,7 @@ func sumTotalSwapAccount() error {
 	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
 		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, kLines[0].Date.Location())
 		v.Date = &date
-		if err := sumDateTypeSwapAccount(ctx, v, &now); err != nil {
+		if err := sumDateTypeSwapAccount(ctx, v); err != nil {
 			logger.Error("sync k line to redis err", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
@@ -41,14 +46,14 @@ func sumTotalSwapAccount() error {
 	return nil
 }
 
-func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time) error {
+func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 
 	var (
 		key = domain.TotalHistogramKey(klineT.DateType)
 	)
 
 	// 构造初始零值数据
-	swapHistogramZ := make([]*HistogramZ, klineT.DataCount, klineT.DataCount)
+	//swapHistogramZ = swapHistogramZ[:0]
 	for index := range swapHistogramZ {
 		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
 		swapHistogramZ[index] = &HistogramZ{
@@ -57,6 +62,14 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 				Tvl:  decimal.Decimal{},
 				Vol:  decimal.Decimal{},
 				Date: date,
+			},
+		}
+		swapHistogramZ[index+1] = &HistogramZ{
+			Score: 0,
+			Member: &SwapHistogram{
+				Tvl:  decimal.Decimal{},
+				Vol:  decimal.Decimal{},
+				Date: nil,
 			},
 		}
 	}
@@ -146,7 +159,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp, now *time.Time
 	// }
 
 	// lua 通过脚本更新
-	newZ := make([]interface{}, 0, len(swapHistogramZ)+1)
+	newZ = newZ[:0]
 	for i := range swapHistogramZ {
 		newZ = append(newZ, swapHistogramZ[i].Score)
 		newZ = append(newZ, swapHistogramZ[i].Member)
