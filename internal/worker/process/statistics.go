@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -47,14 +48,19 @@ func sumTotalSwapAccount() error {
 }
 
 func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
 
+	}()
 	var (
 		key = domain.TotalHistogramKey(klineT.DateType)
 	)
 
 	// 构造初始零值数据
 	//swapHistogramZ = swapHistogramZ[:0]
-	for index := range swapHistogramZ {
+	for index := range swapHistogramZ[0:500] {
 		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
 		swapHistogramZ[index] = &HistogramZ{
 			Score: date.Unix(),
@@ -130,39 +136,19 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 	}
 
 	// 去掉列表前面的零值
+	var newSwapHistogramZ []*HistogramZ
 	for i, v := range swapHistogramZ {
 		if !v.Member.Tvl.IsZero() {
-			swapHistogramZ = swapHistogramZ[i:]
+			newSwapHistogramZ = swapHistogramZ[i:]
 			break
 		}
 	}
 
-	// 注释，暂时不使用当前时间点这个坐标
-	// if len(swapHistogramZ) > 1 {
-	//	swapHistogramZ = append(swapHistogramZ, &HistogramZ{
-	//		Score: now.Unix(),
-	//		Member: &SwapHistogram{
-	//			Tvl:  swapHistogramZ[len(swapHistogramZ)-1].Member.Tvl,
-	//			Vol:  swapHistogramZ[len(swapHistogramZ)-1].Member.Vol,
-	//			Date: now,
-	//		},
-	//	})
-	//
-	//	// 时间计时改为每个时间段的最后时间点，最后一个时间段就前一个时间段到当前的时间，就用英文current 表示
-	//	for i := 0; i < len(swapHistogramZ)-1; i++ {
-	//		swapHistogramZ[len(swapHistogramZ)-1-i].Member.Tvl = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Tvl
-	//		swapHistogramZ[len(swapHistogramZ)-1-i].Member.Vol = swapHistogramZ[len(swapHistogramZ)-2-i].Member.Vol
-	//	}
-	//
-	//	swapHistogramZ[0].Member.Tvl = decimal.Zero
-	//	swapHistogramZ[0].Member.Vol = decimal.Zero
-	// }
-
 	// lua 通过脚本更新
 	newZ = newZ[:0]
-	for i := range swapHistogramZ {
-		newZ = append(newZ, swapHistogramZ[i].Score)
-		newZ = append(newZ, swapHistogramZ[i].Member)
+	for i := range newSwapHistogramZ {
+		newZ = append(newZ, newSwapHistogramZ[i].Score)
+		newZ = append(newZ, newSwapHistogramZ[i].Member)
 	}
 
 	_, err := delAndAddByZSet.Run(ctx, redisClient, []string{key}, newZ).Result()
