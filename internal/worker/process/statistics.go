@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	swapHistogramZ = make([]*HistogramZ, 500+1, 500+1)
+	swapHistogramZ = make([]*HistogramZ, 500, 500)
 	newZ           = make([]interface{}, 0, 2*len(swapHistogramZ))
 )
 
@@ -60,7 +60,7 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 
 	// 构造初始零值数据
 	//swapHistogramZ = swapHistogramZ[:0]
-	for index := range swapHistogramZ[0:500] {
+	for index := range swapHistogramZ {
 		date := klineT.SkipIntervalTime(-(klineT.DataCount - (index + 1)))
 		swapHistogramZ[index] = &HistogramZ{
 			Score: date.Unix(),
@@ -68,14 +68,6 @@ func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 				Tvl:  decimal.Decimal{},
 				Vol:  decimal.Decimal{},
 				Date: date,
-			},
-		}
-		swapHistogramZ[index+1] = &HistogramZ{
-			Score: 0,
-			Member: &SwapHistogram{
-				Tvl:  decimal.Decimal{},
-				Vol:  decimal.Decimal{},
-				Date: nil,
 			},
 		}
 	}
