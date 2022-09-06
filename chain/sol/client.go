@@ -36,6 +36,7 @@ var etcdSwapPairsKey = "/swap-pairs"
 var (
 	chainNet            *domain.ChainNet
 	wsClient            *ws.Client
+	wsNet               string
 	chainNets           []*domain.ChainNet
 	chainNetsConfig     []string
 	swapConfigList      []*domain.SwapConfig
@@ -52,16 +53,12 @@ func Init(conf *config.Config) error {
 
 	var err error
 	once.Do(func() {
-		var wsNet string
 		err = conf.UnmarshalKey("solana_ws_net", &wsNet)
 		if err != nil {
 			panic(err.Error())
 		}
 
-		wsClient, err = ws.Connect(context.Background(), wsNet)
-		if err != nil {
-			panic(err)
-		}
+		wsClient = newWSConnect()
 
 		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
@@ -93,6 +90,15 @@ func Init(conf *config.Config) error {
 	})
 
 	return errors.Wrap(err)
+}
+
+// newWSConnect 新建ws连接
+func newWSConnect() *ws.Client {
+	wsCli, err := ws.Connect(context.Background(), wsNet)
+	if err != nil {
+		panic(err)
+	}
+	return wsCli
 }
 
 // watchSwapPairsConfig 监听swap pairs配置变动
@@ -284,6 +290,9 @@ func GetRpcSlot() uint64 {
 }
 
 func GetWsClient() *ws.Client {
+	if wsClient == nil {
+		return newWSConnect()
+	}
 	return wsClient
 }
 

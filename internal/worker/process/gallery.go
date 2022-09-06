@@ -38,7 +38,7 @@ func parser(outs []*rpc.KeyedAccount) error {
 	sortGalleryName := make([]*redis.Z, 0, len(outs))
 	fullGallery := make(map[string]interface{}, len(outs))
 	galleryAttributes := make(map[string][]interface{})
-	limitChan := make(chan struct{}, 5)
+	limitChan := make(chan struct{}, 10)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(outs))

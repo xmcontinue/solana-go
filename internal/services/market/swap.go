@@ -175,9 +175,9 @@ func (t *MarketService) Get24hVolV2(ctx context.Context, args *iface.Get24hVolV2
 		return errors.Wrap(err)
 	} else if err == nil {
 
-		aa := &model.SwapVol{}
-		_ = json.Unmarshal([]byte(vol), aa)
-		reply.SwapVol = aa
+		swapVol := &model.SwapVol{}
+		_ = json.Unmarshal([]byte(vol), swapVol)
+		reply.SwapVol = swapVol
 
 		return nil
 	}
