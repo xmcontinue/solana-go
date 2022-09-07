@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"unsafe"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
@@ -329,7 +330,7 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 
 	reply.List = list
 	fmt.Println("---------------------")
-	fmt.Println(list)
+	fmt.Println(unsafe.Sizeof(list), len(list))
 	return nil
 }
 
