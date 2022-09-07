@@ -322,13 +322,13 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
-	fmt.Println("---------------------")
 	list, err := model.QueryPositions(ctx, args.Limit, args.Offset)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
 	reply.List = list
+	fmt.Println("---------------------")
 	return nil
 }
 
