@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"unsafe"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
@@ -323,14 +321,12 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
-	list, err := model.QueryPositions(ctx, args.Limit, args.Offset)
+	list, err := model.QueryPositions(ctx, limit(args.Limit), args.Offset)
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
 	reply.List = list
-	fmt.Println("---------------------")
-	fmt.Println(unsafe.Sizeof(list), len(list))
 	return nil
 }
 
