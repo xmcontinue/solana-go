@@ -329,6 +329,7 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 
 	reply.List = list
 	fmt.Println("---------------------")
+	fmt.Println(list)
 	return nil
 }
 
