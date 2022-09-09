@@ -34,7 +34,7 @@ func (c *CollectRecordV2) GetTokenACollectVolume() decimal.Decimal {
 }
 
 func (c *CollectRecordV2) GetTokenBCollectVolume() decimal.Decimal {
-	return PrecisionConversion(decimal.NewFromInt(int64(c.AmountA)), int(c.GetSwapConfig().TokenB.Decimal))
+	return PrecisionConversion(decimal.NewFromInt(int64(c.AmountB)), int(c.GetSwapConfig().TokenB.Decimal))
 }
 
 func (t *Txv2) createCollectRecord(logMessageEvent event.EventRep) error {

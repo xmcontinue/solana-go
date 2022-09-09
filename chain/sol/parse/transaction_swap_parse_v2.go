@@ -97,7 +97,7 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		UserTokenBAddress: UserTokenB.String(),
 		ProgramAddress:    cremaSwapProgramAddressV2,
 		Direction:         direction,
-		AmountIn:          amountIn, // ToDo  确认顺序
+		AmountIn:          amountIn,
 		AmountOut:         amountOut,
 		VaultAAmount:      tokenABalance,
 		VaultBAmount:      tokenBBalance,

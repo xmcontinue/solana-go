@@ -134,7 +134,7 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 			swapConfigMap = swapMap
 			tokenConfigMap = tokenMap
-			parse.SetSwapConfig(swapConfigMap)
+			parse.SetSwapConfig(swapConfigMap) // todo 如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
 
 			if !isInit {
 				wg.Done()
