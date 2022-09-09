@@ -44,7 +44,6 @@ type SwapTransactionV2 struct {
 	Msg         string          `json:"msg"   gorm:"type:text"`                                              // 日志信息
 	TokenAUSD   decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"` // swap token a usd价格
 	TokenBUSD   decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"` // swap token b usd价格
-	Type        string          `json:"type"  gorm:"type:text"`                                              // 日志类型
 }
 
 type Event struct {
