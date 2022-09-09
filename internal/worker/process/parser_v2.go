@@ -52,12 +52,7 @@ func getBeginID(swapAccount string) (int64, error) {
 		if !errors.Is(err, errors.RecordNotFound) {
 			return 0, errors.Wrap(err)
 		}
-		err = model.CreateSwapCount(context.TODO(), &domain.SwapCount{
-			SwapAddress: swapAccount,
-		})
-		if err != nil {
-			return 0, errors.Wrap(err)
-		}
+		return 0, nil
 	}
 
 	var maxId int64
