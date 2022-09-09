@@ -31,12 +31,13 @@ type ParserTransaction interface {
 }
 
 type WriteTyp struct {
-	ID               int64
-	SwapAccount      string
-	BlockDate        *time.Time
-	swapRecords      []parse.SwapRecordIface
-	liquidityRecords []parse.LiquidityRecordIface
-	claimRecords     []parse.CollectRecordIface
+	ID                    int64
+	LastSwapTransactionID int64
+	SwapAccount           string
+	BlockDate             *time.Time
+	swapRecords           []parse.SwapRecordIface
+	liquidityRecords      []parse.LiquidityRecordIface
+	claimRecords          []parse.CollectRecordIface
 }
 
 // swapKline sync transaction

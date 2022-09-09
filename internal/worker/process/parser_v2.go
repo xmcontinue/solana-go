@@ -158,10 +158,11 @@ func (s *parserV2) ParserSwapInstruction() error {
 		}
 
 		writeTyp := &WriteTyp{
-			ID:          s.ID,
-			SwapAccount: s.SwapAccount,
-			BlockDate:   transaction.BlockTime,
-			swapRecords: swapRecordIface,
+			ID:                    s.ID,
+			LastSwapTransactionID: s.LastTransactionID,
+			SwapAccount:           s.SwapAccount,
+			BlockDate:             transaction.BlockTime,
+			swapRecords:           swapRecordIface,
 		}
 		if err := writeSwapRecordToDB(writeTyp, transaction.TokenAUSD, transaction.TokenBUSD); err != nil {
 			logger.Error("write to db error:", logger.Errorv(err))
