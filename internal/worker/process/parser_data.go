@@ -255,7 +255,7 @@ func CreateSyncKLine() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("swapKline", &m, func(value interface{}) JobInterface {
+	err := job.WatchJobForMap("SyncSwapCountKline", &m, func(value interface{}) JobInterface {
 		return &swapKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),
@@ -277,7 +277,7 @@ func CreateUserSyncKLine() error {
 		m.Store(v.SwapAccount, v)
 	}
 
-	err := job.WatchJobForMap("UserKline", &m, func(value interface{}) JobInterface {
+	err := job.WatchJobForMap("SyncUserCountKLine", &m, func(value interface{}) JobInterface {
 		return &UserKline{
 			name:       "sync_kline",
 			spec:       getSpec("sync_kline"),

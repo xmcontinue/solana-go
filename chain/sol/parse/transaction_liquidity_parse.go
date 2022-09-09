@@ -36,7 +36,6 @@ func (l *LiquidityRecord) GetDirection() int8 {
 }
 
 func (l *LiquidityRecord) GetTokenALiquidityVolume() decimal.Decimal {
-
 	return l.UserCount.TokenAVolume
 }
 
@@ -113,7 +112,6 @@ func (t *Tx) ParseTxToLiquidity() error {
 			}
 
 			t.LiquidityRecords = append(t.LiquidityRecords, liquidityRecord)
-
 		}
 	}
 

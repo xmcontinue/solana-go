@@ -162,10 +162,13 @@ func getUriJson(uri string) ([]byte, error) {
 		return nil, errors.Wrap(errors.RecordNotFound)
 	}
 
-	_ = model.CreateMetadataJson(context.TODO(), &domain.MetadataJsonDate{
+	err = model.CreateMetadataJson(context.TODO(), &domain.MetadataJsonDate{
 		URI:  uri,
 		Data: string(repos.Body()),
 	})
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 
 	return repos.Body(), nil
 }

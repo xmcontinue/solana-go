@@ -9,6 +9,7 @@ var SwapEventName = "SwapEvent"
 type SwapEvent struct {
 	Pool         ag_solanago.PublicKey
 	Owner        ag_solanago.PublicKey
+	Partner      ag_solanago.PublicKey
 	AToB         bool
 	AmountIn     uint64
 	AmountOut    uint64

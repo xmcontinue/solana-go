@@ -36,6 +36,7 @@ func NewTxV2() *Txv2 {
 	}
 }
 
+// ParseAllV2 解析所有类型
 func (t *Txv2) ParseAllV2(logs string) error {
 	var logList []string
 	err := json.Unmarshal([]byte(logs), &logList)
@@ -80,6 +81,7 @@ func (t *Txv2) ParseSwapV2(logs string) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	logMessageEvents, err := event.GetEventDecoder().Decode(logList)
 	if err != nil {
 		return errors.Wrap(err)

@@ -69,7 +69,8 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 	return swapCountKLine
 }
 
-func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountKLine, t *kline.Type) error {
+// updateSwapCountKline 按照时间类型更新表
+func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountKLine, t *kline.Type) error {
 
 	currentSwapCountKLine, err := model.QuerySwapCountKLine(ctx,
 		model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
@@ -167,7 +168,8 @@ func UpdateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	return nil
 }
 
-func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType, symbol string) (decimal.Decimal, error) {
+// getPriceInfo 获取价格信息
+func getPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType, symbol string) (decimal.Decimal, error) {
 	// 获取前一个时刻的价格
 	var (
 		TokenPriceInfo *domain.SwapTokenPriceKLine
@@ -196,18 +198,18 @@ func GetPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 	return TokenPriceInfo.Avg, nil
 }
 
-func PriceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine) (decimal.Decimal, decimal.Decimal, error) {
+func priceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine) (decimal.Decimal, decimal.Decimal, error) {
 	var (
 		tokenAPrice decimal.Decimal
 		tokenBPrice decimal.Decimal
 		err         error
 	)
 	// 查找tokenA,tokenB价格
-	tokenAPrice, err = GetPriceInfo(ctx, swapInfo.Date, swapInfo.DateType, swapInfo.TokenASymbol)
+	tokenAPrice, err = getPriceInfo(ctx, swapInfo.Date, swapInfo.DateType, swapInfo.TokenASymbol)
 	if err != nil {
 		return tokenAPrice, tokenBPrice, errors.Wrap(err)
 	}
-	tokenBPrice, err = GetPriceInfo(ctx, swapInfo.Date, swapInfo.DateType, swapInfo.TokenBSymbol)
+	tokenBPrice, err = getPriceInfo(ctx, swapInfo.Date, swapInfo.DateType, swapInfo.TokenBSymbol)
 	if err != nil {
 		return tokenAPrice, tokenBPrice, errors.Wrap(err)
 	}
@@ -215,8 +217,8 @@ func PriceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine
 	return tokenAPrice, tokenBPrice, nil
 }
 
-// WriteSwapRecordToDB 只存储swap tx 数据
-func WriteSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decimal) error {
+// writeSwapRecordToDB 只存储swap tx 数据
+func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decimal) error {
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println("Recovered in f", err)
@@ -249,14 +251,14 @@ func WriteSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			swapCountKLine.DateType = t.DateType
 			swapCountKLine.Date = t.Date
 			// 获取价格
-			tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(ctx, swapCountKLine)
+			tokenAPrice, tokenBPrice, err := priceToSwapKLineHandle(ctx, swapCountKLine)
 			if err != nil {
 				return errors.Wrap(err)
 			}
 			swapCountKLine.TokenAUSDForContract = tokenAPrice
 			swapCountKLine.TokenBUSDForContract = tokenBPrice
 
-			if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
+			if err = updateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 				return errors.Wrap(err)
 			}
 		}
@@ -361,7 +363,7 @@ func createClaim(writeTyp *WriteTyp, userCountKLine *domain.UserCountKLine) {
 
 }
 
-func WriteAllToDB(writeTyp *WriteTyp) error {
+func writeAllToDB(writeTyp *WriteTyp) error {
 	var (
 		err            error
 		userCountKLine = &domain.UserCountKLine{}

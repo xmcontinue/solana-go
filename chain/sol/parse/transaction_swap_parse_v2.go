@@ -70,23 +70,39 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		return errors.Wrap(err)
 	}
 
+	direction, tokenABalance, tokenBBalance, amountIn, amountOut := int8(0), decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero
+
+	if swap.AToB {
+		direction = 1
+		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountIn)), int(swapConfig.TokenA.Decimal))
+		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountOut)), int(swapConfig.TokenB.Decimal))
+
+		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Add(amountIn)
+		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Sub(amountOut)
+		//fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
+		//fmt.Println("交易额", amountIn.String(), amountOut.String())
+	} else {
+		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountIn)), int(swapConfig.TokenB.Decimal))
+		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountOut)), int(swapConfig.TokenA.Decimal))
+
+		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Add(amountIn)
+		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Sub(amountOut)
+		//fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
+		//fmt.Println("交易额", amountIn.String(), amountOut.String())
+	}
+
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
 		UserOwnerAddress:  swap.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
 		UserTokenBAddress: UserTokenB.String(),
 		ProgramAddress:    cremaSwapProgramAddressV2,
-		Direction: func() int8 {
-			if swap.AToB {
-				return 1
-			}
-			return 0
-		}(),
-		AmountIn:     PrecisionConversion(decimal.NewFromInt(int64(swap.AmountOut)), int(swapConfig.TokenA.Decimal)), // ToDo  确认顺序
-		AmountOut:    PrecisionConversion(decimal.NewFromInt(int64(swap.AmountIn)), int(swapConfig.TokenB.Decimal)),
-		VaultAAmount: PrecisionConversion(decimal.NewFromInt(int64(swap.VaultAAmount)), int(swapConfig.TokenA.Decimal)),
-		VaultBAmount: PrecisionConversion(decimal.NewFromInt(int64(swap.VaultBAmount)), int(swapConfig.TokenB.Decimal)),
-		Price:        decimal.NewFromFloatWithExponent(float64(swap.AmountOut), int32(swapConfig.TokenA.Decimal)).Div(decimal.NewFromFloatWithExponent(float64(swap.AmountIn), int32(swapConfig.TokenA.Decimal))),
-		SwapConfig:   swapConfig,
+		Direction:         direction,
+		AmountIn:          amountIn, // ToDo  确认顺序
+		AmountOut:         amountOut,
+		VaultAAmount:      tokenABalance,
+		VaultBAmount:      tokenBBalance,
+		Price:             PrecisionConversion(decimal.New(int64(swap.AmountOut), 0), int(swapConfig.TokenB.Decimal)).Div(PrecisionConversion(decimal.New(int64(swap.AmountIn), 0), int(swapConfig.TokenA.Decimal))),
+		SwapConfig:        swapConfig,
 	})
 
 	return nil

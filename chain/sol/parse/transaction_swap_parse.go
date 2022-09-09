@@ -235,41 +235,33 @@ func getSwapInnerInstructionsForInstructionIndex(index int, innerInstructions []
 }
 
 func (sr *SwapRecord) GetSwapConfig() *domain.SwapConfig {
-
 	return sr.SwapConfig
 }
 
 func (sr *SwapRecord) GetUserOwnerAccount() string {
-
 	return sr.UserOwnerAddress
 }
 
 func (sr *SwapRecord) GetPrice() decimal.Decimal {
-
 	return sr.Price
 }
 
 func (sr *SwapRecord) GetTokenAVolume() decimal.Decimal {
-
 	return sr.UserCount.TokenAVolume
 }
 
 func (sr *SwapRecord) GetTokenBVolume() decimal.Decimal {
-
 	return sr.UserCount.TokenBVolume
 }
 
 func (sr *SwapRecord) GetTokenABalance() decimal.Decimal {
-
 	return sr.TokenCount.TokenABalance
 }
 
 func (sr *SwapRecord) GetTokenBBalance() decimal.Decimal {
-
 	return sr.TokenCount.TokenBBalance
 }
 
 func (sr *SwapRecord) GetDirection() int8 {
-
 	return sr.Direction
 }

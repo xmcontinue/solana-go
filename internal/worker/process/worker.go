@@ -124,12 +124,12 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// create sync transaction cron job
-	syncTransactionJob := NewJobInfo("SyncTvl")
-	job.JobList["swapKline"] = syncTransactionJob
+	syncTransactionJob := NewJobInfo("SyncSwapCountKline")
+	job.JobList["SyncSwapCountKline"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
 
-	userSyncTransactionJob := NewJobInfo("UserSync")
-	job.JobList["UserKline"] = userSyncTransactionJob
+	userSyncTransactionJob := NewJobInfo("SyncUserCountKLine")
+	job.JobList["SyncUserCountKLine"] = userSyncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
 	if err != nil {
 		panic(err)

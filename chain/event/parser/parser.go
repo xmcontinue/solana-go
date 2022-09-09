@@ -2,7 +2,6 @@ package event
 
 import (
 	"encoding/base64"
-	"fmt"
 	"strings"
 
 	"git.cplus.link/go/akit/errors"
@@ -90,13 +89,10 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 		} else {
 			event := parser.Layout[eventName]
 			if err := borsh.Deserialize(event, logArr[8:]); err == nil {
-				fmt.Println(event)
 				events = append(events, EventRep{
 					EventName: eventName,
 					Event:     event,
 				})
-			} else {
-				fmt.Println(err)
 			}
 		}
 	}

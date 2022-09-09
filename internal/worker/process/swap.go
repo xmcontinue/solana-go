@@ -140,14 +140,14 @@ package process
 //			for _, t := range newKline.Types {
 //				swapCountKLine.DateType = t.DateType
 //				// 获取价格
-//				tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(ctx, swapCountKLine)
+//				tokenAPrice, tokenBPrice, err := priceToSwapKLineHandle(ctx, swapCountKLine)
 //				if err != nil {
 //					return errors.Wrap(err)
 //				}
 //				swapCountKLine.TokenAUSDForContract = tokenAPrice
 //				swapCountKLine.TokenBUSDForContract = tokenBPrice
 //
-//				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
+//				if err = updateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 //					return errors.Wrap(err)
 //				}
 //			}
@@ -380,14 +380,14 @@ package process
 //			for _, t := range newKline.Types {
 //				swapCountKLine.DateType = t.DateType
 //				// 获取价格
-//				tokenAPrice, tokenBPrice, err := PriceToSwapKLineHandle(ctx, swapCountKLine)
+//				tokenAPrice, tokenBPrice, err := priceToSwapKLineHandle(ctx, swapCountKLine)
 //				if err != nil {
 //					return errors.Wrap(err)
 //				}
 //				swapCountKLine.TokenAUSDForContract = tokenAPrice
 //				swapCountKLine.TokenBUSDForContract = tokenBPrice
 //
-//				if err = UpdateSwapCountKline(ctx, swapCountKLine, t); err != nil {
+//				if err = updateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 //					return errors.Wrap(err)
 //				}
 //			}

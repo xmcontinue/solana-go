@@ -2,7 +2,6 @@ package process
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -48,12 +47,6 @@ func sumTotalSwapAccount() error {
 }
 
 func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-
-	}()
 	var (
 		key = domain.TotalHistogramKey(klineT.DateType)
 	)

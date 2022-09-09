@@ -114,7 +114,7 @@ func (s *parserV1) ParserAllInstructionType() error {
 			continue
 		}
 
-		if err := WriteAllToDB(writeTyp); err != nil {
+		if err := writeAllToDB(writeTyp); err != nil {
 			logger.Error("write to db error:", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
@@ -147,7 +147,8 @@ func (s *parserV1) ParserSwapInstruction() error {
 			BlockDate:   transaction.BlockTime,
 			swapRecords: swapRecordIface,
 		}
-		if err := WriteSwapRecordToDB(writeTyp, transaction.TokenAUSD, transaction.TokenBUSD); err != nil {
+
+		if err := writeSwapRecordToDB(writeTyp, transaction.TokenAUSD, transaction.TokenBUSD); err != nil {
 			logger.Error("write to db error:", logger.Errorv(err))
 			return errors.Wrap(err)
 		}
