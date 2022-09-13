@@ -33,7 +33,7 @@ type NetRecode struct {
 }
 
 type SwapCount struct {
-	ID                    int64           `json:"-" gorm:"PRIMARY_KEY;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
+	ID                    int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`                                           // 最后同步的transaction id
