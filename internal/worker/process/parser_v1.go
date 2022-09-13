@@ -142,7 +142,7 @@ func (s *parserV1) ParserSwapInstruction() error {
 		}
 
 		writeTyp := &WriteTyp{
-			ID:                    s.ID,
+			ID:                    transaction.ID,
 			LastSwapTransactionID: s.LastTransactionID,
 			SwapAccount:           s.SwapAccount,
 			BlockDate:             transaction.BlockTime,
