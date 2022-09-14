@@ -56,7 +56,6 @@ func (s *parserV1) GetParsingCutoffID() int64 {
 
 func (s *parserV1) UpdateLastTransActionID() error {
 	// 更新处理数据的位置
-	fmt.Println("last_swap_transaction_id", s.SwapAccount, s.ID)
 	if err := model.UpdateSwapCountBySwapAccount(context.TODO(), s.SwapAccount, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {
 		return errors.Wrap(err)
 	}

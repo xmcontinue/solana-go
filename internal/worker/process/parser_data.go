@@ -235,10 +235,6 @@ func ParserAllInstructionType(iface parserIface) error {
 			return errors.Wrap(err)
 		}
 
-		if err = iface.UpdateLastTransActionID(); err != nil {
-			return errors.Wrap(err)
-		}
-
 		beginID, err = iface.GetBeginId()
 		if err != nil {
 			return errors.Wrap(err)
