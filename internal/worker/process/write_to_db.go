@@ -217,9 +217,6 @@ func priceToSwapKLineHandle(ctx context.Context, swapInfo *domain.SwapCountKLine
 	return tokenAPrice, tokenBPrice, nil
 }
 
-var countI int
-var countJ int
-
 // writeSwapRecordToDB 只存储swap tx 数据
 func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decimal) error {
 	defer func() {
@@ -235,9 +232,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 		if swapCountKLine == nil {
 			return nil
 		}
-		if swapCountKLine.SwapAddress == "6jZ1KK9LephzTTTL4pRnHwL9qBG8ymHk5Biv7vFdNtrR" {
-			countI++
-		}
+
 		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCount{
 			LastSwapTransactionID: swapCountKLine.LastSwapTransactionID,
 			SwapAddress:           swapCountKLine.SwapAddress,
@@ -274,11 +269,6 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 	if err = model.Transaction(context.TODO(), trans); err != nil {
 		logger.Error("transaction error", logger.Errorv(err))
 		return errors.Wrap(err)
-	}
-	if writeTyp.SwapAccount == "6jZ1KK9LephzTTTL4pRnHwL9qBG8ymHk5Biv7vFdNtrR" {
-		countJ++
-
-		fmt.Println("countI", countI, "countJ", countJ)
 	}
 
 	return nil
