@@ -112,7 +112,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	}
 	if res.RowsAffected == 0 {
 		swapCount1, _ := QuerySwapCount(ctx, SwapAddressFilter(swapCount.SwapAddress))
-		fmt.Println("RowsAffected=0", swapCount.LastSwapTransactionID, swapCount1.LastSwapTransactionID)
+		fmt.Println("RowsAffected=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, swapCount1.LastSwapTransactionID)
 	} else {
 		fmt.Println("RowsAffected!=0", swapCount.LastSwapTransactionID, after.LastSwapTransactionID)
 	}
