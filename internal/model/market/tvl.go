@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	dbPool "git.cplus.link/go/akit/client/psql"
@@ -108,6 +109,10 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
+	}
+
+	if res.RowsAffected == 0 {
+		fmt.Println("RowsAffected=0", swapCount.LastSwapTransactionID)
 	}
 
 	return &after, nil
