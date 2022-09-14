@@ -202,6 +202,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		swapCountKLine, _ := QuerySwapCountKLine(ctx, SwapAddressFilter(swapCount.SwapAddress), NewFilter("date = ?", swapCount.DateType), NewFilter("date_type = ?", swapCount.DateType))
 		fmt.Println("RowsAffected=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, swapCountKLine.LastSwapTransactionID, swapCountKLine.Date, swapCountKLine.DateType)
 	} else {
+
 		fmt.Println("RowsAffected!=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, after.LastSwapTransactionID)
 	}
 
