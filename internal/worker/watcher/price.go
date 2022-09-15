@@ -35,12 +35,19 @@ func SyncSwapPrice() error {
 
 	// 同步swap pair price
 	for _, config := range configs {
-		// 获取价格
 		res, err := sol.GetRpcClient().GetAccountInfo(context.Background(), config.SwapPublicKey)
 		if err != nil {
 			return errors.Wrap(err)
 		}
-		swapPrice := parse.GetSwapPrice(res, config)
+
+		// 获取价格
+		var swapPrice decimal.Decimal
+
+		if config.Version == "v2" {
+			swapPrice = parse.GetSwapPriceV2(res, config)
+		} else {
+			swapPrice = parse.GetSwapPrice(res, config)
+		}
 
 		swapPairPrices = append(swapPairPrices, &swapPairPrice{
 			TokenASymbol: config.TokenA.Symbol,

@@ -2,6 +2,7 @@ package parse
 
 import (
 	"math"
+	"math/big"
 	"strconv"
 
 	"git.cplus.link/go/akit/errors"
@@ -13,6 +14,15 @@ import (
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
+
+var MaxInt64 *big.Float
+
+func init() {
+	MaxInt64 = big.NewFloat(1)
+	for i := 0; i < 64; i++ {
+		MaxInt64 = MaxInt64.Mul(MaxInt64, big.NewFloat(2))
+	}
+}
 
 type Tx struct {
 	Data             rpc.GetTransactionResult
