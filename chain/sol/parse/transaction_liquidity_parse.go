@@ -9,7 +9,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-var LiquidityType = "Liquidity"
+var IncreaseLiquidityType = "IncreaseLiquidity"
+var DecreaseLiquidityType = "DecreaseLiquidity"
 
 // LiquidityRecord 解析后的liquidity数据
 type LiquidityRecord struct {

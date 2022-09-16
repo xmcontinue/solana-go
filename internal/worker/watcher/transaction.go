@@ -280,9 +280,18 @@ func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
 
 	if len(tx.LiquidityRecords) != 0 {
 		if txType == "" {
-			txType = parse.LiquidityType
+			if tx.LiquidityRecords[0].Direction == 0 {
+				txType = parse.DecreaseLiquidityType
+			} else {
+				txType = parse.IncreaseLiquidityType
+			}
+
 		} else {
-			txType = txType + "," + parse.LiquidityType
+			if tx.LiquidityRecords[0].Direction == 0 {
+				txType = txType + "," + parse.DecreaseLiquidityType
+			} else {
+				txType = txType + "," + parse.IncreaseLiquidityType
+			}
 		}
 		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
@@ -486,9 +495,18 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 
 	if len(tx.LiquidityRecords) != 0 {
 		if txType == "" {
-			txType = parse.LiquidityType
+			if tx.LiquidityRecords[0].Direction == 0 {
+				txType = parse.DecreaseLiquidityType
+			} else {
+				txType = parse.IncreaseLiquidityType
+			}
+
 		} else {
-			txType = txType + "," + parse.LiquidityType
+			if tx.LiquidityRecords[0].Direction == 0 {
+				txType = txType + "," + parse.DecreaseLiquidityType
+			} else {
+				txType = txType + "," + parse.IncreaseLiquidityType
+			}
 		}
 		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
