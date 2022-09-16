@@ -212,6 +212,7 @@ func SyncTypeAndUserAddressHistory() error {
 		}()
 	}
 	wg.Wait()
+	logger.Warn("携程结束。。。。。。。。。。。。。。。。")
 	return nil
 }
 
