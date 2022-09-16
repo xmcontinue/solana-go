@@ -221,6 +221,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
 			model.NewFilter("id > ?", beginID),
+			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
 		}
 
@@ -236,7 +237,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 		for _, swapTransaction := range swapTransactions {
 			tx := parse.NewTx(swapTransaction.TxData)
 
-			err = tx.ParseTxToSwap()
+			err = tx.ParseTxALl()
 			if err != nil {
 				continue
 			}
