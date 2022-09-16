@@ -8,6 +8,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -175,16 +176,25 @@ func SyncTypeAndUserAddressHistory() error {
 				model.OrderFilter("id asc"),
 			}
 			swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
-			if err != nil {
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 				logger.Error("QuerySwapTransaction err", logger.Errorv(err))
 				return errors.Wrap(err)
 			}
+
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				swapTransaction, err = model.QuerySwapTransaction(ctx,
+					model.SwapAddressFilter(swapPair.SwapAddress),
+					model.OrderFilter("id desc"),
+				)
+			}
+
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
 				"sync_util_id": swapTransaction.ID,
 			})
 			if err != nil {
 				return errors.Wrap(err)
 			}
+
 			swapPair.SyncUtilID = swapTransaction.ID
 		}
 
@@ -202,9 +212,12 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 	ctx := context.Background()
 	beginID := int64(0)
 	for {
+		if beginID < swapPair.SyncUtilID {
+			continue
+		}
+
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
-			model.NewFilter("tx_type = ?", ""),
 			model.NewFilter("id > ?", beginID),
 			model.OrderFilter("id asc"),
 		}
