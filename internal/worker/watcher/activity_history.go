@@ -214,8 +214,8 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 	ctx := context.Background()
 	beginID := int64(0)
 	for {
-		if beginID < swapPair.SyncUtilID {
-			continue
+		if beginID >= swapPair.SyncUtilID {
+			break
 		}
 
 		filters := []model.Filter{
