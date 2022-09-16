@@ -213,6 +213,7 @@ func SyncTypeAndUserAddressHistory() error {
 func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 	ctx := context.Background()
 	beginID := int64(0)
+	logger.Info("开始。。。")
 	for {
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
@@ -229,10 +230,10 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 		if len(swapTransactions) == 0 {
 			break
 		}
-
+		logger.Info("开始。。。2")
 		for _, swapTransaction := range swapTransactions {
 			tx := parse.NewTx(swapTransaction.TxData)
-
+			logger.Info("开始。。。3")
 			err = tx.ParseTxALl()
 			if err != nil {
 				continue
@@ -245,7 +246,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 			},
 				model.IDFilter(swapTransaction.ID),
 			)
-
+			logger.Info("开始。。。4")
 			if err != nil {
 				return errors.Wrap(err)
 			}
