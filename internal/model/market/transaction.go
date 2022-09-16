@@ -17,6 +17,20 @@ func QuerySwapPairBase(ctx context.Context, filter ...Filter) (*domain.SwapPairB
 	return info, nil
 }
 
+func QuerySwapPairBases(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapPairBase, error) {
+	var (
+		db        = rDB(ctx)
+		err       error
+		pairBases []*domain.SwapPairBase
+	)
+
+	if err = db.Model(&domain.SwapPairBase{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&pairBases).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return pairBases, nil
+}
+
 func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBase) error {
 	if err := wDB(ctx).Create(swapPairBase).Error; err != nil {
 		return errors.Wrap(err)
@@ -26,6 +40,14 @@ func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBase) 
 
 func UpdateSwapPairBase(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
 	db := wDB(ctx).Model(&domain.SwapPairBase{}).Scopes(filter...).Updates(updates)
+	if err := db.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func UpdateSwapTransaction(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	db := wDB(ctx).Model(&domain.SwapTransaction{}).Scopes(filter...).Updates(updates)
 	if err := db.Error; err != nil {
 		return errors.Wrap(err)
 	}

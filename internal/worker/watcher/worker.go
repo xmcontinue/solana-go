@@ -88,6 +88,9 @@ func Init(viperConf *config.Config) error {
 	// TODO 由于未测试完成其他功能上线，此处暂时关闭
 	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
+	// 解析已经同步的数据，这些数据在第一次同步时没有解析类型和user_address
+	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncTypeAndUserAddressHistory)
+
 	job.Cron.Start()
 
 	return nil

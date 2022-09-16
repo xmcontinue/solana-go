@@ -10,6 +10,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -152,4 +153,98 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 	logger.Info(fmt.Sprintf("sync activity signature from %s to %s", signatures[0].Signature.String(), signatures[len(signatures)-1].Signature.String()))
 
 	return nil
+}
+
+func SyncTypeAndUserAddressHistory() error {
+	ctx := context.Background()
+	swapPairs, err := model.QuerySwapPairBases(ctx, 1000, 0, model.NewFilter("sync_util_finished = false"))
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if len(swapPairs) == 0 {
+		return nil
+	}
+
+	for _, swapPair := range swapPairs {
+
+		if swapPair.SyncUtilID == 0 {
+			filters := []model.Filter{
+				model.SwapAddressFilter(swapPair.SwapAddress),
+				model.NewFilter("tx_type != ?", ""),
+				model.OrderFilter("id asc"),
+			}
+			swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
+			if err != nil {
+				logger.Error("QuerySwapTransaction err", logger.Errorv(err))
+				return errors.Wrap(err)
+			}
+			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+				"sync_util_id": swapTransaction.ID,
+			})
+			if err != nil {
+				return errors.Wrap(err)
+			}
+			swapPair.SyncUtilID = swapTransaction.ID
+		}
+
+		err = SyncTypeAndUserAddressSingle(swapPair)
+		if err != nil {
+			logger.Error("SyncTypeAndUserAddressSingle err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
+	}
+
+	return nil
+}
+
+func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
+	ctx := context.Background()
+	beginID := int64(0)
+	for {
+		filters := []model.Filter{
+			model.SwapAddressFilter(swapPair.SwapAddress),
+			model.NewFilter("tx_type = ?", ""),
+			model.NewFilter("id > ?", beginID),
+			model.OrderFilter("id asc"),
+		}
+
+		swapTransactions, err := model.QuerySwapTransactions(context.Background(), 1000, 0, filters...)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		if len(swapTransactions) == 0 {
+			break
+		}
+
+		for _, swapTransaction := range swapTransactions {
+			tx := parse.NewTx(swapTransaction.TxData)
+
+			err = tx.ParseTxToSwap()
+			if err != nil {
+				continue
+			}
+
+			txType, userAccount := getTxTypeAndUserAccount(tx)
+			err = model.UpdateSwapTransaction(ctx, map[string]interface{}{
+				"user_address": userAccount,
+				"tx_type":      txType,
+			},
+				model.IDFilter(swapTransaction.ID),
+			)
+
+			if err != nil {
+				return errors.Wrap(err)
+			}
+		}
+
+		beginID = swapTransactions[len(swapTransactions)-1].ID
+	}
+
+	err := model.UpdateSwapPairBase(ctx, map[string]interface{}{
+		"sync_util_finished": true,
+	})
+
+	return errors.Wrap(err)
 }
