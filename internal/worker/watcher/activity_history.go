@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -167,7 +168,9 @@ func SyncTypeAndUserAddressHistory() error {
 		return nil
 	}
 
-	for _, swapPair := range swapPairs {
+	wg := &sync.WaitGroup{}
+	wg.Add(len(swapPairs))
+	for i, swapPair := range swapPairs {
 
 		if swapPair.SyncUtilID == 0 {
 			filters := []model.Filter{
@@ -197,20 +200,25 @@ func SyncTypeAndUserAddressHistory() error {
 				return errors.Wrap(err)
 			}
 
-			swapPair.SyncUtilID = swapTransaction.ID
+			swapPairs[i].SyncUtilID = swapTransaction.ID
 		}
 
-		err = SyncTypeAndUserAddressSingle(swapPair)
-		if err != nil {
-			logger.Error("SyncTypeAndUserAddressSingle err", logger.Errorv(err))
-			return errors.Wrap(err)
-		}
+		go func() {
+			err = SyncTypeAndUserAddressSingle(swapPairs[i], wg)
+			if err != nil {
+				logger.Error("SyncTypeAndUserAddressSingle err", logger.Errorv(err))
+				return
+			}
+		}()
 	}
-
+	wg.Wait()
 	return nil
 }
 
-func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
+func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGroup) error {
+	defer func() {
+		wg.Done()
+	}()
 	ctx := context.Background()
 	beginID := int64(0)
 	logger.Warn("开始。。。", logger.String("", swapPair.SwapAddress))
