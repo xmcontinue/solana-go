@@ -25,6 +25,7 @@ type LiquidityRecordIface interface {
 	GetTokenALiquidityVolume() decimal.Decimal
 	GetTokenBLiquidityVolume() decimal.Decimal
 	GetDirection() int8
+	GetUserAddress() string
 }
 
 func (l *LiquidityRecordV2) GetSwapConfig() *domain.SwapConfig {
@@ -45,6 +46,10 @@ func (l *LiquidityRecordV2) GetTokenALiquidityVolume() decimal.Decimal {
 
 func (l *LiquidityRecordV2) GetTokenBLiquidityVolume() decimal.Decimal {
 	return PrecisionConversion(decimal.NewFromInt(int64(l.AmountB)), int(l.GetSwapConfig().TokenB.Decimal))
+}
+
+func (l *LiquidityRecordV2) GetUserAddress() string {
+	return l.UserOwnerAddress
 }
 
 func (t *Txv2) createIncreaseLiquidityRecord(logMessageEvent event.EventRep) error {

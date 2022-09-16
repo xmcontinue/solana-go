@@ -9,6 +9,18 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+type SwapRecordIface interface {
+	GetSwapConfig() *domain.SwapConfig
+	GetUserOwnerAccount() string
+	GetPrice() decimal.Decimal
+	GetTokenAVolume() decimal.Decimal
+	GetTokenBVolume() decimal.Decimal
+	GetTokenABalance() decimal.Decimal
+	GetTokenBBalance() decimal.Decimal
+	GetDirection() int8
+	GetUserAddress() string
+}
+
 // SwapRecordV2 解析后的swap数据
 type SwapRecordV2 struct {
 	SwapAccount       string
@@ -50,6 +62,10 @@ func (s *SwapRecordV2) GetTokenBBalance() decimal.Decimal {
 }
 func (s *SwapRecordV2) GetDirection() int8 {
 	return s.Direction
+}
+
+func (s *SwapRecordV2) GetUserAddress() string {
+	return s.UserOwnerAddress
 }
 
 func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {

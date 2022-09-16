@@ -4,24 +4,11 @@ import (
 	"encoding/json"
 
 	"git.cplus.link/go/akit/errors"
-	"git.cplus.link/go/akit/util/decimal"
 
 	event "git.cplus.link/crema/backend/chain/event/parser"
-	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 const cremaSwapProgramAddressV2 = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
-
-type SwapRecordIface interface {
-	GetSwapConfig() *domain.SwapConfig
-	GetUserOwnerAccount() string
-	GetPrice() decimal.Decimal
-	GetTokenAVolume() decimal.Decimal
-	GetTokenBVolume() decimal.Decimal
-	GetTokenABalance() decimal.Decimal
-	GetTokenBBalance() decimal.Decimal
-	GetDirection() int8
-}
 
 type Txv2 struct {
 	SwapRecords      []*SwapRecordV2

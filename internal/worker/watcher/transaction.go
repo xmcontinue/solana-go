@@ -247,18 +247,57 @@ func (s *SyncTransaction) parserTx(transactions []*rpc.GetTransactionResult) []*
 		blockTime := transaction.BlockTime.Time()
 
 		logs, _ := json.Marshal(transaction.Meta.LogMessages)
+		txV2 := parse.NewTxV2()
+		err = txV2.ParseAllV2(string(logs))
+		if err != nil {
+			continue
+		}
+
+		txType, userAccount := getTxTypeAndUserAccountV2(txV2)
+
 		swapTransactionV2 = append(swapTransactionV2, &domain.SwapTransactionV2{
 			SwapAddress: s.swapConfig.SwapAccount,
+			UserAddress: userAccount,
 			Signature:   tx.Signatures[0].String(),
 			FeePayer:    tx.Message.AccountKeys[0].String(),
 			Slot:        transaction.Slot,
 			BlockTime:   &blockTime,
 			Msg:         string(logs),
+			TxType:      txType,
 		})
 	}
+
 	return swapTransactionV2
 }
 
+func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
+	var txType, userAccount string
+
+	if len(tx.SwapRecords) != 0 {
+		txType = parse.SwapType
+		userAccount = tx.SwapRecords[0].GetUserAddress()
+	}
+
+	if len(tx.LiquidityRecords) != 0 {
+		if txType == "" {
+			txType = parse.LiquidityType
+		} else {
+			txType = txType + "," + parse.LiquidityType
+		}
+		userAccount = tx.LiquidityRecords[0].GetUserAddress()
+	}
+
+	if len(tx.ClaimRecords) != 0 {
+		if txType == "" {
+			txType = parse.ClaimType
+		} else {
+			txType = txType + "," + parse.ClaimType
+		}
+		userAccount = tx.ClaimRecords[0].GetUserAddress()
+	}
+
+	return txType, userAccount
+}
 func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
 	swapTransactionV2s := s.parserTx(transactions)
 
@@ -364,20 +403,22 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 
 			data := domain.TxData(*v)
 
-			tx, err := solana.TransactionFromDecoder(bin.NewBinDecoder(v.Transaction.GetBinary()))
-			if err != nil {
-				panic(err)
+			var txType, userAccount string
+			tx := parse.NewTx(&data)
+			err = tx.ParseTxALl()
+			if err == nil {
+				txType, userAccount = getTxTypeAndUserAccount(tx)
 			}
 
-			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v, tx)
+			tokenAVolume, tokenBVolume, tokenABalance, tokenBBalance := s.getSwapVolume(v, tx.TransAction)
 
 			swapTransactions = append(swapTransactions, &domain.SwapTransaction{
-				Signature:      tx.Signatures[0].String(),
+				Signature:      tx.TransAction.Signatures[0].String(),
 				Fee:            parse.PrecisionConversion(decimal.NewFromInt(int64(v.Meta.Fee)), 9),
 				BlockTime:      &blockTime,
 				Slot:           v.Slot,
-				UserAddress:    "",
-				InstructionLen: getCompiledInstructionLen(tx.Message.Instructions),
+				UserAddress:    userAccount,
+				InstructionLen: getCompiledInstructionLen(tx.TransAction.Message.Instructions),
 				SwapAddress:    s.swapConfig.SwapAccount,
 				TokenAAddress:  s.swapConfig.TokenA.SwapTokenAccount,
 				TokenBAddress:  s.swapConfig.TokenB.SwapTokenAccount,
@@ -389,6 +430,7 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 				TokenBUSD:      tokenBUSD,
 				Status:         true,
 				TxData:         &data,
+				TxType:         txType,
 			})
 		}
 
@@ -432,6 +474,35 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	logger.Info(fmt.Sprintf("sync transaction : swap account(%s) signature from %s to %s", s.swapConfig.SwapAccount, signatures[0].Signature.String(), signatures[len(signatures)-1].Signature.String()))
 
 	return nil
+}
+
+func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
+	var txType string
+	var userAccount string
+	if len(tx.SwapRecords) != 0 {
+		txType = parse.SwapType
+		userAccount = tx.SwapRecords[0].GetUserAddress()
+	}
+
+	if len(tx.LiquidityRecords) != 0 {
+		if txType == "" {
+			txType = parse.LiquidityType
+		} else {
+			txType = txType + "," + parse.LiquidityType
+		}
+		userAccount = tx.LiquidityRecords[0].GetUserAddress()
+	}
+
+	if len(tx.ClaimRecords) != 0 {
+		if txType == "" {
+			txType = parse.ClaimType
+		} else {
+			txType = txType + "," + parse.ClaimType
+		}
+		userAccount = tx.ClaimRecords[0].GetUserAddress()
+	}
+
+	return txType, userAccount
 }
 
 func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult, tx *solana.Transaction) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {

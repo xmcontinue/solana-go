@@ -11,6 +11,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+var SwapType = "Swap"
+
 // SwapRecord 解析后的swap数据
 type SwapRecord struct {
 	UserOwnerAddress  string
@@ -264,4 +266,8 @@ func (sr *SwapRecord) GetTokenBBalance() decimal.Decimal {
 
 func (sr *SwapRecord) GetDirection() int8 {
 	return sr.Direction
+}
+
+func (sr *SwapRecord) GetUserAddress() string {
+	return sr.UserOwnerAddress
 }

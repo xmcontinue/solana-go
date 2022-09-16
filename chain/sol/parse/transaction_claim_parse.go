@@ -9,6 +9,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+var ClaimType = "Claim"
+
 // ClaimRecord 解析后的Claim数据
 type ClaimRecord struct {
 	UserOwnerAddress  string
@@ -155,4 +157,8 @@ func (c *ClaimRecord) GetTokenACollectVolume() decimal.Decimal {
 
 func (c *ClaimRecord) GetTokenBCollectVolume() decimal.Decimal {
 	return c.UserCount.TokenBVolume
+}
+
+func (c *ClaimRecord) GetUserAddress() string {
+	return c.UserOwnerAddress
 }

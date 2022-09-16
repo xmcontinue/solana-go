@@ -9,6 +9,8 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+var LiquidityType = "Liquidity"
+
 // LiquidityRecord 解析后的liquidity数据
 type LiquidityRecord struct {
 	UserOwnerAddress      string
@@ -41,6 +43,10 @@ func (l *LiquidityRecord) GetTokenALiquidityVolume() decimal.Decimal {
 
 func (l *LiquidityRecord) GetTokenBLiquidityVolume() decimal.Decimal {
 	return l.UserCount.TokenBVolume
+}
+
+func (l *LiquidityRecord) GetUserAddress() string {
+	return l.UserOwnerAddress
 }
 
 // ParseTxToLiquidity 解析TX到流动性

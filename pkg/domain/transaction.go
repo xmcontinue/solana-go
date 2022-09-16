@@ -30,6 +30,7 @@ type SwapTransaction struct {
 	TokenBUSD      decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                                   // swap token b usd价格
 	Status         bool            `json:"status"`                                                                                                                // 交易状态: false-失败，true-成功(废弃)
 	TxData         *TxData         `json:"tx_data"               gorm:"type:text;" `                                                                              // 原数据（json格式）
+	TxType         string          `json:"tx_type"  gorm:"type:text"`                                                                                             // tx 类型
 }
 
 type SwapTransactionV2 struct {
@@ -38,12 +39,14 @@ type SwapTransactionV2 struct {
 	UpdatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6)"`
 	Signature   string          `json:"signature" gorm:"not null;type:varchar(128); uniqueIndex"` // 交易签名
 	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);index"`
+	UserAddress string          `json:"user_address" gorm:"type:varchar(64)"`
 	FeePayer    string          `json:"fee_payer"`
 	BlockTime   *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6);index"`                  // 打包时间
 	Slot        uint64          `json:"slot"  gorm:"not null"`                                               // 区块高度
 	Msg         string          `json:"msg"   gorm:"type:text"`                                              // 日志信息
 	TokenAUSD   decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"` // swap token a usd价格
 	TokenBUSD   decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"` // swap token b usd价格
+	TxType      string          `json:"tx_type"     gorm:"type:varchar(64)"`
 }
 
 type Event struct {

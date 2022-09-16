@@ -19,6 +19,7 @@ type CollectRecordIface interface {
 	GetUserOwnerAccount() string
 	GetTokenACollectVolume() decimal.Decimal
 	GetTokenBCollectVolume() decimal.Decimal
+	GetUserAddress() string
 }
 
 func (c *CollectRecordV2) GetSwapConfig() *domain.SwapConfig {
@@ -35,6 +36,10 @@ func (c *CollectRecordV2) GetTokenACollectVolume() decimal.Decimal {
 
 func (c *CollectRecordV2) GetTokenBCollectVolume() decimal.Decimal {
 	return PrecisionConversion(decimal.NewFromInt(int64(c.AmountB)), int(c.GetSwapConfig().TokenB.Decimal))
+}
+
+func (c *CollectRecordV2) GetUserAddress() string {
+	return c.UserOwnerAddress
 }
 
 func (t *Txv2) createCollectRecord(logMessageEvent event.EventRep) error {
