@@ -259,7 +259,9 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 
 	err := model.UpdateSwapPairBase(ctx, map[string]interface{}{
 		"sync_util_finished": true,
-	})
+	},
+		model.SwapAddressFilter(swapPair.SwapAddress),
+	)
 
 	return errors.Wrap(err)
 }
