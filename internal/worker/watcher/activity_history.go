@@ -213,7 +213,7 @@ func SyncTypeAndUserAddressHistory() error {
 func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 	ctx := context.Background()
 	beginID := int64(0)
-	logger.Info("开始。。。")
+	logger.Warn("开始。。。", logger.String("", swapPair.SwapAddress))
 	for {
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
@@ -230,10 +230,10 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 		if len(swapTransactions) == 0 {
 			break
 		}
-		logger.Info("开始。。。2")
+		logger.Warn("开始。。。2", logger.String("", swapPair.SwapAddress))
 		for _, swapTransaction := range swapTransactions {
 			tx := parse.NewTx(swapTransaction.TxData)
-			logger.Info("开始。。。3")
+			logger.Warn("开始。。。3", logger.String("", swapPair.SwapAddress))
 			err = tx.ParseTxALl()
 			if err != nil {
 				continue
@@ -246,10 +246,11 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase) error {
 			},
 				model.IDFilter(swapTransaction.ID),
 			)
-			logger.Info("开始。。。4")
+			logger.Warn("开始。。。4", logger.String("", swapPair.SwapAddress))
 			if err != nil {
 				return errors.Wrap(err)
 			}
+			logger.Warn("开始。。。5", logger.String("", swapPair.SwapAddress))
 		}
 
 		beginID = swapTransactions[len(swapTransactions)-1].ID
