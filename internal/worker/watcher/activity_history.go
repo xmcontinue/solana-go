@@ -190,7 +190,9 @@ func SyncTypeAndUserAddressHistory() error {
 
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
 				"sync_util_id": swapTransaction.ID,
-			})
+			},
+				model.SwapAddressFilter(swapPair.SwapAddress),
+			)
 			if err != nil {
 				return errors.Wrap(err)
 			}
