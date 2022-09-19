@@ -3,6 +3,7 @@ package watcher
 import (
 	"sync"
 
+	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -16,8 +17,9 @@ import (
 const defaultBaseSpec = "0 * * * * *"
 
 var (
-	job  *Job
-	conf *config.Config
+	job         *Job
+	conf        *config.Config
+	redisClient *redisV8.Client
 )
 
 type Job struct {
@@ -58,6 +60,11 @@ func Init(viperConf *config.Config) error {
 	event.Init()
 
 	err := conf.UnmarshalKey("cron_job_conf", &job.CronConf)
+
+	redisClient, err = initRedis(conf)
+	if err != nil {
+		return errors.Wrap(err)
+	}
 
 	if err != nil {
 		return errors.Wrap(err)
@@ -111,6 +118,16 @@ func NewJobInfo(name string) *JobInfo {
 			NewNap: &sync.Map{},
 		},
 	}
+}
+
+// initRedis 初始化redis
+func initRedis(conf *config.Config) (*redisV8.Client, error) {
+	c := redisV8.DefaultRedisConfig()
+	err := conf.UnmarshalKey("redis", c)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return redisV8.NewClient(c)
 }
 
 func (j *Job) WatchJobForMap(name string, newMap *sync.Map, createFunc func(interface{}) JobInterface) error {

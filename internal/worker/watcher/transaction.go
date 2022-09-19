@@ -491,23 +491,28 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 	var txType []string
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
-		txType = append(txType, parse.SwapType)
-		userAccount = tx.SwapRecords[0].GetUserAddress()
+		for _, v := range tx.SwapRecords {
+			txType = append(txType, parse.SwapType)
+			userAccount = v.GetUserAddress()
+		}
 	}
 
 	if len(tx.LiquidityRecords) != 0 {
-		if tx.LiquidityRecords[0].Direction == 0 {
-			txType = append(txType, parse.DecreaseLiquidityType)
-		} else {
-			txType = append(txType, parse.IncreaseLiquidityType)
+		for _, v := range tx.LiquidityRecords {
+			if v.Direction == 0 {
+				txType = append(txType, parse.DecreaseLiquidityType)
+			} else {
+				txType = append(txType, parse.IncreaseLiquidityType)
+			}
+			userAccount = v.GetUserAddress()
 		}
-		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
 
 	if len(tx.ClaimRecords) != 0 {
-		txType = append(txType, parse.ClaimType)
-
-		userAccount = tx.ClaimRecords[0].GetUserAddress()
+		for _, v := range tx.SwapRecords {
+			txType = append(txType, parse.ClaimType)
+			userAccount = v.GetUserAddress()
+		}
 	}
 
 	if len(txType) == 1 {

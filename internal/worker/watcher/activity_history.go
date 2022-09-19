@@ -9,7 +9,6 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -173,63 +172,77 @@ func SyncTypeAndUserAddressHistory() error {
 	for i, swapPair := range swapPairs {
 
 		if swapPair.SyncUtilID == 0 {
-			filters := []model.Filter{
-				model.SwapAddressFilter(swapPair.SwapAddress),
-				model.NewFilter("tx_type != ?", ""),
-				model.OrderFilter("id asc"),
-			}
-			swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
-			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				logger.Error("QuerySwapTransaction err", logger.Errorv(err))
-				return errors.Wrap(err)
-			}
+			//filters := []model.Filter{
+			//	model.SwapAddressFilter(swapPair.SwapAddress),
+			//	model.NewFilter("tx_type != ?", ""),
+			//	model.OrderFilter("id asc"),
+			//}
+			//swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
+			//if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			//	logger.Error("QuerySwapTransaction err", logger.Errorv(err))
+			//	return errors.Wrap(err)
+			//}
+			//
+			//if errors.Is(err, gorm.ErrRecordNotFound) {
+			//	swapTransaction, err = model.QuerySwapTransaction(ctx,
+			//		model.SwapAddressFilter(swapPair.SwapAddress),
+			//		model.OrderFilter("id desc"),
+			//	)
+			//}
+			//
+			//err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+			//	"sync_util_id": swapTransaction.ID,
+			//},
+			//	model.SwapAddressFilter(swapPair.SwapAddress),
+			//)
+			//if err != nil {
+			//	return errors.Wrap(err)
+			//}
 
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				swapTransaction, err = model.QuerySwapTransaction(ctx,
-					model.SwapAddressFilter(swapPair.SwapAddress),
-					model.OrderFilter("id desc"),
-				)
-			}
-
-			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
-				"sync_util_id": swapTransaction.ID,
-			},
-				model.SwapAddressFilter(swapPair.SwapAddress),
-			)
+			lastTransaction, err := getTransactionID()
 			if err != nil {
 				return errors.Wrap(err)
 			}
 
-			swapPairs[i].SyncUtilID = swapTransaction.ID
+			swapPairs[i].SyncUtilID = lastTransaction + 10000 // 向后移一定数量 保证全部解析
 		}
 
-		go func() {
-			err = SyncTypeAndUserAddressSingle(swapPairs[i], wg)
+		go func(swapPair *domain.SwapPairBase) {
+			err = SyncTypeAndUserAddressSingle(swapPair, wg)
 			if err != nil {
 				logger.Error("SyncTypeAndUserAddressSingle err", logger.Errorv(err))
 				return
 			}
-		}()
+		}(swapPairs[i])
 	}
 	wg.Wait()
-	logger.Warn("携程结束。。。。。。。。。。。。。。。。")
+
 	return nil
+}
+
+func getTransactionID() (int64, error) {
+	res := redisClient.Get(context.TODO(), domain.LastSwapTransactionID().Key)
+	if res.Err() != nil {
+		logger.Error("sync transaction id err", logger.Errorv(res.Err()))
+		return 0, errors.Wrap(res.Err())
+	}
+
+	return res.Int64()
 }
 
 func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGroup) error {
 	defer func() {
-		fmt.Println("++++++++++")
 		wg.Done()
 	}()
-	fmt.Println("1111111111")
+
 	ctx := context.Background()
 	beginID := int64(0)
-	logger.Warn("开始。。。", logger.String("", swapPair.SwapAddress))
+
 	for {
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
 			model.NewFilter("id > ?", beginID),
-			model.NewFilter("user_address =''"),
+			//model.NewFilter("user_address =''"),
 			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
 		}
@@ -242,10 +255,9 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		if len(swapTransactions) == 0 {
 			break
 		}
-		logger.Warn("开始。。。2", logger.String("", swapPair.SwapAddress))
+
 		for _, swapTransaction := range swapTransactions {
 			tx := parse.NewTx(swapTransaction.TxData)
-			logger.Warn("开始。。。3", logger.String("", swapPair.SwapAddress))
 			err = tx.ParseTxALl()
 			if err != nil {
 				continue
@@ -258,11 +270,11 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			},
 				model.IDFilter(swapTransaction.ID),
 			)
-			logger.Warn("开始。。。4", logger.String(userAccount, swapPair.SwapAddress))
+
 			if err != nil {
 				return errors.Wrap(err)
 			}
-			logger.Warn("开始。。。5", logger.String(userAccount, swapPair.SwapAddress))
+
 		}
 
 		beginID = swapTransactions[len(swapTransactions)-1].ID
