@@ -172,8 +172,7 @@ func SyncTypeAndUserAddressHistory() error {
 	wg.Add(len(swapPairs))
 	for i, swapPair := range swapPairs {
 
-		//if swapPair.SyncUtilID == 0 {
-		if true {
+		if swapPair.SyncUtilID == 0 {
 			filters := []model.Filter{
 				model.SwapAddressFilter(swapPair.SwapAddress),
 				model.NewFilter("tx_type != ?", ""),
@@ -201,11 +200,6 @@ func SyncTypeAndUserAddressHistory() error {
 				return errors.Wrap(err)
 			}
 
-			//lastTransaction, err := getTransactionID()
-			//if err != nil {
-			//	return errors.Wrap(err)
-			//}
-
 			swapPairs[i].SyncUtilID = swapTransaction.ID
 		}
 
@@ -229,25 +223,6 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 
 	var err error
 	ctx := context.Background()
-	// todo 先置user_address 和 tx_type 为''
-	err = model.UpdateSwapTransaction(ctx, map[string]interface{}{
-		"user_address": "",
-		"tx_type":      "",
-	},
-		model.SwapAddressFilter(swapPair.SwapAddress),
-	)
-	if err != nil {
-		return errors.Wrap(err)
-	}
-	err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
-		"sync_util_finished": true,
-	},
-		model.SwapAddressFilter(swapPair.SwapAddress),
-	)
-
-	fmt.Println("先置user_address 和 tx_type 为'':", swapPair.SwapAddress)
-	return nil
-	// todo 取消
 
 	beginID := int64(0)
 
