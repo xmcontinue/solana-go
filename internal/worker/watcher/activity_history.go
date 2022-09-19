@@ -191,9 +191,6 @@ func SyncTypeAndUserAddressHistory() error {
 				)
 			}
 
-			// 只是为了测试
-			swapTransaction.ID = 2387977
-
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
 				"sync_util_id": swapTransaction.ID,
 			},
@@ -252,7 +249,6 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			}
 
 			txType, userAccount := getTxTypeAndUserAccount(tx)
-			fmt.Println("锁位置：", swapPair.SwapAddress, swapPair.SyncBeginID, swapTransaction.ID)
 			err = model.UpdateSwapTransaction(ctx, map[string]interface{}{
 				"user_address": userAccount,
 				"tx_type":      txType,
@@ -275,8 +271,6 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		if err != nil {
 			return errors.Wrap(err)
 		}
-
-		fmt.Println("锁位置：结束", swapPair.SwapAddress, swapPair.SyncBeginID)
 	}
 
 	err := model.UpdateSwapPairBase(ctx, map[string]interface{}{
