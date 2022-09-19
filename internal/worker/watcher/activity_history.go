@@ -191,6 +191,9 @@ func SyncTypeAndUserAddressHistory() error {
 				)
 			}
 
+			// 只是为了测试
+			swapTransaction.ID = 2387977
+
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
 				"sync_util_id": swapTransaction.ID,
 			},
@@ -271,6 +274,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		if err != nil {
 			return errors.Wrap(err)
 		}
+
 		fmt.Println(swapPair.SwapAddress, swapPair.SyncBeginID)
 	}
 
