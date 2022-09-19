@@ -252,6 +252,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			}
 
 			txType, userAccount := getTxTypeAndUserAccount(tx)
+			fmt.Println("锁位置：", swapPair.SwapAddress, swapPair.SyncBeginID, swapTransaction.ID)
 			err = model.UpdateSwapTransaction(ctx, map[string]interface{}{
 				"user_address": userAccount,
 				"tx_type":      txType,
