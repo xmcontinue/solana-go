@@ -9,6 +9,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/chain/sol/parse"
@@ -172,39 +173,39 @@ func SyncTypeAndUserAddressHistory() error {
 	for i, swapPair := range swapPairs {
 
 		if swapPair.SyncUtilID == 0 {
-			//filters := []model.Filter{
-			//	model.SwapAddressFilter(swapPair.SwapAddress),
-			//	model.NewFilter("tx_type != ?", ""),
-			//	model.OrderFilter("id asc"),
-			//}
-			//swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
-			//if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			//	logger.Error("QuerySwapTransaction err", logger.Errorv(err))
-			//	return errors.Wrap(err)
-			//}
-			//
-			//if errors.Is(err, gorm.ErrRecordNotFound) {
-			//	swapTransaction, err = model.QuerySwapTransaction(ctx,
-			//		model.SwapAddressFilter(swapPair.SwapAddress),
-			//		model.OrderFilter("id desc"),
-			//	)
-			//}
-			//
-			//err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
-			//	"sync_util_id": swapTransaction.ID,
-			//},
-			//	model.SwapAddressFilter(swapPair.SwapAddress),
-			//)
-			//if err != nil {
-			//	return errors.Wrap(err)
-			//}
+			filters := []model.Filter{
+				model.SwapAddressFilter(swapPair.SwapAddress),
+				model.NewFilter("tx_type != ?", ""),
+				model.OrderFilter("id asc"),
+			}
+			swapTransaction, err := model.QuerySwapTransaction(ctx, filters...)
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				logger.Error("QuerySwapTransaction err", logger.Errorv(err))
+				return errors.Wrap(err)
+			}
 
-			lastTransaction, err := getTransactionID()
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				swapTransaction, err = model.QuerySwapTransaction(ctx,
+					model.SwapAddressFilter(swapPair.SwapAddress),
+					model.OrderFilter("id desc"),
+				)
+			}
+
+			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+				"sync_util_id": swapTransaction.ID,
+			},
+				model.SwapAddressFilter(swapPair.SwapAddress),
+			)
 			if err != nil {
 				return errors.Wrap(err)
 			}
 
-			swapPairs[i].SyncUtilID = lastTransaction + 10000 // 向后移一定数量 保证全部解析
+			//lastTransaction, err := getTransactionID()
+			//if err != nil {
+			//	return errors.Wrap(err)
+			//}
+
+			swapPairs[i].SyncUtilID = swapTransaction.ID
 		}
 
 		go func(swapPair *domain.SwapPairBase) {
@@ -220,16 +221,6 @@ func SyncTypeAndUserAddressHistory() error {
 	return nil
 }
 
-func getTransactionID() (int64, error) {
-	res := redisClient.Get(context.TODO(), domain.LastSwapTransactionID().Key)
-	if res.Err() != nil {
-		logger.Error("sync transaction id err", logger.Errorv(res.Err()))
-		return 0, errors.Wrap(res.Err())
-	}
-
-	return res.Int64()
-}
-
 func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGroup) error {
 	defer func() {
 		wg.Done()
@@ -242,7 +233,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
 			model.NewFilter("id > ?", beginID),
-			//model.NewFilter("user_address =''"),
+			model.NewFilter("user_address =''"),
 			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
 		}
