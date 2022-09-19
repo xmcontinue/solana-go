@@ -167,7 +167,7 @@ func initData() {
 			"user_address": "",
 			"tx_type":      "",
 		},
-			model.NewFilter("id >= ? and id< ?", i, i+10000),
+			model.NewFilter("id >= ? and id< ?", i, i+1000),
 		)
 		if err != nil {
 			logger.Error("\n\n==============" +
@@ -175,7 +175,7 @@ func initData() {
 				"\n\n==============")
 			return
 		}
-		i += 10000
+		i += 1000
 		logger.Info("数据位置：", logger.Int("end:", i))
 	}
 
