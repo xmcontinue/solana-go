@@ -276,7 +276,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			return errors.Wrap(err)
 		}
 
-		fmt.Println(swapPair.SwapAddress, swapPair.SyncBeginID)
+		fmt.Println("锁位置：结束", swapPair.SwapAddress, swapPair.SyncBeginID)
 	}
 
 	err := model.UpdateSwapPairBase(ctx, map[string]interface{}{
