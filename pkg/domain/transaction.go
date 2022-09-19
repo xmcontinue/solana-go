@@ -69,6 +69,7 @@ type SwapPairBase struct {
 	TotalVol         decimal.Decimal `json:"total_vol" gorm:"type:decimal(36,18);default:0"`              // 总交易量 TODO 待开发，由tx解析后统计
 	TokenNum         uint64          `json:"token_num" gorm:"default:0"`                                  // token数量 TODO 待开发，由配置文件中解析统计
 	UserNum          uint64          `json:"user_num" gorm:"default:0"`                                   // 用户数量 TODO 待开发，由用户总统计表中统计
+	SyncBeginID      int64           `json:"sync_begin_id" gorm:"default:0"`                              // 第一次拉取数据时未解析user_address和类型的开始ID
 	SyncUtilID       int64           `json:"sync_util_id" gorm:"default:0"`                               // 第一次拉取数据时未解析user_address和类型的截止ID
 	SyncUtilFinished bool            `json:"sync_util_finished" gorm:"default:false"`                     // 是否重新同步user_address和类型完成
 }

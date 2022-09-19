@@ -157,32 +157,7 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 	return nil
 }
 
-//
-func initData() {
-	endID := 2387972
-	i := 0
-	for i < endID {
-
-		err := model.UpdateSwapTransaction(context.Background(), map[string]interface{}{
-			"user_address": "",
-			"tx_type":      "",
-		},
-			model.NewFilter("id >= ? and id< ?", i, i+1000),
-		)
-		if err != nil {
-			logger.Error("\n\n==============" +
-				"只是还原错误数据" +
-				"\n\n==============")
-			return
-		}
-		i += 1000
-		logger.Info("数据位置：", logger.Int("end:", i))
-	}
-
-}
-
 func SyncTypeAndUserAddressHistory() error {
-	initData()
 	ctx := context.Background()
 	swapPairs, err := model.QuerySwapPairBases(ctx, 1000, 0, model.NewFilter("sync_util_finished = false"))
 	if err != nil {
@@ -246,15 +221,12 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		wg.Done()
 	}()
 
-	var err error
 	ctx := context.Background()
-
-	beginID := int64(0)
 
 	for {
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
-			model.NewFilter("id > ?", beginID),
+			model.NewFilter("id > ?", swapPair.SyncBeginID),
 			//model.NewFilter("user_address =''"),
 			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
@@ -287,13 +259,22 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			if err != nil {
 				return errors.Wrap(err)
 			}
-			fmt.Println(swapPair.SwapAddress, swapTransaction.ID)
 		}
 
-		beginID = swapTransactions[len(swapTransactions)-1].ID
+		swapPair.SyncBeginID = swapTransactions[len(swapTransactions)-1].ID
+		err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+			"sync_begin_id": swapPair.SyncBeginID,
+		},
+			model.SwapAddressFilter(swapPair.SwapAddress),
+		)
+
+		if err != nil {
+			return errors.Wrap(err)
+		}
+		fmt.Println(swapPair.SwapAddress, swapPair.SyncBeginID)
 	}
 
-	err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+	err := model.UpdateSwapPairBase(ctx, map[string]interface{}{
 		"sync_util_finished": true,
 	},
 		model.SwapAddressFilter(swapPair.SwapAddress),
