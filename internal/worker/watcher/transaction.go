@@ -273,11 +273,11 @@ func (s *SyncTransaction) parserTx(transactions []*rpc.GetTransactionResult) []*
 }
 
 func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
-	var txType []string
+	txTypeMap := make(map[string]struct{})
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txType = append(txType, parse.SwapType)
+			txTypeMap[parse.SwapType] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}
@@ -285,9 +285,9 @@ func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
 	if len(tx.LiquidityRecords) != 0 {
 		for _, v := range tx.LiquidityRecords {
 			if v.Direction == 0 {
-				txType = append(txType, parse.DecreaseLiquidityType)
+				txTypeMap[parse.DecreaseLiquidityType] = struct{}{}
 			} else {
-				txType = append(txType, parse.IncreaseLiquidityType)
+				txTypeMap[parse.IncreaseLiquidityType] = struct{}{}
 			}
 			userAccount = v.GetUserAddress()
 		}
@@ -295,17 +295,13 @@ func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
 
 	if len(tx.ClaimRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txType = append(txType, parse.ClaimType)
+			txTypeMap[parse.ClaimType] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}
 
-	if len(txType) == 1 {
-		return txType[0], userAccount
-	}
-
 	var tType string
-	for _, v := range txType {
+	for v := range txTypeMap {
 		tType += v + ","
 	}
 
@@ -497,11 +493,11 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 }
 
 func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
-	var txType []string
+	txTypeMap := make(map[string]struct{})
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txType = append(txType, parse.SwapType)
+			txTypeMap[parse.SwapType] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}
@@ -509,9 +505,9 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 	if len(tx.LiquidityRecords) != 0 {
 		for _, v := range tx.LiquidityRecords {
 			if v.Direction == 0 {
-				txType = append(txType, parse.DecreaseLiquidityType)
+				txTypeMap[parse.DecreaseLiquidityType] = struct{}{}
 			} else {
-				txType = append(txType, parse.IncreaseLiquidityType)
+				txTypeMap[parse.IncreaseLiquidityType] = struct{}{}
 			}
 			userAccount = v.GetUserAddress()
 		}
@@ -519,17 +515,13 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 
 	if len(tx.ClaimRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txType = append(txType, parse.ClaimType)
+			txTypeMap[parse.ClaimType] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}
 
-	if len(txType) == 1 {
-		return txType[0], userAccount
-	}
-
 	var tType string
-	for _, v := range txType {
+	for v := range txTypeMap {
 		tType += v + ","
 	}
 
