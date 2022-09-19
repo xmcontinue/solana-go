@@ -218,8 +218,10 @@ func SyncTypeAndUserAddressHistory() error {
 
 func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGroup) error {
 	defer func() {
+		fmt.Println("++++++++++")
 		wg.Done()
 	}()
+	fmt.Println("1111111111")
 	ctx := context.Background()
 	beginID := int64(0)
 	logger.Warn("开始。。。", logger.String("", swapPair.SwapAddress))
@@ -227,6 +229,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
 			model.NewFilter("id > ?", beginID),
+			model.NewFilter("user_address =''"),
 			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
 		}
@@ -255,11 +258,11 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 			},
 				model.IDFilter(swapTransaction.ID),
 			)
-			logger.Warn("开始。。。4", logger.String("", swapPair.SwapAddress))
+			logger.Warn("开始。。。4", logger.String(userAccount, swapPair.SwapAddress))
 			if err != nil {
 				return errors.Wrap(err)
 			}
-			logger.Warn("开始。。。5", logger.String("", swapPair.SwapAddress))
+			logger.Warn("开始。。。5", logger.String(userAccount, swapPair.SwapAddress))
 		}
 
 		beginID = swapTransactions[len(swapTransactions)-1].ID
