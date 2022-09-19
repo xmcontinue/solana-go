@@ -157,7 +157,32 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 	return nil
 }
 
+//
+func initData() {
+	endID := 2387972
+	i := 0
+	for i < endID {
+
+		err := model.UpdateSwapTransaction(context.Background(), map[string]interface{}{
+			"user_address": "",
+			"tx_type":      "",
+		},
+			model.NewFilter("id >= ? and id< ?", i, i+10000),
+		)
+		if err != nil {
+			logger.Error("\n\n==============" +
+				"只是还原错误数据" +
+				"\n\n==============")
+			return
+		}
+		i += 10000
+		logger.Info("数据位置：", logger.Int("end:", i))
+	}
+
+}
+
 func SyncTypeAndUserAddressHistory() error {
+	initData()
 	ctx := context.Background()
 	swapPairs, err := model.QuerySwapPairBases(ctx, 1000, 0, model.NewFilter("sync_util_finished = false"))
 	if err != nil {
