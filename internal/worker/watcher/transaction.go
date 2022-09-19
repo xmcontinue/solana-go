@@ -273,41 +273,44 @@ func (s *SyncTransaction) parserTx(transactions []*rpc.GetTransactionResult) []*
 }
 
 func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
-	var txType, userAccount string
-
+	var txType []string
+	var userAccount string
 	if len(tx.SwapRecords) != 0 {
-		txType = parse.SwapType
-		userAccount = tx.SwapRecords[0].GetUserAddress()
+		for _, v := range tx.SwapRecords {
+			txType = append(txType, parse.SwapType)
+			userAccount = v.GetUserAddress()
+		}
 	}
 
 	if len(tx.LiquidityRecords) != 0 {
-		if txType == "" {
-			if tx.LiquidityRecords[0].Direction == 0 {
-				txType = parse.DecreaseLiquidityType
+		for _, v := range tx.LiquidityRecords {
+			if v.Direction == 0 {
+				txType = append(txType, parse.DecreaseLiquidityType)
 			} else {
-				txType = parse.IncreaseLiquidityType
+				txType = append(txType, parse.IncreaseLiquidityType)
 			}
-
-		} else {
-			if tx.LiquidityRecords[0].Direction == 0 {
-				txType = txType + "," + parse.DecreaseLiquidityType
-			} else {
-				txType = txType + "," + parse.IncreaseLiquidityType
-			}
+			userAccount = v.GetUserAddress()
 		}
-		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
 
 	if len(tx.ClaimRecords) != 0 {
-		if txType == "" {
-			txType = parse.ClaimType
-		} else {
-			txType = txType + "," + parse.ClaimType
+		for _, v := range tx.SwapRecords {
+			txType = append(txType, parse.ClaimType)
+			userAccount = v.GetUserAddress()
 		}
-		userAccount = tx.ClaimRecords[0].GetUserAddress()
 	}
 
-	return txType, userAccount
+	if len(txType) == 1 {
+		return txType[0], userAccount
+	}
+
+	var tType string
+	for _, v := range txType {
+		tType += v + ","
+	}
+
+	tType = strings.TrimRight(tType, ",")
+	return tType, userAccount
 }
 func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.Signature, signatures []*rpc.TransactionSignature, transactions []*rpc.GetTransactionResult) error {
 	swapTransactionV2s := s.parserTx(transactions)
@@ -334,7 +337,7 @@ func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.
 			swapPairBaseMap["failed_tx_num"] = gorm.Expr("failed_tx_num + ?", failedNum)
 		}
 
-		err := model.UpdateSwapPairBase(ctx, swapPairBaseMap, model.SwapAddressFilter(s.swapConfig.SwapAccount))
+		err = model.UpdateSwapPairBase(ctx, swapPairBaseMap, model.SwapAddressFilter(s.swapConfig.SwapAccount))
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -348,6 +351,12 @@ func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.
 			_, err = model.GetSwapTransactionV2(ctx, model.NewFilter("signature = ?", v.Signature))
 			if !errors.Is(err, errors.RecordNotFound) {
 				continue
+			}
+
+			tx := parse.NewTxV2()
+			err = tx.ParseAllV2(v.Msg)
+			if err == nil {
+				v.TxType, v.UserAddress = getTxTypeAndUserAccountV2(tx)
 			}
 
 			v.TokenAUSD = tokenAUSD
