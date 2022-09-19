@@ -172,7 +172,8 @@ func SyncTypeAndUserAddressHistory() error {
 	wg.Add(len(swapPairs))
 	for i, swapPair := range swapPairs {
 
-		if swapPair.SyncUtilID == 0 {
+		//if swapPair.SyncUtilID == 0 {
+		if true {
 			filters := []model.Filter{
 				model.SwapAddressFilter(swapPair.SwapAddress),
 				model.NewFilter("tx_type != ?", ""),
