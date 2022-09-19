@@ -498,10 +498,8 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 	if len(tx.LiquidityRecords) != 0 {
 		if tx.LiquidityRecords[0].Direction == 0 {
 			txType = append(txType, parse.DecreaseLiquidityType)
-
 		} else {
 			txType = append(txType, parse.IncreaseLiquidityType)
-
 		}
 		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
@@ -518,7 +516,7 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 
 	var tType string
 	for _, v := range txType {
-		tType += v + "."
+		tType += v + ","
 	}
 
 	tType = strings.TrimRight(tType, ",")
