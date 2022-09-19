@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -487,41 +488,41 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 }
 
 func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
-	var txType string
+	var txType []string
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
-		txType = parse.SwapType
+		txType = append(txType, parse.SwapType)
 		userAccount = tx.SwapRecords[0].GetUserAddress()
 	}
 
 	if len(tx.LiquidityRecords) != 0 {
-		if txType == "" {
-			if tx.LiquidityRecords[0].Direction == 0 {
-				txType = parse.DecreaseLiquidityType
-			} else {
-				txType = parse.IncreaseLiquidityType
-			}
+		if tx.LiquidityRecords[0].Direction == 0 {
+			txType = append(txType, parse.DecreaseLiquidityType)
 
 		} else {
-			if tx.LiquidityRecords[0].Direction == 0 {
-				txType = txType + "," + parse.DecreaseLiquidityType
-			} else {
-				txType = txType + "," + parse.IncreaseLiquidityType
-			}
+			txType = append(txType, parse.IncreaseLiquidityType)
+
 		}
 		userAccount = tx.LiquidityRecords[0].GetUserAddress()
 	}
 
 	if len(tx.ClaimRecords) != 0 {
-		if txType == "" {
-			txType = parse.ClaimType
-		} else {
-			txType = txType + "," + parse.ClaimType
-		}
+		txType = append(txType, parse.ClaimType)
+
 		userAccount = tx.ClaimRecords[0].GetUserAddress()
 	}
 
-	return txType, userAccount
+	if len(txType) == 1 {
+		return txType[0], userAccount
+	}
+
+	var tType string
+	for _, v := range txType {
+		tType += v + "."
+	}
+
+	tType = strings.TrimRight(tType, ",")
+	return tType, userAccount
 }
 
 func (s *SyncTransaction) getSwapVolume(meta *rpc.GetTransactionResult, tx *solana.Transaction) (decimal.Decimal, decimal.Decimal, decimal.Decimal, decimal.Decimal) {
