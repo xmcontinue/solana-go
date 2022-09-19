@@ -230,7 +230,7 @@ func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGr
 		filters := []model.Filter{
 			model.SwapAddressFilter(swapPair.SwapAddress),
 			model.NewFilter("id > ?", beginID),
-			model.NewFilter("user_address =''"),
+			//model.NewFilter("user_address =''"),
 			model.NewFilter("id < ?", swapPair.SyncUtilID),
 			model.OrderFilter("id asc"),
 		}
