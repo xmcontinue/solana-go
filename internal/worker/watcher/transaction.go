@@ -343,7 +343,6 @@ func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.
 		}
 
 		for _, v := range swapTransactionV2s {
-			logger.Info("writeTxToDb", logger.Any("v:", v))
 			_, err = model.GetSwapTransactionV2(ctx, model.NewFilter("signature = ?", v.Signature))
 			if !errors.Is(err, errors.RecordNotFound) {
 				continue

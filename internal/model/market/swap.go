@@ -234,8 +234,8 @@ func GetSwapTransactionV2(ctx context.Context, filter ...Filter) (*domain.SwapTr
 	return &info, nil
 }
 
-func CreatedSwapTransactionV2(ctx context.Context, programData *domain.SwapTransactionV2) error {
-	if err := wDB(ctx).Create(programData).Error; err != nil {
+func CreatedSwapTransactionV2(ctx context.Context, transactionV2 *domain.SwapTransactionV2) error {
+	if err := wDB(ctx).Create(transactionV2).Error; err != nil {
 		if dbPool.IsDuplicateKeyError(err) {
 			return errors.Wrap(errors.AlreadyExists)
 		}
