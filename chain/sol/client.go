@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -127,6 +128,16 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 					v.TokenA.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.RefundAddress)
 					v.TokenB.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.RefundAddress)
 				}
+
+				if v.Version == "v2" {
+					//  如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
+					if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
+						temp := v.TokenB
+						v.TokenB = v.TokenA
+						v.TokenA = temp
+					}
+				}
+
 				swapMap[v.SwapAccount] = v
 				tokenMap[v.TokenA.SwapTokenAccount] = &v.TokenA
 				tokenMap[v.TokenB.SwapTokenAccount] = &v.TokenB
@@ -134,7 +145,7 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair) {
 
 			swapConfigMap = swapMap
 			tokenConfigMap = tokenMap
-			parse.SetSwapConfig(swapConfigMap) // todo 如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
+			parse.SetSwapConfig(swapConfigMap)
 
 			if !isInit {
 				wg.Done()
