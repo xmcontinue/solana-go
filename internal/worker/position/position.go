@@ -53,6 +53,9 @@ func syncPosition() error {
 	// 3.同步仓位数据
 	positionsMode := make([]*domain.PositionCountSnapshot, 0)
 	for _, swapPair := range swapList {
+		if swapPair.Version == "v2" {
+			continue
+		}
 		// 3.1 获取swap池子仓位
 		swapAccountAndPositionsAccount, err := sol.GetSwapAccountAndPositionsAccountForSwapKey(swapPair.SwapPublicKey)
 		if err != nil {
@@ -195,4 +198,73 @@ func randTime() error {
 
 func timeZero(t time.Time) time.Time {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
+}
+
+func syncPositionV2() error {
+	logger.Info("sync position V2 start")
+
+	var err error
+	//err = randTime()
+	logger.Info("rand sync time", logger.String("rand time：", before.String()))
+	if err != nil {
+		logger.Info("rand sync time", logger.Errorv(err))
+		return nil
+	}
+
+	_, err = model.QuerySwapPositionV2Snapshot(context.Background(), model.NewFilter("date > ?", timeZero(time.Now())))
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		logger.Info("sync skipped today")
+		return nil
+	}
+
+	swapList := sol.SwapConfigList()
+
+	domainPositionV2List := make([]*domain.PositionV2Snapshot, 0, len(swapList))
+	for _, swap := range swapList {
+		if swap.Version != "v2" {
+			continue
+		}
+
+		positionV2, err := sol.GetPositionInfoV2(swap.SwapPublicKey)
+		if err != nil {
+			logger.Error("GetPositionInfoV2 err", logger.Errorv(err))
+		}
+		domainPositionV2 := positionV2ToModel(positionV2)
+		domainPositionV2List = append(domainPositionV2List, domainPositionV2...)
+
+	}
+
+	err = model.CreateSwapPositionV2Snapshot(context.Background(), domainPositionV2List)
+	if err != nil {
+		logger.Error("CreateSwapPositionV2Snapshot ", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func positionV2ToModel(positionV2s []*sol.PositionV2) []*domain.PositionV2Snapshot {
+	domainPositionV2 := make([]*domain.PositionV2Snapshot, 0, len(positionV2s))
+	for i := range positionV2s {
+		domainPositionV2 = append(domainPositionV2, &domain.PositionV2Snapshot{
+			Model:            gorm.Model{},
+			ClmmPool:         positionV2s[i].ClmmPool.String(),
+			PositionNFTMint:  positionV2s[i].PositionNFTMint.String(),
+			Date:             before.Format("2006-01-02 15:04:05"),
+			Liquidity:        positionV2s[i].Liquidity.Val(),
+			TickLowerIndex:   positionV2s[i].TickLowerIndex,
+			TickUpperIndex:   positionV2s[i].TickUpperIndex,
+			FeeGrowthInsideA: positionV2s[i].FeeGrowthInsideA.Val(),
+			FeeOwedA:         positionV2s[i].FeeOwedA,
+			FeeGrowthInsideB: positionV2s[i].FeeGrowthInsideB.Val(),
+			FeeOwedB:         positionV2s[i].FeeOwedB,
+			//GrowthInside1:    positionV2s[i].RewardInfos[0].GrowthInside.Val(),
+			//AmountOwed1:      positionV2s[i].RewardInfos[0].AmountOwed,
+			//GrowthInside2:    positionV2s[i].RewardInfos[1].GrowthInside.Val(),
+			//AmountOwed2:      positionV2s[i].RewardInfos[1].AmountOwed,
+			//GrowthInside3:    positionV2s[i].RewardInfos[2].GrowthInside.Val(),
+			//AmountOwed3:      positionV2s[i].RewardInfos[2].AmountOwed,
+		})
+	}
+
+	return domainPositionV2
 }

@@ -496,10 +496,8 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 	txTypeMap := make(map[string]struct{})
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
-		for _, v := range tx.SwapRecords {
-			txTypeMap[parse.SwapType] = struct{}{}
-			userAccount = v.GetUserAddress()
-		}
+		txTypeMap[parse.SwapType] = struct{}{}
+		userAccount = tx.SwapRecords[0].GetUserAddress()
 	}
 
 	if len(tx.LiquidityRecords) != 0 {
@@ -514,10 +512,8 @@ func getTxTypeAndUserAccount(tx *parse.Tx) (string, string) {
 	}
 
 	if len(tx.ClaimRecords) != 0 {
-		for _, v := range tx.SwapRecords {
-			txTypeMap[parse.ClaimType] = struct{}{}
-			userAccount = v.GetUserAddress()
-		}
+		txTypeMap[parse.ClaimType] = struct{}{}
+		userAccount = tx.ClaimRecords[0].GetUserAddress()
 	}
 
 	var tType string

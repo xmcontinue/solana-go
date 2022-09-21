@@ -65,6 +65,7 @@ func autoMigrate() error {
 		&domain.SwapTokenPriceKLine{},
 		&domain.ActivityHistory{},
 		&domain.PositionCountSnapshot{},
+		&domain.PositionV2Snapshot{},
 		&domain.MetadataJsonDate{},
 	); err != nil {
 		return errors.Wrap(err)

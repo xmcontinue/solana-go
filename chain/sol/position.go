@@ -359,3 +359,114 @@ func tick2SqrtPrice(tick int32) decimal.Decimal {
 	f, _ := decimal.NewFromInt32(tick).Float64()
 	return decimal.NewFromFloat(math.Sqrt(math.Pow(1.0001, f)))
 }
+
+const (
+	PositionV2DataLen = 216
+	PositionDataLen   = 216
+	ProgramIDV2       = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
+	ProgramID         = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
+	//swapAccount = "DVPzDyY3Zi6V11R72wJ2r9k2tJXtNRekmSAuAdZ2bFHd"
+)
+
+type PositionV2 struct {
+	ClmmPool         solana.PublicKey
+	PositionNFTMint  solana.PublicKey
+	Liquidity        decimalU128
+	TickLowerIndex   int32
+	TickUpperIndex   int32
+	FeeGrowthInsideA decimalU128
+	FeeOwedA         uint64
+	FeeGrowthInsideB decimalU128
+	FeeOwedB         uint64
+	RewardInfos      PositionRewards
+}
+
+type PositionReward struct {
+	GrowthInside decimalU128
+	AmountOwed   uint64
+}
+
+type PositionRewards [3]PositionReward
+
+func getProgramAccountsOptsV2(swapAccount solana.PublicKey) *rpc.GetProgramAccountsOpts {
+	rpcMem := rpc.RPCFilter{
+		Memcmp: &rpc.RPCFilterMemcmp{
+			Offset: uint64(8),
+			Bytes:  swapAccount.Bytes(),
+		},
+	}
+
+	rpcSize := rpc.RPCFilter{
+		DataSize: PositionV2DataLen,
+	}
+	opt := &rpc.GetProgramAccountsOpts{
+		Commitment: rpc.CommitmentConfirmed,
+		Encoding:   solana.EncodingBase64,
+		Filters: []rpc.RPCFilter{
+			rpcMem,
+			rpcSize,
+		},
+	}
+	return opt
+}
+
+func GetPositionInfoV2(swapAccount solana.PublicKey) ([]*PositionV2, error) {
+	opt := getProgramAccountsOptsV2(swapAccount)
+
+	result, err := GetRpcClient().GetProgramAccountsWithOpts(context.TODO(), solana.MustPublicKeyFromBase58(ProgramIDV2), opt)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	positionV2s := make([]*PositionV2, 0, len(result))
+	for _, v := range result {
+		p2 := &PositionV2{}
+		err = bin.NewBinDecoder(v.Account.Data.GetBinary()[8:]).Decode(p2)
+		if err != nil {
+			return nil, errors.Wrap(err)
+		}
+
+		positionV2s = append(positionV2s, p2)
+	}
+
+	return positionV2s, nil
+}
+
+func GetPositionInfo(swapAccount solana.PublicKey) ([]Position, error) {
+	opt := getProgramAccountsOpts(swapAccount)
+
+	result, err := GetRpcClient().GetProgramAccountsWithOpts(context.TODO(), solana.MustPublicKeyFromBase58(ProgramID), opt)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	positionsAccounts := make([]*PositionsAccount, 0)
+	for _, v := range result {
+		if isPositionKeysAccount(v) {
+			positionsAccount, err := GetPositionsAccountForPositionKey(v.Pubkey)
+			if err != nil {
+				return nil, err
+			}
+			positionsAccounts = append(positionsAccounts, positionsAccount)
+		}
+	}
+
+	positions := make([]Position, 0, len(result))
+	for i := range positionsAccounts {
+		positions = append(positions, positionsAccounts[i].Positions...)
+	}
+
+	return positions, nil
+}
+
+func getProgramAccountsOpts(swapAccount solana.PublicKey) *rpc.GetProgramAccountsOpts {
+	opt := &rpc.GetProgramAccountsOpts{
+		Filters: []rpc.RPCFilter{
+			{
+				Memcmp: &rpc.RPCFilterMemcmp{
+					Offset: 1,
+					Bytes:  swapAccount.Bytes(),
+				},
+			},
+		},
+	}
+	return opt
+}
