@@ -67,7 +67,6 @@ type Clmmpool struct {
 	TickSpacing      uint16
 	TickSpacingSeed  uint16
 	FeeRate          uint16
-	ProtocolFeeRate  uint16 // todo 再最新版本中去掉了 结构体长度也要去掉两个字节
 	Liquidity        ag_binary.Uint128
 	CurrentSqrtPrice ag_binary.Uint128
 	//CurrentTickIndex  int32
