@@ -312,6 +312,10 @@ func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.
 	swapTransactionV2s := s.parserTx(transactions)
 
 	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
 	if err != nil {
 		return errors.Wrap(err)

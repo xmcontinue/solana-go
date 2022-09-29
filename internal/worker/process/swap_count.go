@@ -126,6 +126,7 @@ func SwapTotalCount() error {
 			VolInUsd:                    volInUsd.String(),
 			TxNum:                       swapCountTotal.TxNum,
 			Apr:                         apr,
+			Fee:                         v.Fee,
 			TvlInUsd:                    tvlInUsd.String(),
 			PriceInterval:               v.PriceInterval,
 			Price:                       FormatFloat(newSwapPrice, countDecimal),
