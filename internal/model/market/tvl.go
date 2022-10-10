@@ -180,12 +180,12 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("token_b_quote_volume = swap_count_k_lines.token_b_quote_volume + ?,", swapCount.TokenBQuoteVolume.Abs()).
 		Suffix("token_a_balance = ?,", tokenABalance).
 		Suffix("token_b_balance = ?,", tokenBBalance).
-		Suffix("token_a_ref_amount + ?", swapCount.TokenARefAmount.Abs()).
-		Suffix("token_a_fee_amount + ?", swapCount.TokenAFeeAmount.Abs()).
-		Suffix("token_a_protocol_amount + ?", swapCount.TokenAProtocolAmount.Abs()).
-		Suffix("token_b_ref_amount + ?", swapCount.TokenBRefAmount.Abs()).
-		Suffix("token_b_fee_amount + ?", swapCount.TokenBFeeAmount.Abs()).
-		Suffix("token_b_protocol_amount + ?", swapCount.TokenBProtocolAmount.Abs()).
+		Suffix("token_a_ref_amount = swap_count_k_lines.token_a_ref_amount + ?,", swapCount.TokenARefAmount.Abs()).
+		Suffix("token_a_fee_amount = swap_count_k_lines.token_a_fee_amount + ?,", swapCount.TokenAFeeAmount.Abs()).
+		Suffix("token_a_protocol_amount = swap_count_k_lines.token_a_protocol_amount + ?,", swapCount.TokenAProtocolAmount.Abs()).
+		Suffix("token_b_ref_amount = swap_count_k_lines.token_b_ref_amount + ?,", swapCount.TokenBRefAmount.Abs()).
+		Suffix("token_b_fee_amount = swap_count_k_lines.token_b_fee_amount + ?,", swapCount.TokenBFeeAmount.Abs()).
+		Suffix("token_b_protocol_amount = swap_count_k_lines.token_b_protocol_amount + ?,", swapCount.TokenBProtocolAmount.Abs()).
 		Suffix("high = ?,", swapCount.High).
 		Suffix("low = ?,", swapCount.Low).
 		Suffix("settle = ?,", swapCount.Settle).
