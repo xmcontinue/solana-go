@@ -17,6 +17,15 @@ type SwapRecordIface interface {
 	GetTokenBVolume() decimal.Decimal
 	GetTokenABalance() decimal.Decimal
 	GetTokenBBalance() decimal.Decimal
+
+	GetTokenARefAmount() decimal.Decimal
+	GetTokenAFeeAmount() decimal.Decimal
+	GetTokenAProtocolAmount() decimal.Decimal
+	
+	GetTokenBRefAmount() decimal.Decimal
+	GetTokenBFeeAmount() decimal.Decimal
+	GetTokenBProtocolAmount() decimal.Decimal
+
 	GetDirection() int8
 	GetUserAddress() string
 }
@@ -31,6 +40,9 @@ type SwapRecordV2 struct {
 	Direction         int8 // 0为A->B,1为B->A
 	AmountIn          decimal.Decimal
 	AmountOut         decimal.Decimal
+	RefAmount         decimal.Decimal
+	FeeAmount         decimal.Decimal
+	ProtocolAmount    decimal.Decimal
 	VaultAAmount      decimal.Decimal
 	VaultBAmount      decimal.Decimal
 	Price             decimal.Decimal
@@ -87,6 +99,7 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 	}
 
 	direction, tokenABalance, tokenBBalance, amountIn, amountOut := int8(0), decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero
+	refAmount, feeAmount, protocolAmount := decimal.Zero, decimal.Zero, decimal.Zero
 
 	if swap.AToB {
 		direction = 1
@@ -95,16 +108,24 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 
 		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Add(amountIn)
 		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Sub(amountOut)
-		//fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
-		//fmt.Println("交易额", amountIn.String(), amountOut.String())
+
+		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.RefAmount)), int(swapConfig.TokenA.Decimal))
+		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.FeeAmount)), int(swapConfig.TokenA.Decimal))
+		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.ProtocolAmount)), int(swapConfig.TokenA.Decimal))
+		// fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
+		// fmt.Println("交易额", amountIn.String(), amountOut.String())
 	} else {
 		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountIn)), int(swapConfig.TokenB.Decimal))
 		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountOut)), int(swapConfig.TokenA.Decimal))
 
 		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Add(amountIn)
 		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swap.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Sub(amountOut)
-		//fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
-		//fmt.Println("交易额", amountIn.String(), amountOut.String())
+
+		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.RefAmount)), int(swapConfig.TokenB.Decimal))
+		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.FeeAmount)), int(swapConfig.TokenB.Decimal))
+		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.ProtocolAmount)), int(swapConfig.TokenB.Decimal))
+		// fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
+		// fmt.Println("交易额", amountIn.String(), amountOut.String())
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
@@ -115,6 +136,9 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		Direction:         direction,
 		AmountIn:          amountIn,
 		AmountOut:         amountOut,
+		RefAmount:         refAmount,
+		FeeAmount:         feeAmount,
+		ProtocolAmount:    protocolAmount,
 		VaultAAmount:      tokenABalance,
 		VaultBAmount:      tokenBBalance,
 		Price:             PrecisionConversion(decimal.New(int64(swap.AmountOut), 0), int(swapConfig.TokenB.Decimal)).Div(PrecisionConversion(decimal.New(int64(swap.AmountIn), 0), int(swapConfig.TokenA.Decimal))),

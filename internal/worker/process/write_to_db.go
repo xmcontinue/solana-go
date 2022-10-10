@@ -22,19 +22,34 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 			continue
 		}
 		var (
-			tokenAVolume      decimal.Decimal
-			tokenBVolume      decimal.Decimal
-			tokenAQuoteVolume decimal.Decimal
-			tokenBQuoteVolume decimal.Decimal
+			tokenAVolume         decimal.Decimal
+			tokenBVolume         decimal.Decimal
+			tokenAQuoteVolume    decimal.Decimal
+			tokenBQuoteVolume    decimal.Decimal
+			TokenARefAmount      decimal.Decimal
+			TokenAFeeAmount      decimal.Decimal
+			TokenAProtocolAmount decimal.Decimal
+			TokenBRefAmount      decimal.Decimal
+			TokenBFeeAmount      decimal.Decimal
+			TokenBProtocolAmount decimal.Decimal
 		)
 
 		if swapRecord.GetDirection() == 0 {
 			tokenAVolume = swapRecord.GetTokenBVolume()
 			tokenAVolume = swapRecord.GetTokenAVolume()
 			tokenBQuoteVolume = swapRecord.GetTokenBVolume()
+
+			TokenARefAmount = swapRecord.GetTokenARefAmount()
+			TokenAFeeAmount = swapRecord.GetTokenAFeeAmount()
+			TokenAProtocolAmount = swapRecord.GetTokenAProtocolAmount()
+
 		} else {
 			tokenBVolume = swapRecord.GetTokenBVolume()
 			tokenAQuoteVolume = swapRecord.GetTokenAVolume()
+
+			TokenBRefAmount = swapRecord.GetTokenBRefAmount()
+			TokenBFeeAmount = swapRecord.GetTokenBFeeAmount()
+			TokenBProtocolAmount = swapRecord.GetTokenBProtocolAmount()
 		}
 
 		swapCountKLine = &domain.SwapCountKLine{
@@ -48,6 +63,12 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 			TokenBQuoteVolume:        tokenBQuoteVolume,
 			TokenABalance:            swapRecord.GetTokenABalance(),
 			TokenBBalance:            swapRecord.GetTokenBBalance(),
+			TokenARefAmount:          TokenARefAmount,
+			TokenAFeeAmount:          TokenAFeeAmount,
+			TokenAProtocolAmount:     TokenAProtocolAmount,
+			TokenBRefAmount:          TokenBRefAmount,
+			TokenBFeeAmount:          TokenBFeeAmount,
+			TokenBProtocolAmount:     TokenBProtocolAmount,
 			DateType:                 domain.DateMin,
 			Open:                     swapRecord.GetPrice(),
 			High:                     swapRecord.GetPrice(),
