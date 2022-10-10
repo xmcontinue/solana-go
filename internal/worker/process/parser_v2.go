@@ -139,9 +139,7 @@ func (s *parserV2) ParserSwapInstruction() error {
 		s.ID = transaction.ID
 
 		tx := parse.NewTxV2()
-		if transaction.Signature != "2ztE9ZM9TB1oX1bbkBcbacfyzo2GHHp2Hgn7mwTzt5CT1SScdrEozoWLeBWvjTFRZsN11xvgp3BSDskmyYgnh1g8" {
-			continue
-		}
+
 		err := tx.ParseSwapV2(transaction.Msg)
 		if err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
