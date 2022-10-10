@@ -20,11 +20,44 @@ type SwapRecord struct {
 	UserTokenBAddress string
 	ProgramAddress    string
 	Direction         int8 // 0为A->B,1为B->A
+	RefAmount         decimal.Decimal
+	FeeAmount         decimal.Decimal
+	ProtocolAmount    decimal.Decimal
 	Price             decimal.Decimal
 	UserCount         *AmountCount
 	TokenCount        *AmountCount
 	SwapConfig        *domain.SwapConfig
 	InnerInstructions []solana.CompiledInstruction
+}
+
+func (sr *SwapRecord) GetTokenARefAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (sr *SwapRecord) GetTokenAFeeAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (sr *SwapRecord) GetTokenAProtocolAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (sr *SwapRecord) GetTokenBRefAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (sr *SwapRecord) GetTokenBFeeAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (sr *SwapRecord) GetTokenBProtocolAmount() decimal.Decimal {
+	//TODO implement me
+	panic("implement me")
 }
 
 type AmountCount struct {

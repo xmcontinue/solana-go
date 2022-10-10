@@ -39,17 +39,21 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 			tokenAVolume = swapRecord.GetTokenAVolume()
 			tokenBQuoteVolume = swapRecord.GetTokenBVolume()
 
-			TokenARefAmount = swapRecord.GetTokenARefAmount()
-			TokenAFeeAmount = swapRecord.GetTokenAFeeAmount()
-			TokenAProtocolAmount = swapRecord.GetTokenAProtocolAmount()
+			//TokenARefAmount = swapRecord.GetTokenARefAmount()
+			//TokenAFeeAmount = swapRecord.GetTokenAFeeAmount()
+			//TokenAProtocolAmount = swapRecord.GetTokenAProtocolAmount()
+			// 修改
+			TokenBRefAmount = swapRecord.GetTokenBRefAmount()
+			TokenBFeeAmount = swapRecord.GetTokenBFeeAmount()
+			TokenBProtocolAmount = swapRecord.GetTokenBProtocolAmount()
 
 		} else {
 			tokenBVolume = swapRecord.GetTokenBVolume()
 			tokenAQuoteVolume = swapRecord.GetTokenAVolume()
 
-			TokenBRefAmount = swapRecord.GetTokenBRefAmount()
-			TokenBFeeAmount = swapRecord.GetTokenBFeeAmount()
-			TokenBProtocolAmount = swapRecord.GetTokenBProtocolAmount()
+			TokenARefAmount = swapRecord.GetTokenARefAmount()
+			TokenAFeeAmount = swapRecord.GetTokenAFeeAmount()
+			TokenAProtocolAmount = swapRecord.GetTokenAProtocolAmount()
 		}
 
 		swapCountKLine = &domain.SwapCountKLine{
