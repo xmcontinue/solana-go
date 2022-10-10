@@ -31,33 +31,27 @@ type SwapRecord struct {
 }
 
 func (sr *SwapRecord) GetTokenARefAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 func (sr *SwapRecord) GetTokenAFeeAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 func (sr *SwapRecord) GetTokenAProtocolAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 func (sr *SwapRecord) GetTokenBRefAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 func (sr *SwapRecord) GetTokenBFeeAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 func (sr *SwapRecord) GetTokenBProtocolAmount() decimal.Decimal {
-	//TODO implement me
-	panic("implement me")
+	return decimal.Zero
 }
 
 type AmountCount struct {
