@@ -91,3 +91,22 @@ func (t *Txv2) createDecreaseLiquidityRecord(logMessageEvent event.EventRep) err
 
 	return nil
 }
+func (t *Txv2) createIncreaseLiquidityWithFixedTokenRecord(logMessageEvent event.EventRep) error {
+	fixedTokenEvent := logMessageEvent.Event.(*event.IncreaseLiquidityWithFixedTokenEvent)
+
+	swapConfig, ok := swapConfigMap[fixedTokenEvent.Pool.String()]
+	if !ok {
+		return nil
+	}
+
+	t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecordV2{
+		SwapConfig:       swapConfig,
+		UserOwnerAddress: fixedTokenEvent.Owner.String(),
+		DeltaLiquidity:   fixedTokenEvent.DeltaLiquidity,
+		AmountA:          fixedTokenEvent.AmountA,
+		AmountB:          fixedTokenEvent.AmountB,
+		Direction:        0,
+	})
+
+	return nil
+}

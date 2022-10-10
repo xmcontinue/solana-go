@@ -50,6 +50,8 @@ func (t *Txv2) ParseAllV2(logs string) error {
 			err = t.createDecreaseLiquidityRecord(logMessageEvent)
 		} else if logMessageEvent.EventName == event.CollectEventName {
 			err = t.createCollectRecord(logMessageEvent)
+		} else if logMessageEvent.EventName == event.IncreaseLiquidityWithFixedTokenEventName {
+			err = t.createIncreaseLiquidityWithFixedTokenRecord(logMessageEvent)
 		} else {
 			continue
 		}
