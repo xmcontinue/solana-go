@@ -10,17 +10,19 @@ import (
 
 var (
 	EventLayout = map[string]Event{
-		SwapEventName:              &SwapEvent{},
-		IncreaseLiquidityEventName: &IncreaseLiquidityEvent{},
-		DecreaseLiquidityEventName: &DecreaseLiquidityEvent{},
-		CollectEventName:           &CollectEvent{},
+		SwapEventName:                            &SwapEvent{},
+		IncreaseLiquidityEventName:               &IncreaseLiquidityEvent{},
+		IncreaseLiquidityWithFixedTokenEventName: &IncreaseLiquidityWithFixedTokenEvent{},
+		DecreaseLiquidityEventName:               &DecreaseLiquidityEvent{},
+		CollectEventName:                         &CollectEvent{},
 	}
 
 	EventDisc = map[string]string{
-		base64.StdEncoding.EncodeToString(EventDiscriminator(SwapEventName)):              SwapEventName,
-		base64.StdEncoding.EncodeToString(EventDiscriminator(IncreaseLiquidityEventName)): IncreaseLiquidityEventName,
-		base64.StdEncoding.EncodeToString(EventDiscriminator(DecreaseLiquidityEventName)): DecreaseLiquidityEventName,
-		base64.StdEncoding.EncodeToString(EventDiscriminator(CollectEventName)):           CollectEventName,
+		base64.StdEncoding.EncodeToString(EventDiscriminator(SwapEventName)):                            SwapEventName,
+		base64.StdEncoding.EncodeToString(EventDiscriminator(IncreaseLiquidityEventName)):               IncreaseLiquidityEventName,
+		base64.StdEncoding.EncodeToString(EventDiscriminator(IncreaseLiquidityWithFixedTokenEventName)): IncreaseLiquidityWithFixedTokenEventName,
+		base64.StdEncoding.EncodeToString(EventDiscriminator(DecreaseLiquidityEventName)):               DecreaseLiquidityEventName,
+		base64.StdEncoding.EncodeToString(EventDiscriminator(CollectEventName)):                         CollectEventName,
 	}
 )
 

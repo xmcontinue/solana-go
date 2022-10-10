@@ -35,7 +35,7 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 		)
 
 		if swapRecord.GetDirection() == 0 {
-			tokenAVolume = swapRecord.GetTokenBVolume()
+			tokenBVolume = swapRecord.GetTokenBVolume()
 			tokenAVolume = swapRecord.GetTokenAVolume()
 			tokenBQuoteVolume = swapRecord.GetTokenBVolume()
 
