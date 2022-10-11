@@ -111,18 +111,19 @@ func SwapTotalCount() error {
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		if err != nil {
-			logger.Info("SwapTotalCount", logger.Errorv(err))
+			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
 
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
-			logger.Info("SwapTotalCount", logger.Errorv(err))
+			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
+			logger.Error("settle is zero", logger.Errorv(errors.New("settle is zero")))
 			continue
 		}
 		if beforeContractPrice.Open.Round(countDecimal).IsZero() {
