@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -230,6 +231,7 @@ func SwapTotalCount() error {
 		return false
 	})
 
+	fmt.Sprintln("%#v", swapCountToApi)
 	// 缓存至redis
 	data, err := json.Marshal(swapCountToApi)
 	if err != nil {
