@@ -231,7 +231,7 @@ func SwapTotalCount() error {
 		return false
 	})
 
-	fmt.Printf("%#v", swapCountToApi)
+	fmt.Printf("\n\n%#v\n\n", swapCountToApi)
 	// 缓存至redis
 	data, err := json.Marshal(swapCountToApi)
 	if err != nil {
