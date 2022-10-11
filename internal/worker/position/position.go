@@ -228,6 +228,7 @@ func syncPositionV2() error {
 		positionV2, err := sol.GetPositionInfoV2(swap.SwapPublicKey)
 		if err != nil {
 			logger.Error("GetPositionInfoV2 err", logger.Errorv(err))
+			return errors.Wrap(err)
 		}
 		domainPositionV2 := positionV2ToModel(positionV2)
 		domainPositionV2List = append(domainPositionV2List, domainPositionV2...)
