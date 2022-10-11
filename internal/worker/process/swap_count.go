@@ -156,7 +156,7 @@ func SwapTotalCount() error {
 			Apr30Day:                    Apr30day,
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-
+		fmt.Printf("\n\nswapCountToApiPool:%#v\n\n", swapCountToApiPool)
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
@@ -196,6 +196,7 @@ func SwapTotalCount() error {
 	// 用户数量
 	total, err := model.CountUserNumber(context.Background())
 	if err != nil {
+		logger.Error("get user number err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
