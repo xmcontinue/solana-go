@@ -75,6 +75,7 @@ func Init(viperConf *config.Config) error {
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTransaction"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
+	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
 	// 同步vol(24h)
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)

@@ -52,7 +52,6 @@ func SwapTotalCount() error {
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
-		fmt.Printf("swapAccountDisplay:%s\n", v.SwapAccount)
 		if strings.ToLower(v.Version) != "v2" {
 			continue // 只统计v2
 		}
@@ -234,7 +233,6 @@ func SwapTotalCount() error {
 		return false
 	})
 
-	fmt.Printf("\n\n%#v\n\n", swapCountToApi)
 	// 缓存至redis
 	data, err := json.Marshal(swapCountToApi)
 	if err != nil {
