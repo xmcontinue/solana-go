@@ -120,6 +120,7 @@ type SwapCountKLineVolCount struct {
 	TokenBVolumeForUsd      decimal.Decimal `json:"token_b_volume_for_usd"`       // swap token b 总交易额(发起方)(USD)
 	TokenAQuoteVolumeForUsd decimal.Decimal `json:"token_a_quote_volume_for_usd"` // swap token a 交易额(获得方)(USD)
 	TokenBQuoteVolumeForUsd decimal.Decimal `json:"token_b_quote_volume_for_usd"` // swap token b 交易额(获得方)(USD)
+	FeeAmount               decimal.Decimal `json:"fee_amount"`                   // swap token b 交易额(获得方)(USD)
 	TxNum                   uint64          `json:"tx_num"`                       // swap token 总交易笔数
 }
 
@@ -166,7 +167,10 @@ type SwapCountToApiPool struct {
 	VolumeInTokenB24hUnilateral string         `json:"volume_in_tokenB_24h_unilateral"`
 	TokenAAddress               string         `json:"token_a_address"`
 	TokenBAddress               string         `json:"token_b_address"`
-	Version                     string
+	Version                     string         `json:"version"`
+	Apr24h                      string         `json:"apr_24h"`
+	Apr7Day                     string         `json:"apr_7day"`
+	Apr30Day                    string         `json:"apr_30day"`
 }
 
 type SwapCountToApiToken struct {

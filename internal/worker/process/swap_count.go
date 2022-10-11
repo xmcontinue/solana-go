@@ -47,7 +47,7 @@ func SwapTotalCount() error {
 	ctx := context.Background()
 
 	// 获取swap pair 24h 内交易统计
-	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour)
+	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
 		if v.Version != "v2" {
@@ -77,6 +77,9 @@ func SwapTotalCount() error {
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
+		// 获取过去30天交易额，交易笔数 不做错误处理，有可能无交易
+		swapCount30d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before30dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
+
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
 
@@ -95,9 +98,13 @@ func SwapTotalCount() error {
 
 		// 计算apr
 		apr := "0%"
+		Apr24h, Apr7day, Apr30day := "0%", "0%", "0%"
 		if !tvlInUsd.IsZero() {
 			fee, _ := decimal.NewFromString(v.Fee)
 			apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
+			Apr24h = swapCount24h.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			Apr7day = swapCount7d.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			Apr30day = swapCount30d.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
 		}
 
 		// 查找合约内价格
@@ -142,6 +149,9 @@ func SwapTotalCount() error {
 			TokenAAddress:               v.TokenA.TokenMint,
 			TokenBAddress:               v.TokenB.TokenMint,
 			Version:                     v.Version,
+			Apr24h:                      Apr24h,
+			Apr7Day:                     Apr7day,
+			Apr30Day:                    Apr30day,
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
 
