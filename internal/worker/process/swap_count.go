@@ -3,7 +3,6 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,10 +51,6 @@ func SwapTotalCount() error {
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
-		if strings.ToLower(v.Version) != "v2" {
-			continue // 只统计v2
-		}
-
 		// 获取token价格
 		newTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
 		newTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
@@ -120,6 +115,17 @@ func SwapTotalCount() error {
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
+
+		// 汇总处理
+		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
+		totalVolInUsd = totalVolInUsd.Add(volInUsd)
+		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
+		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
+		totalTxNum = totalTxNum + swapCountTotal.TxNum
+
+		if strings.ToLower(v.Version) != "v2" {
+			continue // 只统计v2
+		}
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
@@ -155,8 +161,9 @@ func SwapTotalCount() error {
 			Apr7Day:                     Apr7day,
 			Apr30Day:                    Apr30day,
 		}
+
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-		fmt.Printf("\n\nswapCountToApiPool:%#v\n\n", swapCountToApiPool)
+
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
@@ -181,13 +188,6 @@ func SwapTotalCount() error {
 				PriceRate24h: newTokenBPrice.Sub(beforeTokenBPrice).Div(beforeTokenBPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 		)
-
-		// 汇总处理
-		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
-		totalVolInUsd = totalVolInUsd.Add(volInUsd)
-		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
-		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
-		totalTxNum = totalTxNum + swapCountTotal.TxNum
 	}
 
 	// token数量
