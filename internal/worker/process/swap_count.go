@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -51,7 +52,8 @@ func SwapTotalCount() error {
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
-		if v.Version != "v2" {
+		fmt.Printf("swapAccountDisplay:%s\n", v.SwapAccount)
+		if strings.ToLower(v.Version) != "v2" {
 			continue // 只统计v2
 		}
 
