@@ -29,11 +29,6 @@ func WatchBalance() error {
 
 	positionsMode := make([]*domain.PositionCountSnapshot, 0)
 	for _, pair := range swapPairs {
-		// TODO 暂时只监听一个swap池子
-		if pair.SwapAccount != "EzvTazMwHjLAg3oVKK7LCBFP3ThEqkLDiW55frQbQTby" {
-			continue
-		}
-
 		// 获取swap池子仓位
 		swapAccountAndPositionsAccount, err := sol.GetSwapAccountAndPositionsAccountForSwapKey(pair.SwapPublicKey)
 		if err != nil {
@@ -62,7 +57,7 @@ func WatchBalance() error {
 			"needAmountA":    totalTokenAAmount.Round(6).String(),
 			"needAmountB":    totalTokenBAmount.Round(6).String(),
 		}
-		
+
 		if pair.TokenA.Balance.IsZero() || pair.TokenB.Balance.IsZero() ||
 			totalTokenAAmount.IsZero() || totalTokenBAmount.IsZero() {
 			sendBalanceRateMsgToPushGateway(1, pair.SwapAccount, labels)
