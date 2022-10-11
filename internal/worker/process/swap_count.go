@@ -3,8 +3,10 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -50,7 +52,8 @@ func SwapTotalCount() error {
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
-		if v.Version != "v2" {
+		fmt.Printf("swapAccountDisplay:%s\n", v.SwapAccount)
+		if strings.ToLower(v.Version) != "v2" {
 			continue // 只统计v2
 		}
 
@@ -110,18 +113,18 @@ func SwapTotalCount() error {
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		if err != nil {
-			logger.Info("SwapTotalCount", logger.Errorv(err))
+			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
 
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
-			logger.Info("SwapTotalCount", logger.Errorv(err))
-			continue
+			beforeContractPrice = newContractPrice
 		}
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
+			logger.Error("settle is zero", logger.Errorv(errors.New("settle is zero")))
 			continue
 		}
 		if beforeContractPrice.Open.Round(countDecimal).IsZero() {
@@ -154,7 +157,7 @@ func SwapTotalCount() error {
 			Apr30Day:                    Apr30day,
 		}
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-
+		fmt.Printf("\n\nswapCountToApiPool:%#v\n\n", swapCountToApiPool)
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
@@ -194,6 +197,7 @@ func SwapTotalCount() error {
 	// 用户数量
 	total, err := model.CountUserNumber(context.Background())
 	if err != nil {
+		logger.Error("get user number err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
 
@@ -230,6 +234,7 @@ func SwapTotalCount() error {
 		return false
 	})
 
+	fmt.Printf("\n\n%#v\n\n", swapCountToApi)
 	// 缓存至redis
 	data, err := json.Marshal(swapCountToApi)
 	if err != nil {
