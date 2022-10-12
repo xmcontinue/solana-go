@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -250,7 +251,7 @@ func SwapTotalCount() error {
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}
-
+	fmt.Printf("\n是不是一分钟一次:%#v\n", swapCountToApi)
 	return nil
 }
 
