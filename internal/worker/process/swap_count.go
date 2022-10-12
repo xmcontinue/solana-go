@@ -96,6 +96,13 @@ func SwapTotalCount() error {
 		// 计算apr
 		apr := "0%"
 		Apr24h, Apr7day, Apr30day := "0%", "0%", "0%"
+		if swapCount7d.DayNum == 0 {
+			swapCount7d.DayNum = 1
+		}
+		if swapCount30d.DayNum == 0 {
+			swapCount30d.DayNum = 1
+		}
+
 		if !tvlInUsd.IsZero() {
 			fee, _ := decimal.NewFromString(v.Fee)
 			apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
