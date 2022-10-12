@@ -101,6 +101,10 @@ func SyncSwapPrice() error {
 		"SOL":   {solPrice},
 		"pUSDC": {decimal.NewFromInt(1)},
 		"CUSDC": {decimal.NewFromInt(1)},
+		"DUSDT": {decimal.NewFromInt(1)}, // todo 新增价格，测试使用
+		"DUSDC": {decimal.NewFromInt(1)},
+		"yUSDT": {decimal.NewFromInt(1)},
+		"yUSDC": {decimal.NewFromInt(1)},
 	}
 
 	pairPriceToTokenPrice(swapPairPrices, tokenPrices)

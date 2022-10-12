@@ -124,7 +124,7 @@ func SwapTotalCount() error {
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
 
 		if strings.ToLower(v.Version) != "v2" {
-			continue // 只统计v2
+			continue // pool和token只统计v2
 		}
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
