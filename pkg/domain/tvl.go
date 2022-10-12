@@ -122,6 +122,7 @@ type SwapCountKLineVolCount struct {
 	TokenBQuoteVolumeForUsd decimal.Decimal `json:"token_b_quote_volume_for_usd"` // swap token b 交易额(获得方)(USD)
 	FeeAmount               decimal.Decimal `json:"fee_amount"`                   // swap token b 交易额(获得方)(USD)
 	TxNum                   uint64          `json:"tx_num"`                       // swap token 总交易笔数
+	DayNum                  uint64          `json:"day_num"`
 }
 
 type SwapCountListInfo struct {

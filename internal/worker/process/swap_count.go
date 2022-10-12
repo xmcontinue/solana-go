@@ -73,7 +73,7 @@ func SwapTotalCount() error {
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
 
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
-		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
+		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
 
 		// 获取过去30天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount30d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before30dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
@@ -101,8 +101,8 @@ func SwapTotalCount() error {
 			fee, _ := decimal.NewFromString(v.Fee)
 			apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
 			Apr24h = swapCount24h.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
-			Apr7day = swapCount7d.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
-			Apr30day = swapCount30d.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			Apr7day = swapCount7d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount7d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			Apr30day = swapCount30d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount30d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
 		}
 
 		// 查找合约内价格
