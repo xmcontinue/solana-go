@@ -145,6 +145,9 @@ func SwapTotalCount() error {
 		}
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:                        v.Name,
+			Test24h:                     swapCount24h.FeeAmount.String(),
+			Test7d:                      swapCount7d.FeeAmount.String(),
+			Test30d:                     swapCount30d.FeeAmount.String(),
 			SwapAccount:                 v.SwapAccount,
 			TokenAReserves:              v.TokenA.SwapTokenAccount,
 			TokenBReserves:              v.TokenB.SwapTokenAccount,
@@ -251,7 +254,7 @@ func SwapTotalCount() error {
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}
-	fmt.Printf("\n是不是一分钟一次:%#v\n", swapCountToApi)
+	fmt.Printf("\n是不是一分钟一次:%+v\n", swapCountToApi)
 	return nil
 }
 
