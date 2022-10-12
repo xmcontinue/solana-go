@@ -295,6 +295,10 @@ func (sr *SwapRecord) GetDirection() int8 {
 	return sr.Direction
 }
 
+// GetDirectionByVersion 和v1 版本方向统一
+func (sr *SwapRecord) GetDirectionByVersion() int8 {
+	return sr.Direction
+}
 func (sr *SwapRecord) GetUserAddress() string {
 	return sr.UserOwnerAddress
 }

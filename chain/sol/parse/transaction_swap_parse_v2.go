@@ -27,6 +27,8 @@ type SwapRecordIface interface {
 	GetTokenBProtocolAmount() decimal.Decimal
 
 	GetDirection() int8
+	GetDirectionByVersion() int8
+
 	GetUserAddress() string
 }
 
@@ -119,6 +121,17 @@ func (s *SwapRecordV2) GetTokenBBalance() decimal.Decimal {
 }
 func (s *SwapRecordV2) GetDirection() int8 {
 	return s.Direction
+}
+
+// GetDirectionByVersion 和v1 版本方向统一
+// 因为v1 v2 定义的0 1 方向相反，既
+// v1 A->B  为：0，B->A 为：1
+// v2 A->B  为：1，B->A 为：0
+func (s *SwapRecordV2) GetDirectionByVersion() int8 {
+	if s.Direction == 1 {
+		return 0
+	}
+	return 1
 }
 
 func (s *SwapRecordV2) GetUserAddress() string {
