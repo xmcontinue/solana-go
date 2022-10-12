@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	dbPool "git.cplus.link/go/akit/client/psql"
@@ -210,13 +209,13 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		return nil, errors.Wrap(err)
 	}
 
-	if res.RowsAffected == 0 {
-		swapCountKLine, _ := QuerySwapCountKLine(ctx, SwapAddressFilter(swapCount.SwapAddress), NewFilter("date = ?", swapCount.DateType), NewFilter("date_type = ?", swapCount.DateType))
-		fmt.Println("RowsAffected=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, swapCountKLine.LastSwapTransactionID, swapCountKLine.Date, swapCountKLine.DateType)
-	} else {
-
-		fmt.Println("RowsAffected!=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, after.LastSwapTransactionID)
-	}
+	//if res.RowsAffected == 0 {
+	//	swapCountKLine, _ := QuerySwapCountKLine(ctx, SwapAddressFilter(swapCount.SwapAddress), NewFilter("date = ?", swapCount.DateType), NewFilter("date_type = ?", swapCount.DateType))
+	//	fmt.Println("RowsAffected=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, swapCountKLine.LastSwapTransactionID, swapCountKLine.Date, swapCountKLine.DateType)
+	//} else {
+	//
+	//	fmt.Println("RowsAffected!=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, after.LastSwapTransactionID)
+	//}
 
 	return &after, nil
 }

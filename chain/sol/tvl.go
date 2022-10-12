@@ -320,7 +320,19 @@ func (tvl *TVL) getTvl() error {
 }
 
 func SwapConfigList() []*domain.SwapConfig {
+	return append(SwapConfigListV1(), SwapConfigListV2()...)
+}
+
+func SwapConfigListV1() []*domain.SwapConfig {
 	return swapConfigList
+}
+
+// SwapConfigListV2 给每个v2 版本赋值，以区分版本
+func SwapConfigListV2() []*domain.SwapConfig {
+	for i := range swapConfigListV2 {
+		swapConfigListV2[i].Version = "v2"
+	}
+	return swapConfigListV2
 }
 
 // getInstructionLen 获取第一个Instruction data长度
