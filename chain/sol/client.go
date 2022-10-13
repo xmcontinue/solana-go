@@ -80,7 +80,7 @@ func Init(conf *config.Config) error {
 		activityEventParser = event.NewActivityEventParser()
 
 		wg.Add(1)
-		go watchSwapPairsConfig(resChan, &swapConfigList)
+		go watchSwapPairsConfig(resChan, &swapConfigList, "")
 		wg.Wait()
 
 		etcdSwapPairsKeyV2 = "/" + domain.GetPublicPrefix() + etcdSwapPairsKeyV2
@@ -92,7 +92,7 @@ func Init(conf *config.Config) error {
 		}
 
 		wg.Add(1)
-		go watchSwapPairsConfig(resChanV2, &swapConfigListV2)
+		go watchSwapPairsConfig(resChanV2, &swapConfigListV2, "v2")
 		wg.Wait()
 
 		// 加载网络配置
@@ -123,7 +123,7 @@ func newWSConnect() *ws.Client {
 }
 
 // watchSwapPairsConfig 监听swap pairs配置变动
-func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[]*domain.SwapConfig) {
+func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[]*domain.SwapConfig, version string) {
 	for {
 		select {
 		case res := <-swapConfigChan:
@@ -140,27 +140,33 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[
 			// 加载配置
 			for _, v := range *swapConfigList {
 				v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-				v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+
 				v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
-
-				//tokenATokenAccount, _, _ := solana.FindAssociatedTokenAddress(v.SwapPublicKey, v.TokenA.TokenMintPublicKey)
-
-				//v.TokenA.SwapTokenAccount = tokenATokenAccount.String()
-
 				v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
-				if v.TokenA.RefundAddress != "" {
-					v.TokenA.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.RefundAddress)
-					v.TokenB.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.RefundAddress)
-				}
 
-				if v.Version == "v2" {
+				if version == "v2" {
+					tokenATokenAccount, _, _ := solana.FindAssociatedTokenAddress(v.SwapPublicKey, v.TokenA.TokenMintPublicKey)
+
+					v.TokenA.SwapTokenAccount = tokenATokenAccount.String()
+
+					tokenBTokenAccount, _, _ := solana.FindAssociatedTokenAddress(v.SwapPublicKey, v.TokenB.TokenMintPublicKey)
+
+					v.TokenB.SwapTokenAccount = tokenBTokenAccount.String()
+
 					//  如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
 					if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
 						temp := v.TokenB
 						v.TokenB = v.TokenA
 						v.TokenA = temp
 					}
+				}
+
+				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
+				v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
+
+				if v.TokenA.RefundAddress != "" {
+					v.TokenA.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.RefundAddress)
+					v.TokenB.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.RefundAddress)
 				}
 
 				swapMap[v.SwapAccount] = v
