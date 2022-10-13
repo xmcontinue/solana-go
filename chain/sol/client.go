@@ -143,6 +143,11 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[
 				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
 				v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
 				v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
+
+				//tokenATokenAccount, _, _ := solana.FindAssociatedTokenAddress(v.SwapPublicKey, v.TokenA.TokenMintPublicKey)
+
+				//v.TokenA.SwapTokenAccount = tokenATokenAccount.String()
+
 				v.TokenB.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.TokenMint)
 				if v.TokenA.RefundAddress != "" {
 					v.TokenA.RefundAddressPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.RefundAddress)

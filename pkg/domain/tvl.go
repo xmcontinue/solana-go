@@ -151,6 +151,8 @@ type SwapCountToApiPool struct {
 	Name                        string         `json:"name"`
 	Test24h                     string         `json:"test_24_h"`
 	Test7d                      string         `json:"test_7_d"`
+	Test7dNum                   uint64         `json:"test_7_d_num"`
+	Test30dNum                  uint64         `json:"test_30_d_num"`
 	Test30d                     string         `json:"test_30_d"`
 	TvlInUsd                    string         `json:"tvl_in_usd"`
 	VolInUsd24h                 string         `json:"vol_in_usd_24h"`

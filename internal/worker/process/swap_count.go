@@ -147,6 +147,8 @@ func SwapTotalCount() error {
 			Test24h:                     swapCount24h.FeeAmount.String(),
 			Test7d:                      swapCount7d.FeeAmount.String(),
 			Test30d:                     swapCount30d.FeeAmount.String(),
+			Test7dNum:                   swapCount7d.DayNum,
+			Test30dNum:                  swapCount30d.DayNum,
 			SwapAccount:                 v.SwapAccount,
 			TokenAReserves:              v.TokenA.SwapTokenAccount,
 			TokenBReserves:              v.TokenB.SwapTokenAccount,
