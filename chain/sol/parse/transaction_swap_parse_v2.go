@@ -60,11 +60,7 @@ func (s *SwapRecordV2) GetTokenARefAmount() decimal.Decimal {
 }
 
 func (s *SwapRecordV2) GetTokenAFeeAmount() decimal.Decimal {
-	if s.Direction == 1 {
-		return s.FeeAmount
-	}
-	return decimal.Zero
-
+	return s.FeeAmount
 }
 
 func (s *SwapRecordV2) GetTokenAProtocolAmount() decimal.Decimal {
@@ -83,10 +79,7 @@ func (s *SwapRecordV2) GetTokenBRefAmount() decimal.Decimal {
 }
 
 func (s *SwapRecordV2) GetTokenBFeeAmount() decimal.Decimal {
-	if s.Direction == 0 {
-		return s.FeeAmount
-	}
-	return decimal.Zero
+	return s.FeeAmount
 }
 
 func (s *SwapRecordV2) GetTokenBProtocolAmount() decimal.Decimal {
