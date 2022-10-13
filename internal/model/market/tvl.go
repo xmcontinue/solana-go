@@ -448,6 +448,8 @@ func SumSwapCountVolForKLines(ctx context.Context, filter ...Filter) (*domain.Sw
 		"SUM(token_a_quote_volume*token_ausd_for_contract) as token_a_quote_volume_for_usd, " +
 		"SUM(token_b_quote_volume*token_busd_for_contract) as token_b_quote_volume_for_usd, SUM(tx_num) as tx_num," +
 		"SUM(token_a_fee_amount*token_ausd_for_contract + token_b_fee_amount*token_busd_for_contract) as fee_amount," +
+		"SUM(token_a_ref_amount*token_ausd_for_contract + token_b_ref_amount*token_busd_for_contract) as ref_amount," +
+		"SUM(token_a_protocol_amount*token_ausd_for_contract + token_b_protocol_amount*token_busd_for_contract) as protocol_amount," +
 		"COUNT(*) as day_num").Scopes(filter...).Scan(&swapCountKLineVolCount).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}

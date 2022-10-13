@@ -121,6 +121,8 @@ type SwapCountKLineVolCount struct {
 	TokenAQuoteVolumeForUsd decimal.Decimal `json:"token_a_quote_volume_for_usd"` // swap token a 交易额(获得方)(USD)
 	TokenBQuoteVolumeForUsd decimal.Decimal `json:"token_b_quote_volume_for_usd"` // swap token b 交易额(获得方)(USD)
 	FeeAmount               decimal.Decimal `json:"fee_amount"`                   // swap token b 交易额(获得方)(USD)
+	RefAmount               decimal.Decimal `json:"ref_amount"`                   // 渠道商获取的总fee
+	ProtocolAmount          decimal.Decimal `json:"protocol_amount"`              // 池子获取的总fee
 	TxNum                   uint64          `json:"tx_num"`                       // swap token 总交易笔数
 	DayNum                  uint64          `json:"day_num"`
 }
@@ -149,11 +151,17 @@ type SwapCountToApi struct {
 
 type SwapCountToApiPool struct {
 	Name                        string         `json:"name"`
-	Test24h                     string         `json:"test_24_h"`
-	Test7d                      string         `json:"test_7_d"`
+	Test24hFeeAmount            string         `json:"test_24_h_fee_amount"`
+	Test7dFeeAmount             string         `json:"test_7_d_fee_amount"`
 	Test7dNum                   uint64         `json:"test_7_d_num"`
 	Test30dNum                  uint64         `json:"test_30_d_num"`
-	Test30d                     string         `json:"test_30_d"`
+	Test30dFeeAmount            string         `json:"test_30_d_fee_amount"`
+	Test24hRefAmount            string         `json:"test_24h_ref_amount"`
+	Test24hProAmount            string         `json:"test_24h_pro_amount"`
+	Test7dRefAmount             string         `json:"test_7d_ref_amount"`
+	Test7dProAmount             string         `json:"test_7d_pro_amount"`
+	Test30dRefAmount            string         `json:"test_30d_ref_amount"`
+	Test30dProAmount            string         `json:"test_30d_pro_amount"`
 	TvlInUsd                    string         `json:"tvl_in_usd"`
 	VolInUsd24h                 string         `json:"vol_in_usd_24h"`
 	TxNum24h                    uint64         `json:"tx_num_24h"`
