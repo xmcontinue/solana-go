@@ -52,11 +52,7 @@ type SwapRecordV2 struct {
 }
 
 func (s *SwapRecordV2) GetTokenARefAmount() decimal.Decimal {
-	if s.Direction == 1 {
-		return s.RefAmount
-	}
-	return decimal.Zero
-
+	return s.RefAmount
 }
 
 func (s *SwapRecordV2) GetTokenAFeeAmount() decimal.Decimal {
@@ -64,18 +60,11 @@ func (s *SwapRecordV2) GetTokenAFeeAmount() decimal.Decimal {
 }
 
 func (s *SwapRecordV2) GetTokenAProtocolAmount() decimal.Decimal {
-	if s.Direction == 1 {
-		return s.ProtocolAmount
-	}
-	return decimal.Zero
-
+	return s.ProtocolAmount
 }
 
 func (s *SwapRecordV2) GetTokenBRefAmount() decimal.Decimal {
-	if s.Direction == 0 {
-		return s.RefAmount
-	}
-	return decimal.Zero
+	return s.RefAmount
 }
 
 func (s *SwapRecordV2) GetTokenBFeeAmount() decimal.Decimal {
@@ -83,10 +72,7 @@ func (s *SwapRecordV2) GetTokenBFeeAmount() decimal.Decimal {
 }
 
 func (s *SwapRecordV2) GetTokenBProtocolAmount() decimal.Decimal {
-	if s.Direction == 0 {
-		return s.ProtocolAmount
-	}
-	return decimal.Zero
+	return s.ProtocolAmount
 }
 
 func (s *SwapRecordV2) GetSwapConfig() *domain.SwapConfig {
