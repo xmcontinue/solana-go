@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -154,11 +153,11 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[
 					v.TokenB.SwapTokenAccount = tokenBTokenAccount.String()
 
 					//  如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
-					if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
-						temp := v.TokenB
-						v.TokenB = v.TokenA
-						v.TokenA = temp
-					}
+					//if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
+					//	temp := v.TokenB
+					//	v.TokenB = v.TokenA
+					//	v.TokenA = temp
+					//}
 				}
 
 				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
