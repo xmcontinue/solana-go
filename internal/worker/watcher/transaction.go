@@ -379,7 +379,12 @@ func (s *SyncTransaction) writeTxToDb(before *solana.Signature, until *solana.Si
 	if len(signatures) == 0 {
 		return errors.Wrap(errors.New(fmt.Sprintf("signatures is zero, swap_account: %s", s.swapConfig.SwapAccount)))
 	}
+
 	tokenAUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenA.Symbol)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
 	tokenBUSD, err := model.GetPriceForSymbol(context.Background(), s.swapConfig.TokenB.Symbol)
 	if err != nil {
 		return errors.Wrap(err)
