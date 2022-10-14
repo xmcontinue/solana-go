@@ -36,6 +36,10 @@ func SyncSwapPrice() error {
 
 	// 同步swap pair price
 	for _, config := range configs {
+		if config.Version != "v2" {
+			continue
+		}
+
 		res, err := sol.GetRpcClient().GetAccountInfo(context.Background(), config.SwapPublicKey)
 		if err != nil {
 			return errors.Wrap(err)
