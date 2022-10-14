@@ -363,8 +363,11 @@ func tick2SqrtPrice(tick int32) decimal.Decimal {
 const (
 	PositionV2DataLen = 216
 	PositionDataLen   = 216
-	ProgramIDV2       = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
-	ProgramID         = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
+	// 正式环境
+	ProgramIDV2 = "CLMM9tUoggJu2wagPkkqs9eFG4BWhVBZWkP1qv3Sp7tR"
+	// 测试环境
+	//ProgramIDV2       = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
+	ProgramID = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
 	//swapAccount = "DVPzDyY3Zi6V11R72wJ2r9k2tJXtNRekmSAuAdZ2bFHd"
 )
 
