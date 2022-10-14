@@ -44,6 +44,8 @@ func (t *Txv2) ParseAllV2(logs string) error {
 	for _, logMessageEvent := range logMessageEvents {
 		if logMessageEvent.EventName == event.SwapEventName {
 			err = t.createSwapRecord(logMessageEvent)
+		} else if logMessageEvent.EventName == event.SwapWithPartnerEventName {
+			err = t.createSwapWithPartnerRecord(logMessageEvent)
 		} else if logMessageEvent.EventName == event.IncreaseLiquidityEventName {
 			err = t.createIncreaseLiquidityRecord(logMessageEvent)
 		} else if logMessageEvent.EventName == event.DecreaseLiquidityEventName {
@@ -86,6 +88,12 @@ func (t *Txv2) ParseSwapV2(logs string) error {
 		// 直接洗swap事件
 		if logMessageEvent.EventName == event.SwapEventName {
 			err = t.createSwapRecord(logMessageEvent)
+			if err != nil {
+				continue
+			}
+		}
+		if logMessageEvent.EventName == event.SwapWithPartnerEventName {
+			err = t.createSwapWithPartnerRecord(logMessageEvent)
 			if err != nil {
 				continue
 			}

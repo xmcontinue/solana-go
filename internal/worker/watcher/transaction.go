@@ -277,7 +277,7 @@ func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
 	var userAccount string
 	if len(tx.SwapRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txTypeMap[parse.SwapType] = struct{}{}
+			txTypeMap[v.EventName] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}

@@ -35,6 +35,7 @@ type SwapRecordIface interface {
 // SwapRecordV2 解析后的swap数据
 type SwapRecordV2 struct {
 	SwapAccount       string
+	EventName         string
 	UserOwnerAddress  string
 	UserTokenAAddress string
 	UserTokenBAddress string
@@ -149,8 +150,6 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.RefAmount)), int(swapConfig.TokenA.Decimal))
 		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.FeeAmount)), int(swapConfig.TokenA.Decimal))
 		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.ProtocolAmount)), int(swapConfig.TokenA.Decimal))
-		// fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
-		// fmt.Println("交易额", amountIn.String(), amountOut.String())
 	} else {
 		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountIn)), int(swapConfig.TokenB.Decimal))
 		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swap.AmountOut)), int(swapConfig.TokenA.Decimal))
@@ -161,11 +160,10 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.RefAmount)), int(swapConfig.TokenB.Decimal))
 		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.FeeAmount)), int(swapConfig.TokenB.Decimal))
 		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.ProtocolAmount)), int(swapConfig.TokenB.Decimal))
-		// fmt.Println("余额", tokenABalance.String(), tokenBBalance.String())
-		// fmt.Println("交易额", amountIn.String(), amountOut.String())
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
+		EventName:         event.SwapEventName,
 		UserOwnerAddress:  swap.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
 		UserTokenBAddress: UserTokenB.String(),
@@ -179,6 +177,71 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		VaultAAmount:      tokenABalance,
 		VaultBAmount:      tokenBBalance,
 		Price:             PrecisionConversion(decimal.New(int64(swap.AmountOut), 0), int(swapConfig.TokenB.Decimal)).Div(PrecisionConversion(decimal.New(int64(swap.AmountIn), 0), int(swapConfig.TokenA.Decimal))),
+		SwapConfig:        swapConfig,
+	})
+
+	return nil
+}
+
+func (t *Txv2) createSwapWithPartnerRecord(logMessageEvent event.EventRep) error {
+	swapWithPartnerEvent := logMessageEvent.Event.(*event.SwapWithPartnerEvent)
+
+	swapConfig, ok := swapConfigMap[swapWithPartnerEvent.Pool.String()]
+	if !ok {
+		return nil
+	}
+
+	UserTokenA, _, err := solana.FindAssociatedTokenAddress(swapWithPartnerEvent.Owner, solana.MustPublicKeyFromBase58(swapConfig.TokenA.TokenMint))
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	UserTokenB, _, err := solana.FindAssociatedTokenAddress(swapWithPartnerEvent.Owner, solana.MustPublicKeyFromBase58(swapConfig.TokenB.TokenMint))
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	direction, tokenABalance, tokenBBalance, amountIn, amountOut := int8(0), decimal.Zero, decimal.Zero, decimal.Zero, decimal.Zero
+	refAmount, feeAmount, protocolAmount := decimal.Zero, decimal.Zero, decimal.Zero
+
+	if swapWithPartnerEvent.AToB {
+		direction = 1
+		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.AmountIn)), int(swapConfig.TokenA.Decimal))
+		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.AmountOut)), int(swapConfig.TokenB.Decimal))
+
+		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Add(amountIn)
+		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Sub(amountOut)
+
+		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.RefAmount)), int(swapConfig.TokenA.Decimal))
+		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.FeeAmount)), int(swapConfig.TokenA.Decimal))
+		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.ProtocolAmount)), int(swapConfig.TokenA.Decimal))
+	} else {
+		amountIn = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.AmountIn)), int(swapConfig.TokenB.Decimal))
+		amountOut = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.AmountOut)), int(swapConfig.TokenA.Decimal))
+
+		tokenABalance = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.VaultBAmount)), int(swapConfig.TokenB.Decimal)).Add(amountIn)
+		tokenBBalance = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.VaultAAmount)), int(swapConfig.TokenA.Decimal)).Sub(amountOut)
+
+		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.RefAmount)), int(swapConfig.TokenB.Decimal))
+		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.FeeAmount)), int(swapConfig.TokenB.Decimal))
+		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.ProtocolAmount)), int(swapConfig.TokenB.Decimal))
+	}
+
+	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
+		EventName:         event.SwapEventName,
+		UserOwnerAddress:  swapWithPartnerEvent.Owner.String(),
+		UserTokenAAddress: UserTokenA.String(),
+		UserTokenBAddress: UserTokenB.String(),
+		ProgramAddress:    cremaSwapProgramAddressV2,
+		Direction:         direction,
+		AmountIn:          amountIn,
+		AmountOut:         amountOut,
+		RefAmount:         refAmount,
+		FeeAmount:         feeAmount,
+		ProtocolAmount:    protocolAmount,
+		VaultAAmount:      tokenABalance,
+		VaultBAmount:      tokenBBalance,
+		Price:             PrecisionConversion(decimal.New(int64(swapWithPartnerEvent.AmountOut), 0), int(swapConfig.TokenB.Decimal)).Div(PrecisionConversion(decimal.New(int64(swapWithPartnerEvent.AmountIn), 0), int(swapConfig.TokenA.Decimal))),
 		SwapConfig:        swapConfig,
 	})
 

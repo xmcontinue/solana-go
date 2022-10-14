@@ -20,12 +20,14 @@ func transactionIDCache() error {
 
 	lastSwapTransactionV2, err := model.GetSwapTransactionV2(context.Background(), model.OrderFilter("id desc"))
 	if err != nil {
-		logger.Error("sync transaction id err", logger.Errorv(err))
-		return errors.Wrap(err)
-	}
-
-	if lastSwapTransactionV2.ID > lastSwapTransaction.ID {
-		lastSwapTransaction.ID = lastSwapTransactionV2.ID
+		if errors.Is(err, errors.RecordNotFound) {
+			if lastSwapTransactionV2.ID > lastSwapTransaction.ID {
+				lastSwapTransaction.ID = lastSwapTransactionV2.ID
+			}
+		} else {
+			logger.Error("sync transaction id err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
 	}
 
 	err = redisClient.Set(context.TODO(), domain.LastSwapTransactionID().Key, lastSwapTransaction.ID, 0).Err()
