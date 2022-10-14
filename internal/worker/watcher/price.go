@@ -36,9 +36,6 @@ func SyncSwapPrice() error {
 
 	// 同步swap pair price
 	for _, config := range configs {
-		if config.SwapAccount != "3v8aZvUGUyBNT9xe1Sck1SbJkFG621w9YmGM1iAxVWPd" {
-			continue
-		}
 		res, err := sol.GetRpcClient().GetAccountInfo(context.Background(), config.SwapPublicKey)
 		if err != nil {
 			return errors.Wrap(err)
@@ -52,7 +49,7 @@ func SyncSwapPrice() error {
 		} else {
 			swapPrice = parse.GetSwapPrice(res, config)
 		}
-		fmt.Println("swapPrice", swapPrice.String())
+		fmt.Println("swapPrice", config.SwapAccount, swapPrice.String())
 		swapPairPrices = append(swapPairPrices, &swapPairPrice{
 			TokenASymbol: config.TokenA.Symbol,
 			TokenBSymbol: config.TokenB.Symbol,
