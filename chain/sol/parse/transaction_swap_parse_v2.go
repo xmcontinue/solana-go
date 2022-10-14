@@ -94,7 +94,7 @@ func (s *SwapRecordV2) GetTokenAVolume() decimal.Decimal {
 	return s.AmountOut
 }
 func (s *SwapRecordV2) GetTokenBVolume() decimal.Decimal {
-	if s.Direction == 1 {
+	if s.Direction == 0 {
 		return s.AmountIn
 	}
 	return s.AmountOut
