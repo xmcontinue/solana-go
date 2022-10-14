@@ -58,6 +58,12 @@ func Init(conf *config.Config) error {
 	var err error
 	once.Do(func() {
 
+		// 获取programID
+		err = conf.UnmarshalKey("program_address_crema_v2", &ProgramIDV2)
+		if err != nil {
+			panic(err.Error())
+		}
+
 		swapConfigMap = make(map[string]*domain.SwapConfig)
 		tokenConfigMap = make(map[string]*domain.Token)
 
