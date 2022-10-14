@@ -86,10 +86,17 @@ func (s *SwapRecordV2) GetUserOwnerAccount() string {
 func (s *SwapRecordV2) GetPrice() decimal.Decimal {
 	return s.Price
 }
+
 func (s *SwapRecordV2) GetTokenAVolume() decimal.Decimal {
-	return s.AmountIn
+	if s.Direction == 1 {
+		return s.AmountIn
+	}
+	return s.AmountOut
 }
 func (s *SwapRecordV2) GetTokenBVolume() decimal.Decimal {
+	if s.Direction == 1 {
+		return s.AmountIn
+	}
 	return s.AmountOut
 }
 func (s *SwapRecordV2) GetTokenABalance() decimal.Decimal {
