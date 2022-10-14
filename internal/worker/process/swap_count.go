@@ -124,7 +124,6 @@ func SwapTotalCount() error {
 		}
 
 		// 汇总处理
-		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
@@ -133,6 +132,8 @@ func SwapTotalCount() error {
 		if strings.ToLower(v.Version) != "v2" {
 			continue // pool和token只统计v2
 		}
+
+		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
