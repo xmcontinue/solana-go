@@ -101,9 +101,7 @@ func SyncSwapPrice() error {
 		"SOL":   {solPrice},
 		"pUSDC": {decimal.NewFromInt(1)},
 		"CUSDC": {decimal.NewFromInt(1)},
-		"CRM":   {decimal.NewFromInt(1)}, // TODO 新增价格，测试使用
-		"tSOL":  {decimal.NewFromInt(1)},
-		"tUSDT": {decimal.NewFromInt(1)},
+		// TODO 新增价格，测试使用
 		"tUSDC": {decimal.NewFromInt(1)},
 	}
 
