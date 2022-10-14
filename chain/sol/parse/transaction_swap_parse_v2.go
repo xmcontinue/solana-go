@@ -39,7 +39,6 @@ type SwapRecordV2 struct {
 	UserOwnerAddress  string
 	UserTokenAAddress string
 	UserTokenBAddress string
-	ProgramAddress    string
 	Direction         int8 // 0为A->B,1为B->A
 	AmountIn          decimal.Decimal
 	AmountOut         decimal.Decimal
@@ -167,7 +166,6 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		UserOwnerAddress:  swap.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
 		UserTokenBAddress: UserTokenB.String(),
-		ProgramAddress:    cremaSwapProgramAddressV2,
 		Direction:         direction,
 		AmountIn:          amountIn,
 		AmountOut:         amountOut,
@@ -232,7 +230,6 @@ func (t *Txv2) createSwapWithPartnerRecord(logMessageEvent event.EventRep) error
 		UserOwnerAddress:  swapWithPartnerEvent.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
 		UserTokenBAddress: UserTokenB.String(),
-		ProgramAddress:    cremaSwapProgramAddressV2,
 		Direction:         direction,
 		AmountIn:          amountIn,
 		AmountOut:         amountOut,

@@ -8,12 +8,6 @@ import (
 	event "git.cplus.link/crema/backend/chain/event/parser"
 )
 
-// 正式环境
-//const cremaSwapProgramAddressV2 = "CLMM9tUoggJu2wagPkkqs9eFG4BWhVBZWkP1qv3Sp7tR"
-
-// dev 环境
-const cremaSwapProgramAddressV2 = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
-
 type Txv2 struct {
 	SwapRecords      []*SwapRecordV2
 	LiquidityRecords []*LiquidityRecordV2
