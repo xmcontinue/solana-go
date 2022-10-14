@@ -8,6 +8,7 @@ import (
 )
 
 type CollectRecordV2 struct {
+	EventName        string
 	SwapConfig       *domain.SwapConfig
 	UserOwnerAddress string
 	AmountA          uint64
@@ -51,6 +52,7 @@ func (t *Txv2) createCollectRecord(logMessageEvent event.EventRep) error {
 	}
 
 	t.ClaimRecords = append(t.ClaimRecords, &CollectRecordV2{
+		EventName:        event.CollectEventName,
 		SwapConfig:       swapConfig,
 		UserOwnerAddress: collectEvent.Owner.String(),
 		AmountA:          collectEvent.AmountA,

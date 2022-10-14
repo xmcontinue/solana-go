@@ -284,18 +284,14 @@ func getTxTypeAndUserAccountV2(tx *parse.Txv2) (string, string) {
 
 	if len(tx.LiquidityRecords) != 0 {
 		for _, v := range tx.LiquidityRecords {
-			if v.Direction == 0 {
-				txTypeMap[parse.DecreaseLiquidityType] = struct{}{}
-			} else {
-				txTypeMap[parse.IncreaseLiquidityType] = struct{}{}
-			}
+			txTypeMap[v.EventName] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}
 
 	if len(tx.ClaimRecords) != 0 {
 		for _, v := range tx.SwapRecords {
-			txTypeMap[parse.ClaimType] = struct{}{}
+			txTypeMap[v.EventName] = struct{}{}
 			userAccount = v.GetUserAddress()
 		}
 	}

@@ -10,6 +10,7 @@ import (
 )
 
 type LiquidityRecordV2 struct {
+	EventName        string
 	SwapConfig       *domain.SwapConfig
 	UserOwnerAddress string
 	Direction        int8
@@ -61,6 +62,7 @@ func (t *Txv2) createIncreaseLiquidityRecord(logMessageEvent event.EventRep) err
 	}
 
 	t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecordV2{
+		EventName:        event.IncreaseLiquidityEventName,
 		SwapConfig:       swapConfig,
 		UserOwnerAddress: increaseLiquidityEvent.Owner.String(),
 		DeltaLiquidity:   increaseLiquidityEvent.DeltaLiquidity,
@@ -81,6 +83,7 @@ func (t *Txv2) createDecreaseLiquidityRecord(logMessageEvent event.EventRep) err
 	}
 
 	t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecordV2{
+		EventName:        event.DecreaseLiquidityEventName,
 		SwapConfig:       swapConfig,
 		UserOwnerAddress: decreaseLiquidityEvent.Owner.String(),
 		DeltaLiquidity:   decreaseLiquidityEvent.DeltaLiquidity,
@@ -100,6 +103,7 @@ func (t *Txv2) createIncreaseLiquidityWithFixedTokenRecord(logMessageEvent event
 	}
 
 	t.LiquidityRecords = append(t.LiquidityRecords, &LiquidityRecordV2{
+		EventName:        event.IncreaseLiquidityWithFixedTokenEventName,
 		SwapConfig:       swapConfig,
 		UserOwnerAddress: fixedTokenEvent.Owner.String(),
 		DeltaLiquidity:   fixedTokenEvent.DeltaLiquidity,
