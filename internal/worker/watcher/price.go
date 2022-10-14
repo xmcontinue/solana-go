@@ -2,7 +2,6 @@ package watcher
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -53,7 +52,7 @@ func SyncSwapPrice() error {
 		} else {
 			swapPrice = parse.GetSwapPrice(res, config)
 		}
-		fmt.Println("swapPrice", config.SwapAccount, swapPrice.String())
+
 		swapPairPrices = append(swapPairPrices, &swapPairPrice{
 			TokenASymbol: config.TokenA.Symbol,
 			TokenBSymbol: config.TokenB.Symbol,
@@ -126,7 +125,7 @@ func SyncSwapPrice() error {
 			Settle:   v.Price,
 			DateType: domain.DateMin,
 		}
-		fmt.Println(v.Price)
+
 		for _, t := range Kline.Types {
 			swapTokenPriceKLine.Date = t.Date
 			swapTokenPriceKLine.DateType = t.DateType
