@@ -25,7 +25,7 @@ func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq,
 	}
 
 	if args.Name == "v2-swap-pairs" {
-		swapConfigListV2 := &[]*domain.SwapConfig{}
+		swapConfigListV2 := &[]*domain.SwapConfigView{}
 
 		err := json.Unmarshal(*reply, swapConfigListV2)
 		if err != nil {

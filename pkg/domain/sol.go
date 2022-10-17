@@ -23,7 +23,7 @@ type SwapConfig struct {
 	TokenA        Token          `json:"token_a" mapstructure:"token_a"`
 	TokenB        Token          `json:"token_b" mapstructure:"token_b"`
 	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
-	Version       string         `json:"version"    mapstructure:"version"`
+	Version       string         `json:"-"    mapstructure:"version"`
 	IsPause       bool           `json:"isPause"   mapstructure:"-"`
 }
 
@@ -45,4 +45,24 @@ type Token struct {
 	ShowDecimal            uint8           `json:"show_decimal" mapstructure:"show_decimal"`
 	Balance                decimal.Decimal `json:"-"`
 	RefundBalance          decimal.Decimal `json:"-"`
+}
+
+type SwapConfigView struct {
+	Name          string         `json:"name" mapstructure:"name"`
+	Fee           string         `json:"fee" mapstructure:"fee"`
+	SwapAccount   string         `json:"swap_account" mapstructure:"swap_account"`
+	PoolAddress   string         `json:"pool_address" mapstructure:"pool_address"`
+	TokenA        TokenView      `json:"token_a" mapstructure:"token_a"`
+	TokenB        TokenView      `json:"token_b" mapstructure:"token_b"`
+	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
+	IsPause       bool           `json:"isPause"   mapstructure:"-"`
+}
+
+type TokenView struct {
+	Symbol           string `json:"symbol" mapstructure:"symbol"`
+	Name             string `json:"name" mapstructure:"name"`
+	TokenMint        string `json:"token_mint" mapstructure:"token_mint"`
+	Decimal          uint8  `json:"decimal" mapstructure:"decimal"`
+	ShowDecimal      uint8  `json:"show_decimal" mapstructure:"show_decimal"`
+	CalculateDecimal uint8  `json:"calculate_decimal" mapstructure:"calculate_decimal"`
 }
