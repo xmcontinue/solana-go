@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math/big"
 
+	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
 	ag_binary "github.com/gagliardetto/binary"
 	bin "github.com/gagliardetto/binary"
@@ -58,21 +59,40 @@ func GetSwapPriceV2(account *rpc.GetAccountInfoResult, config *domain.SwapConfig
 	return tmpPrice
 }
 
+const (
+	rewardLen = 160
+	rewardNum = 3
+)
+
 type Clmmpool struct {
-	ClmmConfig       solana.PublicKey
-	TokenA           solana.PublicKey
-	TokenB           solana.PublicKey
-	TokenAVault      solana.PublicKey
-	TokenBVault      solana.PublicKey
-	TickSpacing      uint16
-	TickSpacingSeed  uint16
-	FeeRate          uint16
-	Liquidity        ag_binary.Uint128
-	CurrentSqrtPrice ag_binary.Uint128
-	//CurrentTickIndex  int32
-	//FeeGrowthGlobalA  decimalU128
-	//FeeGrowthGlobalB  decimalU128
-	//DeeProtocolTokenA uint64
-	//DeeProtocolTokenB uint64
-	//Bump              decimalU6412
+	ClmmConfig              solana.PublicKey
+	TokenA                  solana.PublicKey
+	TokenB                  solana.PublicKey
+	TokenAVault             solana.PublicKey
+	TokenBVault             solana.PublicKey
+	TickSpacing             uint16
+	TickSpacingSeed         uint16
+	FeeRate                 uint16
+	Liquidity               ag_binary.Uint128
+	CurrentSqrtPrice        ag_binary.Uint128
+	CurrentTickIndex        int32
+	FeeGrowthGlobalA        ag_binary.Uint128
+	FeeGrowthGlobalB        ag_binary.Uint128
+	DeeProtocolTokenA       uint64
+	DeeProtocolTokenB       uint64
+	Bump                    uint8
+	RewarderInfos           [rewardNum * rewardLen]uint8
+	RewarderLastUpdatedTime uint64
+	IsPause                 bool
+}
+
+func GetPoolPauseStatus(account *rpc.GetAccountInfoResult) (bool, error) {
+	c := &Clmmpool{}
+	var err error
+
+	err = bin.NewBinDecoder(account.Value.Data.GetBinary()[8:]).Decode(c)
+	if err != nil {
+		return false, errors.Wrap(err)
+	}
+	return c.IsPause, nil
 }

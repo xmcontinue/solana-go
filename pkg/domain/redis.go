@@ -35,6 +35,10 @@ func LastSwapTransactionID() RedisKey {
 	return RedisKey{fmt.Sprintf("%s:swap:transaction:last:id", publicPrefix), time.Hour, 0}
 }
 
+func SwapStatusKey() RedisKey {
+	return RedisKey{fmt.Sprintf("%s:swap:pause:status", publicPrefix), 0, 0}
+}
+
 // AccountSwapVolCountKey 总交易额
 // 使用两个accountAddress，当获取swap account时，第二个为空，
 // 当获取user account 时，第一个表示useraccount ，第二个表示对应的swap account 地址，因为一个user swap 可能参与多个swap 交易
