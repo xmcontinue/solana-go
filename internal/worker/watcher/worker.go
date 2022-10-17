@@ -94,7 +94,7 @@ func Init(viperConf *config.Config) error {
 	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncSwapPrice)
 
 	// 同步swap status
-	_, err = job.Cron.AddFunc(getSpec("sync_kline"), syncSwapStatus)
+	_, err = job.Cron.AddFunc(getSpec("tvl_cache"), syncSwapStatus)
 	// TODO 由于未测试完成其他功能上线，此处暂时关闭
 	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
