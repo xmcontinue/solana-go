@@ -46,6 +46,10 @@ func (t *MarketService) GetConfig(ctx context.Context, args *iface.GetConfigReq,
 			}
 			v.IsPause = status
 		}
+
+		v2, _ := json.Marshal(*swapConfigListV2)
+		*reply = v2
+		return nil
 	}
 	return nil
 }
