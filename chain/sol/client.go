@@ -128,22 +128,39 @@ func newWSConnect() *ws.Client {
 }
 
 // watchSwapPairsConfig 监听swap pairs配置变动
-func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList *[]*domain.SwapConfig, version string) {
+func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList1 *[]*domain.SwapConfig, version string) {
 	for {
 		select {
 		case res := <-swapConfigChan:
 			configLock.Lock()
 
-			err := json.Unmarshal(res.Value, swapConfigList)
-			if err != nil {
-				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
+			var err error
+
+			swapConfigListTemp := make([]*domain.SwapConfig, 0)
+			if version == "v2" {
+				err = json.Unmarshal(res.Value, &swapConfigListTemp)
+				if err != nil {
+					logger.Error("swap config unmarshal failed :", logger.Errorv(err))
+					return
+				}
+				swapConfigListV2 = swapConfigListTemp
+
+			} else {
+
+				err = json.Unmarshal(res.Value, &swapConfigListTemp)
+				if err != nil {
+					logger.Error("swap config unmarshal failed :", logger.Errorv(err))
+					return
+				}
+				swapConfigList = swapConfigListTemp
+
 			}
 
-			swapMap := make(map[string]*domain.SwapConfig, len(*swapConfigList))
+			swapMap := make(map[string]*domain.SwapConfig, len(swapConfigListTemp))
 			tokenMap := make(map[string]*domain.Token, 0)
 
 			// 加载配置
-			for _, v := range *swapConfigList {
+			for _, v := range swapConfigListTemp {
 				v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
 
 				v.TokenA.TokenMintPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.TokenMint)
