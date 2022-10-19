@@ -98,7 +98,7 @@ func Init(viperConf *config.Config) error {
 	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
 	// 解析已经同步的数据，这些数据在第一次同步时没有解析类型和user_address
-	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncTypeAndUserAddressHistory)
+	_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
 
 	job.Cron.Start()
 
