@@ -51,7 +51,6 @@ type SwapConfigView struct {
 	Name          string         `json:"name" mapstructure:"name"`
 	Fee           string         `json:"fee" mapstructure:"fee"`
 	SwapAccount   string         `json:"swap_account" mapstructure:"swap_account"`
-	PoolAddress   string         `json:"pool_address" mapstructure:"pool_address"`
 	TokenA        TokenView      `json:"token_a" mapstructure:"token_a"`
 	TokenB        TokenView      `json:"token_b" mapstructure:"token_b"`
 	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
