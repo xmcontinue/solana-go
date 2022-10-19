@@ -129,11 +129,12 @@ func SwapTotalCount() error {
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
 
+		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
+
 		if strings.ToLower(v.Version) != "v2" {
 			continue // pool和token只统计v2
 		}
 
-		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
