@@ -51,6 +51,7 @@ func SwapTotalCount() error {
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
+		logger.Info("打印日志：1.1", logger.String("swap", v.SwapAccount))
 		// 获取token价格
 		newTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
 		newTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
