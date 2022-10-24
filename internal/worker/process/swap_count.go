@@ -138,14 +138,14 @@ func SwapTotalCount() error {
 		}
 		// 下面为token交易额，算双边
 		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal)
-
+		logger.Info("打印日志：3.1", logger.String("swap", v.SwapAccount))
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
 		if err != nil {
 			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
-
+		logger.Info("打印日志：3.2", logger.String("swap", v.SwapAccount))
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "hour"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
 			beforeContractPrice = newContractPrice
