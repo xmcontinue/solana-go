@@ -44,7 +44,7 @@ func SwapTotalCount() error {
 		Pools:  make([]*domain.SwapCountToApiPool, 0),
 		Tokens: make([]*domain.SwapCountToApiToken, 0),
 	}
-
+	logger.Info("打印日志：1")
 	ctx := context.Background()
 
 	// 获取swap pair 24h 内交易统计
@@ -101,7 +101,7 @@ func SwapTotalCount() error {
 				Apr24h = swapCount24h.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
 			}
 		}
-
+		logger.Info("打印日志：2", logger.String("swap", v.SwapAccount))
 		// --------------7day 计算--------------------
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
 
@@ -124,7 +124,7 @@ func SwapTotalCount() error {
 				Apr7day = swapCount7d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount7d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
 			}
 		}
-
+		logger.Info("打印日志：3", logger.String("swap", v.SwapAccount))
 		// ----------30 day 计算---------------
 		Apr30day := "0%"
 		if swapCount30d.TxNum != 0 {
@@ -150,7 +150,7 @@ func SwapTotalCount() error {
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
-
+		logger.Info("打印日志：4", logger.String("swap", v.SwapAccount))
 		// 汇总处理
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
@@ -158,11 +158,11 @@ func SwapTotalCount() error {
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
 
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
-
+		logger.Info("打印日志：5", logger.String("swap", v.SwapAccount))
 		if strings.ToLower(v.Version) != "v2" {
 			continue // pool和token只统计v2
 		}
-
+		logger.Info("打印日志：6", logger.String("swap", v.SwapAccount))
 		// pool统计
 		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
 		if newContractPrice.Settle.Round(countDecimal).IsZero() {
@@ -229,7 +229,7 @@ func SwapTotalCount() error {
 
 	// token数量
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
-
+	logger.Info("打印日志：7")
 	// 用户数量
 	total, err := model.CountUserNumber(context.Background())
 	if err != nil {
@@ -275,7 +275,7 @@ func SwapTotalCount() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("打印日志：8")
 	swapCountKey := domain.SwapTotalCountKey()
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
