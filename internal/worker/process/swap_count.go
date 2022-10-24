@@ -80,36 +80,64 @@ func SwapTotalCount() error {
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
 
+		var tvlInUsd decimal.Decimal
+
 		// 计算pairs vol,tvl 计算单边
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(v.TokenA.RefundBalance).Mul(newTokenAPrice).Round(countDecimal),
 			v.TokenB.Balance.Add(v.TokenB.RefundBalance).Mul(newTokenBPrice).Round(countDecimal) // v.TokenA.Balance.Add() v.TokenB.Balance.Add()
 
-		tokenAVol24h, tokenBVol24h := swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
-		tokenAVol7d, tokenBVol7d := swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
-		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
-		tvlInUsd, volInUsd24h, volInUsd7d, volInUsd := tokenATvl.Add(tokenBTvl), tokenAVol24h.Add(tokenBVol24h), tokenAVol7d.Add(tokenBVol7d), tokenAVol.Add(tokenBVol)
+		tvlInUsd = tokenATvl.Add(tokenBTvl)
 
-		// 下面为token交易额，算双边
-		tokenA24hVol, tokenB24hVol := tokenAVol24h.Add(swapCount24h.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolumeForUsd).Round(countDecimal)
-		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal)
+		// -------------1day 计算--------------
+		Apr24h := "%0"
+		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
+		if swapCount24h.TxNum != 0 {
+			tokenAVol24h, tokenBVol24h = swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
+			volInUsd24h = tokenAVol24h.Add(tokenBVol24h)
+
+			// 下面为token交易额，算双边
+			tokenA24hVol, tokenB24hVol = tokenAVol24h.Add(swapCount24h.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolumeForUsd).Round(countDecimal)
+			if !tvlInUsd.IsZero() {
+				Apr24h = swapCount24h.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			}
+		}
+
+		// --------------7day 计算--------------------
+		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
 
 		// 计算apr
 		apr := "0%"
-		Apr24h, Apr7day, Apr30day := "0%", "0%", "0%"
-		if swapCount7d.DayNum == 0 {
-			swapCount7d.DayNum = 1
-		}
-		if swapCount30d.DayNum == 0 {
-			swapCount30d.DayNum = 1
+		Apr7day := "0%"
+
+		var tokenAVol7d, tokenBVol7d, volInUsd7d, volInUsd decimal.Decimal
+		if swapCount7d.TxNum != 0 {
+			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
+			tvlInUsd, volInUsd7d, volInUsd = tokenATvl.Add(tokenBTvl), tokenAVol7d.Add(tokenBVol7d), tokenAVol.Add(tokenBVol)
+
+			if swapCount7d.DayNum == 0 {
+				swapCount7d.DayNum = 1
+			}
+
+			if !tvlInUsd.IsZero() {
+				fee, _ := decimal.NewFromString(v.Fee)
+				apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
+				Apr7day = swapCount7d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount7d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			}
 		}
 
-		if !tvlInUsd.IsZero() {
-			fee, _ := decimal.NewFromString(v.Fee)
-			apr = volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
-			Apr24h = swapCount24h.FeeAmount.Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
-			Apr7day = swapCount7d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount7d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
-			Apr30day = swapCount30d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount30d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+		// ----------30 day 计算---------------
+		Apr30day := "0%"
+		if swapCount30d.TxNum != 0 {
+			if swapCount30d.DayNum == 0 {
+				swapCount30d.DayNum = 1
+			}
+
+			if !tvlInUsd.IsZero() {
+				Apr30day = swapCount30d.FeeAmount.Div(decimal.NewFromInt(int64(swapCount30d.DayNum))).Mul(decimal.NewFromInt(36500)).Div(tvlInUsd).Round(2).String() + "%"
+			}
 		}
+		// 下面为token交易额，算双边
+		tokenATotalVol, tokenBTotalVol := tokenAVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol.Add(swapCountTotal.TokenAQuoteVolumeForUsd).Round(countDecimal)
 
 		// 查找合约内价格
 		newContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"), model.OrderFilter("id desc"))
@@ -145,18 +173,7 @@ func SwapTotalCount() error {
 			beforeContractPrice.Open = newContractPrice.Settle
 		}
 		swapCountToApiPool := &domain.SwapCountToApiPool{
-			Name: v.Name,
-			//Test24hFeeAmount:            swapCount24h.FeeAmount.String(),
-			//Test7dFeeAmount:             swapCount7d.FeeAmount.String(),
-			//Test30dFeeAmount:            swapCount30d.FeeAmount.String(),
-			//Test7dNum:                   swapCount7d.DayNum,
-			//Test30dNum:                  swapCount30d.DayNum,
-			//Test24hRefAmount:            swapCount24h.RefAmount.String(),
-			//Test24hProAmount:            swapCount24h.ProtocolAmount.String(),
-			//Test7dRefAmount:             swapCount7d.RefAmount.String(),
-			//Test7dProAmount:             swapCount7d.ProtocolAmount.String(),
-			//Test30dRefAmount:            swapCount30d.RefAmount.String(),
-			//Test30dProAmount:            swapCount30d.ProtocolAmount.String(),
+			Name:                        v.Name,
 			SwapAccount:                 v.SwapAccount,
 			TokenAReserves:              v.TokenA.SwapTokenAccount,
 			TokenBReserves:              v.TokenB.SwapTokenAccount,
