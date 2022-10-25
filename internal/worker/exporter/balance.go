@@ -25,6 +25,7 @@ type SmsConfig struct {
 var smsConfig = SmsConfig{}
 
 func WatchBalance() error {
+	return nil
 	swapPairs := sol.SwapConfigList()
 
 	positionsMode := make([]*domain.PositionCountSnapshot, 0)
