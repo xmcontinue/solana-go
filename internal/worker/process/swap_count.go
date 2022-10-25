@@ -81,14 +81,15 @@ func SwapTotalCount() error {
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
 
-		var tvlInUsd decimal.Decimal
+		var tvlInUsd, volInUsd decimal.Decimal
 
 		// 计算pairs vol,tvl 计算单边
 		tokenATvl, tokenBTvl := v.TokenA.Balance.Add(v.TokenA.RefundBalance).Mul(newTokenAPrice).Round(countDecimal),
 			v.TokenB.Balance.Add(v.TokenB.RefundBalance).Mul(newTokenBPrice).Round(countDecimal) // v.TokenA.Balance.Add() v.TokenB.Balance.Add()
 
 		tvlInUsd = tokenATvl.Add(tokenBTvl)
-
+		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
+		volInUsd = tokenAVol.Add(tokenBVol)
 		// -------------1day 计算--------------
 		Apr24h := "%0"
 		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
@@ -104,16 +105,14 @@ func SwapTotalCount() error {
 		}
 
 		// --------------7day 计算--------------------
-		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
-
 		// 计算apr
 		apr := "0%"
 		Apr7day := "0%"
 
-		var tokenAVol7d, tokenBVol7d, volInUsd7d, volInUsd decimal.Decimal
+		var tokenAVol7d, tokenBVol7d, volInUsd7d decimal.Decimal
 		if swapCount7d.TxNum != 0 {
 			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
-			tvlInUsd, volInUsd7d, volInUsd = tokenATvl.Add(tokenBTvl), tokenAVol7d.Add(tokenBVol7d), tokenAVol.Add(tokenBVol)
+			volInUsd7d = tokenAVol7d.Add(tokenBVol7d)
 
 			if swapCount7d.DayNum == 0 {
 				swapCount7d.DayNum = 1
