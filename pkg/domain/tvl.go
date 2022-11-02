@@ -90,8 +90,8 @@ type Tvl struct {
 	ID            int64        `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
-	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:varchar(32);"`
-	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:varchar(32);"`
+	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:text;"`
+	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:text;"`
 	TxNum         uint64       `json:"tx_num"`
 	CumuTxNum     uint64       `json:"cumu_tx_num"`
 	CumuVolInUsd  string       `json:"cumu_vol_in_usd"`
