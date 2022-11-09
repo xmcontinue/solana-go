@@ -26,6 +26,39 @@ type Position struct {
 	TokenBFee            decimalU12816
 }
 
+type SwapAccountV2 struct {
+	ClmmConfig              solana.PublicKey
+	TokenA                  solana.PublicKey
+	TokenB                  solana.PublicKey
+	TokenAVault             solana.PublicKey
+	TokenBVault             solana.PublicKey
+	TickSpacing             uint16
+	TickSpacingSeed         uint16
+	FeeRate                 uint16
+	Liquidity               decimalU128
+	CurrentSqrtPrice        decimalU128
+	CurrentTickIndex        uint32
+	FeeGrowthGlobalA        decimalU128
+	FeeGrowthGlobalB        decimalU128
+	FeeProtocolTokenA       uint64
+	FeeProtocolTokenB       uint64
+	Bump                    uint8
+	RewarderInfos           Rewarders
+	RewarderLastUpdatedTime uint64
+	IsPause                 bool
+}
+
+type Rewarders [480]byte
+
+type Rewarder struct {
+	MintWrapper        solana.PublicKey
+	Minter             solana.PublicKey
+	Mint               solana.PublicKey
+	Authority          solana.PublicKey
+	EmissionsPerSecond decimalU128
+	GrowthGlobal       decimalU128
+}
+
 type FarmingPosition struct {
 	Wrapper     solana.PublicKey
 	Owner       solana.PublicKey
@@ -96,6 +129,16 @@ const (
 	PositionsHeadLen = 38
 	PositionLen      = 120
 )
+
+func (r *Rewarders) list() []Rewarder {
+	list := make([]Rewarder, 0)
+	for i := 0; i < 3; i++ {
+		var rewarder Rewarder
+		_ = bin.NewBinDecoder(r[i*160 : (i+1)*160]).Decode(&rewarder)
+		list = append(list, rewarder)
+	}
+	return list
+}
 
 func (d *decimalU6412) Val() decimal.Decimal {
 	var v uint64
@@ -364,11 +407,11 @@ const (
 	PositionV2DataLen = 216
 	PositionDataLen   = 216
 	// 正式环境
-	//ProgramIDV2 = "CLMM9tUoggJu2wagPkkqs9eFG4BWhVBZWkP1qv3Sp7tR"
+	// ProgramIDV2 = "CLMM9tUoggJu2wagPkkqs9eFG4BWhVBZWkP1qv3Sp7tR"
 	// 测试环境
-	//ProgramIDV2 = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
+	// ProgramIDV2 = "CcLs6shXAUPEi19SGyCeEHU9QhYAWzV2dRpPPNA4aRb7"
 	ProgramID = "6MLxLqiXaaSUpkgMnWDTuejNZEz3kE7k2woyHGVFw319"
-	//swapAccount = "DVPzDyY3Zi6V11R72wJ2r9k2tJXtNRekmSAuAdZ2bFHd"
+	// swapAccount = "DVPzDyY3Zi6V11R72wJ2r9k2tJXtNRekmSAuAdZ2bFHd"
 )
 
 var ProgramIDV2 string

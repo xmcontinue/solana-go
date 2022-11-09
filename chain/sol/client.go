@@ -24,6 +24,7 @@ import (
 	event "git.cplus.link/crema/backend/chain/event/activity"
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/pkg/crema"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -33,6 +34,7 @@ const (
 
 var (
 	etcdSwapPairsKey   = "/swap-pairs"
+	etcdTokenListKey   = "/token-list"
 	etcdSwapPairsKeyV2 = "/v2-swap-pairs"
 )
 
@@ -46,6 +48,7 @@ var (
 	swapConfigListV2    []*domain.SwapConfig
 	swapConfigMap       map[string]*domain.SwapConfig
 	tokenConfigMap      map[string]*domain.Token
+	TokenList           []*domain.TokenInfo
 	once                sync.Once
 	wg                  sync.WaitGroup
 	isInit              bool
@@ -100,6 +103,18 @@ func Init(conf *config.Config) error {
 		go watchSwapPairsConfig(resChanV2, &swapConfigListV2, "v2")
 		wg.Wait()
 
+		etcdTokenListKey = "/" + domain.GetPublicPrefix() + etcdTokenListKey
+
+		stopTokenListChanV2 := make(chan struct{})
+		resTokenListChanV2, err := etcd.Watch(etcdTokenListKey, stopTokenListChanV2)
+		if err != nil {
+			return
+		}
+
+		wg.Add(1)
+		go watchTokenListConfig(resTokenListChanV2)
+		wg.Wait()
+
 		// 加载网络配置
 		err = initNet(conf)
 		if err != nil {
@@ -125,6 +140,32 @@ func newWSConnect() *ws.Client {
 		panic(err)
 	}
 	return wsCli
+}
+
+// watchTokenListConfig 监听token list配置变动
+func watchTokenListConfig(swapConfigChan <-chan *store.KVPair) {
+	for {
+		select {
+		case res := <-swapConfigChan:
+			configLock.Lock()
+
+			var err error
+
+			tokenListTemp := make([]*domain.TokenInfo, 0)
+			err = json.Unmarshal(res.Value, &tokenListTemp)
+			if err != nil {
+				logger.Error("swap config unmarshal failed :", logger.Errorv(err))
+				return
+			}
+			TokenList = tokenListTemp
+
+			if !isInit {
+				wg.Done()
+			}
+
+			configLock.Unlock()
+		}
+	}
 }
 
 // watchSwapPairsConfig 监听swap pairs配置变动
@@ -176,11 +217,11 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList1 *
 					v.TokenB.SwapTokenAccount = tokenBTokenAccount.String()
 
 					//  如果是v2 ，要严格确保顺序的正确性，否则数据将会出错
-					//if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
+					// if strings.Compare(v.TokenA.TokenMint, v.TokenB.TokenMint) > 0 {
 					//	temp := v.TokenB
 					//	v.TokenB = v.TokenA
 					//	v.TokenA = temp
-					//}
+					// }
 				}
 
 				v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
@@ -196,11 +237,11 @@ func watchSwapPairsConfig(swapConfigChan <-chan *store.KVPair, swapConfigList1 *
 				tokenMap[v.TokenB.SwapTokenAccount] = &v.TokenB
 			}
 
-			//swapConfigMap = swapMap
+			// swapConfigMap = swapMap
 			for k, v := range swapMap {
 				swapConfigMap[k] = v
 			}
-			//tokenConfigMap = tokenMap
+			// tokenConfigMap = tokenMap
 			for k, v := range tokenMap {
 				tokenConfigMap[k] = v
 			}
@@ -330,9 +371,57 @@ func watchBalance() {
 			}
 		}
 
-		for _, v := range swapConfigList {
+		for _, v := range SwapConfigList() {
 			v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
 			v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
+			if v.Version != "v2" {
+				continue
+			}
+			resp, err := GetRpcClient().GetAccountInfo(
+				context.TODO(),
+				v.SwapPublicKey,
+			)
+			if err != nil {
+				if !isInit {
+					panic(err)
+				} else {
+					continue
+				}
+			}
+
+			// get info
+			var swapV2 SwapAccountV2
+			err = bin.NewBinDecoder(resp.Value.Data.GetBinary()[8:]).Decode(&swapV2)
+			if err != nil {
+				panic(err)
+			}
+			rewarders := swapV2.RewarderInfos.list()
+			fmt.Println(rewarders)
+			rewarderUsd := decimal.Decimal{}
+
+			getTokenInfo := func(key solana.PublicKey) *domain.TokenInfo {
+				for _, r := range TokenList {
+					if r.Address.Equals(key) {
+						return r
+					}
+				}
+				return nil
+			}
+
+			for _, f := range rewarders {
+				// v.Mint
+				tokenInfo := getTokenInfo(f.Mint)
+				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
+				// 同步 token price
+				tokenPrice, err := crema.GetPriceForSymbol(tokenInfo.Symbol)
+				if err != nil {
+					continue
+				}
+
+				rewarderUsd = rewarderUsd.Add(emissionsPerSecond.Mul(tokenPrice))
+			}
+
+			v.RewarderUsd = rewarderUsd
 		}
 		if !isInit {
 			isInit = true

@@ -151,17 +151,17 @@ type SwapCountToApi struct {
 
 type SwapCountToApiPool struct {
 	Name string `json:"name"`
-	//Test24hFeeAmount            string         `json:"test_24_h_fee_amount"` // 仅测试使用
-	//Test7dFeeAmount             string         `json:"test_7_d_fee_amount"`
-	//Test7dNum                   uint64         `json:"test_7_d_num"`
-	//Test30dNum                  uint64         `json:"test_30_d_num"`
-	//Test30dFeeAmount            string         `json:"test_30_d_fee_amount"`
-	//Test24hRefAmount            string         `json:"test_24h_ref_amount"`
-	//Test24hProAmount            string         `json:"test_24h_pro_amount"`
-	//Test7dRefAmount             string         `json:"test_7d_ref_amount"`
-	//Test7dProAmount             string         `json:"test_7d_pro_amount"`
-	//Test30dRefAmount            string         `json:"test_30d_ref_amount"`
-	//Test30dProAmount            string         `json:"test_30d_pro_amount"`
+	// Test24hFeeAmount            string         `json:"test_24_h_fee_amount"` // 仅测试使用
+	// Test7dFeeAmount             string         `json:"test_7_d_fee_amount"`
+	// Test7dNum                   uint64         `json:"test_7_d_num"`
+	// Test30dNum                  uint64         `json:"test_30_d_num"`
+	// Test30dFeeAmount            string         `json:"test_30_d_fee_amount"`
+	// Test24hRefAmount            string         `json:"test_24h_ref_amount"`
+	// Test24hProAmount            string         `json:"test_24h_pro_amount"`
+	// Test7dRefAmount             string         `json:"test_7d_ref_amount"`
+	// Test7dProAmount             string         `json:"test_7d_pro_amount"`
+	// Test30dRefAmount            string         `json:"test_30d_ref_amount"`
+	// Test30dProAmount            string         `json:"test_30d_pro_amount"`
 	TvlInUsd                    string         `json:"tvl_in_usd"`
 	VolInUsd24h                 string         `json:"vol_in_usd_24h"`
 	TxNum24h                    uint64         `json:"tx_num_24h"`
@@ -185,6 +185,7 @@ type SwapCountToApiPool struct {
 	Apr24h                      string         `json:"apr_24h"`
 	Apr7Day                     string         `json:"apr_7day"`
 	Apr30Day                    string         `json:"apr_30day"`
+	RewarderApr                 string         `json:"rewarder_apr"`
 }
 
 type SwapCountToApiToken struct {
