@@ -396,7 +396,7 @@ func watchBalance() {
 				panic(err)
 			}
 			rewarders := swapV2.RewarderInfos.list()
-			fmt.Println(rewarders)
+			// fmt.Println(rewarders)
 			rewarderUsd := decimal.Decimal{}
 
 			getTokenInfo := func(key solana.PublicKey) *domain.TokenInfo {
@@ -409,6 +409,9 @@ func watchBalance() {
 			}
 
 			for _, f := range rewarders {
+				if f.Mint.IsZero() {
+					continue
+				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
 				if tokenInfo == nil {
