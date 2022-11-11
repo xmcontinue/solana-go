@@ -108,7 +108,11 @@ func SwapTotalCount() error {
 		// 计算apr
 		apr := "0%"
 		Apr7day := "0%"
+		rewarderApr := "0%"
 
+		if !tvlInUsd.IsZero() {
+			rewarderApr = v.RewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd.Mul(decimal.NewFromInt(100))).Round(2).String() + "%"
+		}
 		var tokenAVol7d, tokenBVol7d, volInUsd7d decimal.Decimal
 		if swapCount7d.TxNum != 0 {
 			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
@@ -197,6 +201,7 @@ func SwapTotalCount() error {
 			Apr24h:                      Apr24h,
 			Apr7Day:                     Apr7day,
 			Apr30Day:                    Apr30day,
+			RewarderApr:                 rewarderApr,
 		}
 
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
