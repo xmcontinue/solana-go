@@ -103,6 +103,7 @@ func SyncSwapPrice() error {
 		"CUSDC": {decimal.NewFromInt(1)},
 		// TODO 新增价格，测试使用
 		"tUSDC": {decimal.NewFromInt(1)},
+		"aUSDC": {decimal.NewFromInt(1)},
 	}
 
 	pairPriceToTokenPrice(swapPairPrices, tokenPrices)
