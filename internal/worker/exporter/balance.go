@@ -25,19 +25,21 @@ type SmsConfig struct {
 var smsConfig = SmsConfig{}
 
 func WatchBalance() error {
-	return nil
 	swapPairs := sol.SwapConfigList()
 
-	positionsMode := make([]*domain.PositionCountSnapshot, 0)
+	// positionsMode := make([]*domain.PositionCountSnapshot, 0)
 	for _, pair := range swapPairs {
+		if pair.Version != "v2" {
+			continue
+		}
 		// 获取swap池子仓位
-		swapAccountAndPositionsAccount, err := sol.GetSwapAccountAndPositionsAccountForSwapKey(pair.SwapPublicKey)
+		swapAccountAndPositionsAccount, err := sol.GetSwapAccountAndPositionsAccountForSwapKeyV2(pair.SwapPublicKey)
 		if err != nil {
 			continue
 		}
 
 		// 解析至model
-		positionsMode, err = positionsAccountToModel(pair, positionsMode, swapAccountAndPositionsAccount)
+		positionsMode, err := positionsAccountV2ToModel(pair, []*domain.PositionCountSnapshot{}, swapAccountAndPositionsAccount)
 		if err != nil {
 			return errors.Wrap(err)
 		}
@@ -69,11 +71,11 @@ func WatchBalance() error {
 		tokenBRate := TokenBDifference.Div(totalTokenBAmount).Round(6)
 		fA, _ := tokenARate.Float64()
 		fB, _ := tokenBRate.Float64()
-		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenARate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
+		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 {
 			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount, labels)
 			return nil
 		}
-		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 || tokenBRate.Cmp(decimal.NewFromFloat(-0.02)) < 0 {
+		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 {
 			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount, labels)
 			return nil
 		}
@@ -104,6 +106,22 @@ func positionsAccountToModel(swapPair *domain.SwapConfig, positionsMode []*domai
 				TokenBAmount: parse.PrecisionConversion(tokenBAmount, int(swapPair.TokenB.Decimal)),
 			})
 		}
+	}
+
+	return positionsMode, nil
+}
+
+func positionsAccountV2ToModel(swapPair *domain.SwapConfig, positionsMode []*domain.PositionCountSnapshot, swapAccountAndPositionsAccount *sol.SwapAccountAndPositionsAccountV2) ([]*domain.PositionCountSnapshot, error) {
+	for _, position := range swapAccountAndPositionsAccount.Positions {
+		// 计算 amount
+		tokenAAmount, tokenBAmount := swapAccountAndPositionsAccount.CalculateTokenAmount(position)
+
+		positionsMode = append(positionsMode, &domain.PositionCountSnapshot{
+			PositionID:   position.PositionNFTMint.String(),
+			TokenAAmount: parse.PrecisionConversion(decimal.NewFromBigInt(tokenAAmount, 0), int(swapPair.TokenA.Decimal)),
+			TokenBAmount: parse.PrecisionConversion(decimal.NewFromBigInt(tokenBAmount, 0), int(swapPair.TokenB.Decimal)),
+		})
+
 	}
 
 	return positionsMode, nil

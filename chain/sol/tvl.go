@@ -69,6 +69,7 @@ func (tvl *TVL) work() error {
 
 	return nil
 }
+
 func (tvl *TVL) Start() error {
 	logger.Info("tvl syncing ......", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.tokenAVolume = 0

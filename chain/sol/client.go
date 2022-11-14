@@ -128,6 +128,7 @@ func Init(conf *config.Config) error {
 
 		// watchNet 监测网络
 		go watchNet()
+
 	})
 
 	return errors.Wrap(err)

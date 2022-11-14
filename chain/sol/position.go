@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
@@ -120,6 +121,11 @@ type SwapAccountAndPositionsAccount struct {
 	PositionsAccount []*PositionsAccount
 }
 
+type SwapAccountAndPositionsAccountV2 struct {
+	SwapAccount *SwapAccountV2
+	Positions   []*PositionV2
+}
+
 type decimalU6412 [8]byte
 type decimalU128 [16]byte
 type decimalU12812 [16]byte
@@ -195,7 +201,6 @@ func GetSwapAccountAndPositionsAccountForSwapKey(swapKey solana.PublicKey) (*Swa
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-
 	swapAccountAndPositionsAccount := SwapAccountAndPositionsAccount{
 		swapAccount,
 		[]*PositionsAccount{
@@ -204,6 +209,7 @@ func GetSwapAccountAndPositionsAccountForSwapKey(swapKey solana.PublicKey) (*Swa
 	}
 
 	return &swapAccountAndPositionsAccount, nil
+
 }
 
 func GetSwapAccountAndPositionsAccountForProgramAccounts(swapKey solana.PublicKey) (*SwapAccountAndPositionsAccount, error) {
@@ -398,6 +404,55 @@ func (sp SwapAccountAndPositionsAccount) CalculateTokenAmount(position *Position
 	// }
 }
 
+func (sp SwapAccountAndPositionsAccountV2) CalculateTokenAmount(position *PositionV2) (*big.Int, *big.Int) {
+	lowerSqrtPrice := GetSqrtPriceAtTick(position.TickLowerIndex)
+	upperSqrtPrice := GetSqrtPriceAtTick(position.TickUpperIndex)
+	liquidity, currentSqrtPrice := newBigInt(position.Liquidity.Val().String()), newBigInt(sp.SwapAccount.CurrentSqrtPrice.Val().String())
+	if currentSqrtPrice.Cmp(lowerSqrtPrice) < 0 {
+
+		amountA := getDeltaA(upperSqrtPrice, lowerSqrtPrice, liquidity)
+		return amountA, &big.Int{}
+	} else if currentSqrtPrice.Cmp(upperSqrtPrice) < 0 {
+		amountA := getDeltaA(upperSqrtPrice, currentSqrtPrice, liquidity)
+		amountB := getDeltaB(currentSqrtPrice, lowerSqrtPrice, liquidity)
+		return amountA, amountB
+	} else {
+		amountB := getDeltaB(upperSqrtPrice, lowerSqrtPrice, liquidity)
+		return &big.Int{}, amountB
+	}
+}
+
+func getDeltaA(sqrtPrice0, sqrtPrice1, liquidity *big.Int) *big.Int {
+	sqrtPriceDiff, numberator0, numberator1, denomminator, deltaA := &big.Int{}, &big.Int{}, &big.Int{}, &big.Int{}, &big.Int{}
+	if sqrtPrice0.Cmp(sqrtPrice1) > 0 {
+		sqrtPriceDiff.Sub(sqrtPrice0, sqrtPrice1)
+	} else {
+		sqrtPriceDiff.Sub(sqrtPrice1, sqrtPrice0)
+	}
+	numberator0.Mul(liquidity, sqrtPriceDiff)
+	numberator1.Lsh(numberator0, 64)
+	denomminator.Mul(sqrtPrice0, sqrtPrice1)
+	deltaA.Div(numberator1, denomminator)
+	return deltaA
+}
+
+func getDeltaB(sqrtPrice0, sqrtPrice1, liquidity *big.Int) *big.Int {
+	sqrtPriceDiff, numberator0, numberator1 := &big.Int{}, &big.Int{}, &big.Int{}
+	if sqrtPrice0.Cmp(sqrtPrice1) > 0 {
+		sqrtPriceDiff.Sub(sqrtPrice0, sqrtPrice1)
+	} else {
+		sqrtPriceDiff.Sub(sqrtPrice1, sqrtPrice0)
+	}
+
+	if liquidity.Cmp(&big.Int{}) == 0 || sqrtPriceDiff.Cmp(&big.Int{}) == 0 {
+		return &big.Int{}
+	}
+
+	numberator0.Mul(liquidity, sqrtPriceDiff)
+	numberator1.Rsh(numberator0, 64)
+	return numberator1
+}
+
 func tick2SqrtPrice(tick int32) decimal.Decimal {
 	f, _ := decimal.NewFromInt32(tick).Float64()
 	return decimal.NewFromFloat(math.Sqrt(math.Pow(1.0001, f)))
@@ -459,9 +514,21 @@ func getProgramAccountsOptsV2(swapAccount solana.PublicKey) *rpc.GetProgramAccou
 }
 
 func GetPositionInfoV2(swapAccount solana.PublicKey) ([]*PositionV2, error) {
-	opt := getProgramAccountsOptsV2(swapAccount)
+	// opt := getProgramAccountsOptsV2(swapAccount)
+	opt := rpc.GetProgramAccountsOpts{
+		Commitment: rpc.CommitmentConfirmed,
+		Filters: []rpc.RPCFilter{
+			{
+				// &rpc.RPCFilterMemcmp{
+				// 	Offset: 0,
+				// 	Bytes:  nil,
+				// },
+				DataSize: uint64(positionV2Len),
+			},
+		},
+	}
 
-	result, err := GetRpcClient().GetProgramAccountsWithOpts(context.TODO(), solana.MustPublicKeyFromBase58(ProgramIDV2), opt)
+	result, err := GetRpcClient().GetProgramAccountsWithOpts(context.TODO(), solana.MustPublicKeyFromBase58(ProgramIDV2), &opt)
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
@@ -472,8 +539,9 @@ func GetPositionInfoV2(swapAccount solana.PublicKey) ([]*PositionV2, error) {
 		if err != nil {
 			return nil, errors.Wrap(err)
 		}
-
-		positionV2s = append(positionV2s, p2)
+		if p2.ClmmPool.Equals(swapAccount) {
+			positionV2s = append(positionV2s, p2)
+		}
 	}
 
 	return positionV2s, nil
