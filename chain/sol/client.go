@@ -397,7 +397,6 @@ func watchBalance() {
 				panic(err)
 			}
 			rewarders := swapV2.RewarderInfos.list()
-			// fmt.Println(rewarders)
 			rewarderUsd := decimal.Decimal{}
 
 			getTokenInfo := func(key solana.PublicKey) *domain.TokenInfo {
@@ -420,7 +419,7 @@ func watchBalance() {
 				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
-				tokenPrice, err := crema.GetPriceForSymbol(tokenInfo.Symbol)
+				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
 				if err != nil {
 					continue
 				}
