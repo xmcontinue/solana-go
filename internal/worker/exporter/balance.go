@@ -71,11 +71,11 @@ func WatchBalance() error {
 		tokenBRate := TokenBDifference.Div(totalTokenBAmount).Round(6)
 		fA, _ := tokenARate.Float64()
 		fB, _ := tokenBRate.Float64()
-		if tokenARate.Cmp(decimal.NewFromFloat(0.02)) > 0 {
+		if tokenARate.Cmp(decimal.NewFromFloat(0.001)) > 0 {
 			sendBalanceRateMsgToPushGateway(fA, pair.SwapAccount, labels)
 			return nil
 		}
-		if tokenBRate.Cmp(decimal.NewFromFloat(0.02)) > 0 {
+		if tokenBRate.Cmp(decimal.NewFromFloat(0.001)) > 0 {
 			sendBalanceRateMsgToPushGateway(fB, pair.SwapAccount, labels)
 			return nil
 		}
