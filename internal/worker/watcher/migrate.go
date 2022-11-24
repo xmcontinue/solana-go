@@ -96,7 +96,7 @@ func migrateSwapTransactionBySwapAddress(swapAddress string) error {
 			model.OrderFilter("id asc"),
 		}
 		// 只在原始表查询数据
-		transactions, err := model.QuerySwapTransactionsV2InBaseTable(context.Background(), 1000, 0, filters...)
+		transactions, err := model.QuerySwapTransactionsV2InBaseTable(context.Background(), 100, 0, filters...)
 		if err != nil {
 			return errors.Wrap(err)
 		}
