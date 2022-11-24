@@ -35,11 +35,6 @@ func migrateSwapCountKline() error {
 
 		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
 
-		// 去掉主键
-		for _, v := range swapCountKLines {
-			v.ID = 0
-		}
-
 		for _, swapCountKLine := range swapCountKLines {
 			trans := func(ctx context.Context) error {
 				if swapCountKLine == nil {
@@ -55,6 +50,9 @@ func migrateSwapCountKline() error {
 				); err != nil {
 					return errors.Wrap(err)
 				}
+
+				// 去掉主键，由数据库自动生成
+				swapCountKLine.ID = 0
 
 				newKline := kline.NewKline(swapCountKLine.Date)
 				for _, t := range newKline.Types {
