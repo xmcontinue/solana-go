@@ -49,6 +49,7 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(swapAddress string) error {
 				"pair_price_migrate_id": syncMigrateID,
 			},
 				model.SwapAddressFilter(swapAddress),
+				model.NewFilter("pair_price_migrate_id < ?", syncMigrateID),
 			)
 
 			if err != nil {
