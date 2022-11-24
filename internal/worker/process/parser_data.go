@@ -16,7 +16,6 @@ import (
 
 type parserIface interface {
 	GetBeginId() (int64, error)
-	GetParsingCutoffID() int64
 	GetSwapAccount() string
 	GetTransactions(limit, offset int, filters ...model.Filter) error
 	ParserSwapInstruction() error
@@ -74,22 +73,15 @@ func (s *swapKline) Run() error {
 		return nil
 	}
 
-	lastSwapTransactionID, err := getTransactionID()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
 	if s.swapConfig.Version == "v2" {
 		swapV2 := &parserV2{
-			LastTransactionID: lastSwapTransactionID,
-			SwapAccount:       s.swapConfig.SwapAccount,
-			Version:           s.swapConfig.Version,
+			SwapAccount: s.swapConfig.SwapAccount,
+			Version:     s.swapConfig.Version,
 		}
 		err = ParserSwapInstruction(swapV2)
 	} else {
 		swapCount := &parserV1{
-			LastTransactionID: lastSwapTransactionID,
-			SwapAccount:       s.swapConfig.SwapAccount,
+			SwapAccount: s.swapConfig.SwapAccount,
 		}
 		err = ParserSwapInstruction(swapCount)
 	}
@@ -109,7 +101,6 @@ func ParserSwapInstruction(iface parserIface) error {
 
 	for {
 		filters := []model.Filter{
-			model.NewFilter("id <= ?", iface.GetParsingCutoffID()),
 			model.SwapAddressFilter(iface.GetSwapAccount()),
 			model.OrderFilter("id asc"),
 			model.NewFilter("id > ?", beginID),
@@ -172,22 +163,15 @@ func (s *UserKline) Run() error {
 		return nil
 	}
 
-	lastSwapTransactionID, err := getTransactionID()
-	if err != nil {
-		return errors.Wrap(err)
-	}
-
 	if s.swapConfig.Version == "v2" {
 		swapV2 := &parserV2{
-			LastTransactionID: lastSwapTransactionID,
-			SwapAccount:       s.swapConfig.SwapAccount,
-			Version:           s.swapConfig.Version,
+			SwapAccount: s.swapConfig.SwapAccount,
+			Version:     s.swapConfig.Version,
 		}
 		err = ParserAllInstructionType(swapV2)
 	} else {
 		swapV1 := &parserV1{
-			LastTransactionID: lastSwapTransactionID,
-			SwapAccount:       s.swapConfig.SwapAccount,
+			SwapAccount: s.swapConfig.SwapAccount,
 		}
 		err = ParserAllInstructionType(swapV1)
 	}
@@ -218,7 +202,6 @@ func ParserAllInstructionType(iface parserIface) error {
 
 	for {
 		filters := []model.Filter{
-			model.NewFilter("id <= ?", iface.GetParsingCutoffID()),
 			model.SwapAddressFilter(iface.GetSwapAccount()),
 			model.OrderFilter("id asc"),
 			model.NewFilter("id > ?", beginID),

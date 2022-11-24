@@ -60,6 +60,8 @@ func autoMigrate() error {
 		&domain.SwapCount{},
 		&domain.SwapCountKLine{},
 		&domain.UserCountKLine{},
+		&domain.SwapUserCount{},
+		&domain.TransActionUserCount{},
 		&domain.SwapPairBase{},
 		&domain.SwapPairPriceKLine{},
 		&domain.SwapTokenPriceKLine{},
@@ -142,6 +144,10 @@ func IDFilter(id int64) Filter {
 // SwapAddressFilter swapAddress查询条件生成
 func SwapAddressFilter(swapAddress string) Filter {
 	return NewFilter("swap_address = ?", swapAddress)
+}
+
+func DateTypeFilter(dateType domain.DateType) Filter {
+	return NewFilter("date_type = ?", dateType)
 }
 
 // OrderFilter order查询条件生成

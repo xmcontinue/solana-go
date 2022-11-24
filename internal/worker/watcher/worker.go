@@ -78,6 +78,11 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTvl"] = syncTvlJob
 	// _, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTvl)
 
+	// 先做数据迁移，做完后才能获取新数据
+	err = migrate()
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTransaction"] = syncTransactionJob
@@ -99,6 +104,9 @@ func Init(viperConf *config.Config) error {
 
 	// 解析已经同步的数据，这些数据在第一次同步时没有解析类型和user_address
 	_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
+
+	// 清除旧数据,最后才上
+	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)
 
 	job.Cron.Start()
 

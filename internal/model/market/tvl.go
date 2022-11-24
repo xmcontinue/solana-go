@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
+	"gorm.io/hints"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -27,6 +28,39 @@ func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Fil
 	}
 
 	return list, nil
+}
+
+func QuerySwapTransactionsV2InBaseTable(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransactionV2, error) {
+	var (
+		db   = rDB(ctx)
+		list []*domain.SwapTransactionV2
+
+		err error
+	)
+
+	if err = db.Clauses(hints.Comment("select", "nosharding")).Model(&domain.SwapTransactionV2{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&list).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return list, nil
+}
+
+func CreatedSwapTransactionsV2(ctx context.Context, transactionV2 []*domain.SwapTransactionV2) error {
+	if err := wDB(ctx).Create(transactionV2).Error; err != nil {
+		if dbPool.IsDuplicateKeyError(err) {
+			return errors.Wrap(errors.AlreadyExists)
+		}
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func UpdateSwapTransactionsV2InBaseTable(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	db := wDB(ctx).Clauses(hints.Comment("update", "nosharding")).Model(&domain.SwapTransactionV2{}).Scopes(filter...).Updates(updates)
+	if err := db.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
 }
 
 type SwapVol struct {
@@ -113,8 +147,8 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 	return &after, nil
 }
 
-func UpdateSwapCountKLine(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCountKLine{}).Scopes(filter...).Updates(updates).Error; err != nil {
+func UpdateSwapCount(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Updates(updates).Error; err != nil {
 		return errors.Wrap(err)
 	}
 	return nil
@@ -158,33 +192,39 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 			"token_b_symbol":                swapCount.TokenBSymbol,
 			"tvl_in_usd":                    swapCount.TvlInUsd,
 			"vol_in_usd":                    swapCount.VolInUsd,
+			"vol_in_usd_for_contract":       swapCount.VolInUsdForContract,
 			"token_ausd_for_contract":       swapCount.TokenAUSDForContract,
 			"token_busd_for_contract":       swapCount.TokenBUSDForContract,
 			"max_block_time_with_date_type": maxBlockTimeWithDateType,
 		}
 	)
+	//fullName := "swap_count_k_lines"
+	fullName, err := getTableFullName(after.TableName(), swapCount.SwapAddress)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 
 	// 除了domain.DateMin 类型，其他的都是根据前一个类型求平均值
 	if swapCount.DateType == domain.DateMin {
-		avgFmt = "avg = (swap_count_k_lines.avg * swap_count_k_lines.tx_num + ? )/(swap_count_k_lines.tx_num+ 1)"
+		avgFmt = "avg = (" + fullName + ".avg * " + fullName + ".tx_num + ? )/(" + fullName + ".tx_num+ 1)"
 	} else {
 		avgFmt = "avg = ?"
 	}
 
 	sqlStem, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
-		Suffix("token_a_volume = swap_count_k_lines.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
-		Suffix("token_b_volume = swap_count_k_lines.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
-		Suffix("token_a_quote_volume = swap_count_k_lines.token_a_quote_volume + ?,", swapCount.TokenAQuoteVolume.Abs()).
-		Suffix("token_b_quote_volume = swap_count_k_lines.token_b_quote_volume + ?,", swapCount.TokenBQuoteVolume.Abs()).
+		Suffix("token_a_volume = "+fullName+".token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
+		Suffix("token_b_volume = "+fullName+".token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
+		Suffix("token_a_quote_volume = "+fullName+".token_a_quote_volume + ?,", swapCount.TokenAQuoteVolume.Abs()).
+		Suffix("token_b_quote_volume = "+fullName+".token_b_quote_volume + ?,", swapCount.TokenBQuoteVolume.Abs()).
 		Suffix("token_a_balance = ?,", tokenABalance).
 		Suffix("token_b_balance = ?,", tokenBBalance).
-		Suffix("token_a_ref_amount = swap_count_k_lines.token_a_ref_amount + ?,", swapCount.TokenARefAmount.Abs()).
-		Suffix("token_a_fee_amount = swap_count_k_lines.token_a_fee_amount + ?,", swapCount.TokenAFeeAmount.Abs()).
-		Suffix("token_a_protocol_amount = swap_count_k_lines.token_a_protocol_amount + ?,", swapCount.TokenAProtocolAmount.Abs()).
-		Suffix("token_b_ref_amount = swap_count_k_lines.token_b_ref_amount + ?,", swapCount.TokenBRefAmount.Abs()).
-		Suffix("token_b_fee_amount = swap_count_k_lines.token_b_fee_amount + ?,", swapCount.TokenBFeeAmount.Abs()).
-		Suffix("token_b_protocol_amount = swap_count_k_lines.token_b_protocol_amount + ?,", swapCount.TokenBProtocolAmount.Abs()).
+		Suffix("token_a_ref_amount = "+fullName+".token_a_ref_amount + ?,", swapCount.TokenARefAmount.Abs()).
+		Suffix("token_a_fee_amount = "+fullName+".token_a_fee_amount + ?,", swapCount.TokenAFeeAmount.Abs()).
+		Suffix("token_a_protocol_amount = "+fullName+".token_a_protocol_amount + ?,", swapCount.TokenAProtocolAmount.Abs()).
+		Suffix("token_b_ref_amount = "+fullName+".token_b_ref_amount + ?,", swapCount.TokenBRefAmount.Abs()).
+		Suffix("token_b_fee_amount = "+fullName+".token_b_fee_amount + ?,", swapCount.TokenBFeeAmount.Abs()).
+		Suffix("token_b_protocol_amount = "+fullName+".token_b_protocol_amount + ?,", swapCount.TokenBProtocolAmount.Abs()).
 		Suffix("high = ?,", swapCount.High).
 		Suffix("low = ?,", swapCount.Low).
 		Suffix("settle = ?,", swapCount.Settle).
@@ -192,11 +232,12 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("token_b_usd = ?,", swapCount.TokenBUSD).
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
 		Suffix("max_block_time_with_date_type = ?,", maxBlockTimeWithDateType).
-		Suffix("tx_num = swap_count_k_lines.tx_num + 1,").
-		Suffix("vol_in_usd = swap_count_k_lines.vol_in_usd + ?,", swapCount.VolInUsd).
+		Suffix("tx_num = "+fullName+".tx_num + 1,").
+		Suffix("vol_in_usd = "+fullName+".vol_in_usd + ?,", swapCount.VolInUsd).
+		Suffix("vol_in_usd_for_contract = "+fullName+".vol_in_usd_for_contract + ?,", swapCount.VolInUsdForContract).
 		Suffix(avgFmt, swapCount.Avg).
 		Suffix("WHERE ").
-		Suffix("swap_count_k_lines.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
+		Suffix(""+fullName+".last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -329,7 +370,7 @@ func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount,
 	}
 
 	var list []*domain.SwapCount
-	wDB(ctx).Model(&domain.SwapCount{}).Select("tvl,swap_address").Where("id in ?", ids).Scan(&list)
+	wDB(ctx).Model(&domain.SwapCount{}).Select("swap_address").Where("id in ?", ids).Scan(&list)
 	return list, nil
 }
 
@@ -413,6 +454,45 @@ func QuerySwapCountKLines(ctx context.Context, limit, offset int, filter ...Filt
 	}
 
 	return swapCountKLine, nil
+}
+
+func QuerySwapCountKLinesInBaseTable(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapCountKLine, error) {
+	var (
+		db             = rDB(ctx)
+		err            error
+		swapCountKLine []*domain.SwapCountKLine
+	)
+
+	if err = db.Clauses(hints.Comment("select", "nosharding")).Model(&domain.SwapCountKLine{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&swapCountKLine).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return swapCountKLine, nil
+}
+
+func UpdateSwapCountKLinesInBaseTable(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	if err := wDB(ctx).Clauses(hints.Comment("update", "nosharding")).Model(&domain.SwapCountKLine{}).Scopes(filter...).Updates(updates).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func CreateSwapCountKLine(ctx context.Context, kLines []*domain.SwapCountKLine) error {
+	if err := wDB(ctx).Create(kLines).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func DeleteSwapCountKLines(ctx context.Context, filter ...Filter) error {
+	res := wDB(ctx).Scopes(filter...).Delete(&domain.SwapCountKLine{})
+	if err := res.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	if res.RowsAffected <= 0 {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+	return nil
 }
 
 type DateAndPrice struct {

@@ -50,10 +50,6 @@ func (s *parserV1) GetTransactions(limit, offset int, filters ...model.Filter) e
 	return nil
 }
 
-func (s *parserV1) GetParsingCutoffID() int64 {
-	return s.LastTransactionID
-}
-
 func (s *parserV1) UpdateLastTransActionID() error {
 	// 更新处理数据的位置
 	if err := model.UpdateSwapCountBySwapAccount(context.TODO(), s.SwapAccount, map[string]interface{}{"last_swap_transaction_id": s.ID}); err != nil {

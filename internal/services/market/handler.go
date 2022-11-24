@@ -11,6 +11,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
 
+	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/market"
@@ -76,6 +77,16 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		// 数据库初始化
 		if rErr = model.Init(conf); rErr != nil {
 			return
+		}
+
+		// 添加支持分表
+		configs := sol.SwapConfigList()
+		shardingValues := make([]string, 0, len(configs))
+		for _, v := range configs {
+			shardingValues = append(shardingValues, v.SwapAccount)
+		}
+		if err := model.InitWithSharding(shardingValues); err != nil {
+			panic(err)
 		}
 
 		// 验证器初始化

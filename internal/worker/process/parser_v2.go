@@ -24,10 +24,6 @@ type parserV2 struct {
 	swapR []parse.SwapRecordIface
 }
 
-func (s *parserV2) GetParsingCutoffID() int64 {
-	return s.LastTransactionID
-}
-
 func (s *parserV2) GetSwapAccount() string {
 	return s.SwapAccount
 }

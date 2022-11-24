@@ -282,6 +282,10 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			swapCountKLine.TokenAUSDForContract = tokenAPrice
 			swapCountKLine.TokenBUSDForContract = tokenBPrice
 
+			if t.DateType == domain.DateMin {
+				swapCountKLine.VolInUsdForContract = swapCountKLine.TokenAVolume.Mul(swapCountKLine.TokenAUSDForContract).Abs().Add(swapCountKLine.TokenBVolume.Mul(swapCountKLine.TokenBUSDForContract)).Abs()
+			}
+
 			if err = updateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 				return errors.Wrap(err)
 			}

@@ -23,19 +23,9 @@ func sumTotalSwapAccount() error {
 		ctx = context.Background()
 		now = time.Now()
 	)
-	// 获取时间类型
-	kLines, err := model.QuerySwapCountKLines(ctx, 1, 0, model.IDDESCFilter())
-	if err != nil {
-		logger.Error("query swap_transactions err", logger.Errorv(err))
-		return err
-	}
-
-	if len(kLines) == 0 {
-		return nil
-	}
 
 	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
-		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, kLines[0].Date.Location())
+		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, time.UTC)
 		v.Date = &date
 		if err := sumDateTypeSwapAccount(ctx, v); err != nil {
 			logger.Error("sync k line to redis err", logger.Errorv(err))

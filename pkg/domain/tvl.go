@@ -33,18 +33,19 @@ type NetRecode struct {
 }
 
 type SwapCount struct {
-	ID                    int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`                                           // 最后同步的transaction id
-	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_count_swap_address_unique_key"` // swap地址
-	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`                                     // swap token a 地址
-	TokenBAddress         string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`                                     // swap token b 地址
-	TokenAVolume          decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`                                          // swap token a 总交易额
-	TokenBVolume          decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                          // swap token b 总交易额
-	TokenABalance         decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                         // swap token a 余额
-	TokenBBalance         decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                         // swap token b 余额
-	TxNum                 int64           `json:"tx_num"`                                                                                       // 交易笔数
+	ID                     int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	LastSwapTransactionID  int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`                                           // 最后同步的transaction id
+	SwapAddress            string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_count_swap_address_unique_key"` // swap地址
+	TokenAAddress          string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`                                     // swap token a 地址
+	TokenBAddress          string          `json:"token_b_address" gorm:"not null;type:varchar(64);  index"`                                     // swap token b 地址
+	TokenAVolume           decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);default:0"`                                          // swap token a 总交易额
+	TokenBVolume           decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);default:0"`                                          // swap token b 总交易额
+	TokenABalance          decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);default:0"`                                         // swap token a 余额
+	TokenBBalance          decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`                                         // swap token b 余额
+	TxNum                  int64           `json:"tx_num"`                                                                                       // 交易笔数
+	MigrateSwapContKLineID int64           `json:"migrate_swap_cont_k_line_id" gorm:"default:0"`                                                 // swapCountKline 迁移进度
 }
 
 type SwapCountKLine struct {
@@ -81,9 +82,15 @@ type SwapCountKLine struct {
 	TokenBUSD                decimal.Decimal `json:"token_b_usd" gorm:"column:token_b_usd;type:decimal(36,18);default:1"`                                                                                                                                                                                                                                                                      // swap token b usd价格
 	TvlInUsd                 decimal.Decimal `json:"tvl_in_usd" gorm:"type:decimal(36,18);"`                                                                                                                                                                                                                                                                                                   // tvl（总锁仓量，单位usd）
 	VolInUsd                 decimal.Decimal `json:"vol_in_usd" gorm:"type:decimal(36,18);"`                                                                                                                                                                                                                                                                                                   // tvl（总交易量，单位usd）
+	VolInUsdForContract      decimal.Decimal `json:"vol_in_usd_for_contract" gorm:"type:decimal(36,18);"`                                                                                                                                                                                                                                                                                      // 实时计算总交易量（总交易量，单位usd）
 	TokenAUSDForContract     decimal.Decimal `json:"token_ausd_for_contract" gorm:"column:token_ausd_for_contract;type:decimal(36,18);default:0; Index:SwapCountKLine_id_token_ausd_for_contract_index"`                                                                                                                                                                                       // swap token a usd价格(合约内部价格)
 	TokenBUSDForContract     decimal.Decimal `json:"token_busd_for_contract" gorm:"column:token_busd_for_contract;type:decimal(36,18);default:0"`                                                                                                                                                                                                                                              // swap token b usd价格(合约内部价格)
 	MaxBlockTimeWithDateType *time.Time      `json:"-"  gorm:"type:timestamp(6)"`
+	IsMigrate                bool            `json:"is_migrate" gorm:"default:false"`
+}
+
+func (*SwapCountKLine) TableName() string {
+	return "swap_count_k_lines"
 }
 
 type Tvl struct {
@@ -214,4 +221,12 @@ func (pt *PairTvlList) Value() (driver.Value, error) {
 
 func (pt *PairTvlList) Scan(v interface{}) error {
 	return json.Unmarshal([]byte(v.(string)), pt)
+}
+
+type ShardingKeyAndTableName struct {
+	ID               int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	ShardingKeyValue string     `json:"sharding_key_value" gorm:"unique"`
+	Suffix           int        `json:"suffix"             gorm:"unique"`
 }

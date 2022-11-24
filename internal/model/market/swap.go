@@ -8,6 +8,7 @@ import (
 	"git.cplus.link/go/akit/errors"
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
+	"gorm.io/hints"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -81,6 +82,27 @@ func QuerySwapPairPriceKLines(ctx context.Context, limit, offset int, filter ...
 	return swapPairPriceKLines, nil
 }
 
+func QuerySwapPairPriceKLinesInBaseTable(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapPairPriceKLine, error) {
+	var (
+		db                  = rDB(ctx)
+		err                 error
+		swapPairPriceKLines []*domain.SwapPairPriceKLine
+	)
+
+	if err = db.Clauses(hints.Comment("select", "nosharding")).Model(&domain.SwapPairPriceKLine{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&swapPairPriceKLines).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return swapPairPriceKLines, nil
+}
+
+func CreateSwapPairPriceKLine(ctx context.Context, transactions []*domain.SwapPairPriceKLine) error {
+	if err := wDB(ctx).Create(transactions).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
 func UpsertSwapPairPriceKLine(ctx context.Context, swapPairPriceKLine *domain.SwapPairPriceKLine) (*domain.SwapPairPriceKLine, error) {
 	var (
 		after   domain.SwapPairPriceKLine
@@ -100,10 +122,15 @@ func UpsertSwapPairPriceKLine(ctx context.Context, swapPairPriceKLine *domain.Sw
 			"date":         swapPairPriceKLine.Date,
 		}
 	)
+	//fullName := "swap_pair_price_k_lines" // todo 取消
+	fullName, err := getTableFullName(after.TableName(), swapPairPriceKLine.SwapAddress)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
 
 	// 除了domain.DateMin 类型，其他的都是根据前一个类型求平均值
 	if swapPairPriceKLine.DateType == domain.DateMin {
-		avgFmt = "avg = (swap_pair_price_k_lines.avg * swap_pair_price_k_lines.num + ? )/(swap_pair_price_k_lines.num+ 1)"
+		avgFmt = "avg = (" + fullName + ".avg * " + fullName + ".num + ? )/(" + fullName + ".num+ 1)"
 	} else {
 		avgFmt = "avg = ?"
 	}
@@ -112,7 +139,7 @@ func UpsertSwapPairPriceKLine(ctx context.Context, swapPairPriceKLine *domain.Sw
 		Suffix("high = ?,", swapPairPriceKLine.High).
 		Suffix("low = ?,", swapPairPriceKLine.Low).
 		Suffix("settle = ?,", swapPairPriceKLine.Settle).
-		Suffix("num = swap_pair_price_k_lines.num + 1,").
+		Suffix("num = "+fullName+".num + 1,").
 		Suffix(avgFmt, swapPairPriceKLine.Avg).
 		Suffix("RETURNING *").
 		ToSql()
@@ -127,6 +154,17 @@ func UpsertSwapPairPriceKLine(ctx context.Context, swapPairPriceKLine *domain.Sw
 	}
 
 	return &after, nil
+}
+
+func DeleteSwapPairPriceKLine(ctx context.Context, filter ...Filter) error {
+	res := wDB(ctx).Scopes(filter...).Delete(&domain.SwapPairPriceKLine{})
+	if err := res.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	if res.RowsAffected <= 0 {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+	return nil
 }
 
 func QuerySwapTokenPriceKLine(ctx context.Context, filter ...Filter) (*domain.SwapTokenPriceKLine, error) {
@@ -206,6 +244,18 @@ func UpsertSwapTokenPriceKLine(ctx context.Context, swapTokenPriceKLine *domain.
 	}
 
 	return &after, nil
+}
+
+func DeleteSwapTokenPriceKLine(ctx context.Context, filter ...Filter) error {
+	res := wDB(ctx).Scopes(filter...).Delete(&domain.SwapTokenPriceKLine{})
+	if err := res.Error; err != nil {
+		return errors.Wrap(err)
+	}
+
+	if res.RowsAffected <= 0 {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+	return nil
 }
 
 func CountUserNumber(ctx context.Context) (int64, error) {

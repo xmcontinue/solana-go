@@ -3,7 +3,7 @@ module git.cplus.link/crema/backend
 go 1.16
 
 require (
-	git.cplus.link/go/akit v0.5.3
+	git.cplus.link/go/akit v0.5.4
 	github.com/Masterminds/squirrel v1.5.1
 	github.com/gagliardetto/binary v0.6.1
 	github.com/gagliardetto/gofuzz v1.2.2
@@ -16,7 +16,7 @@ require (
 	github.com/rpcxio/libkv v0.5.0
 	github.com/stretchr/testify v1.7.0
 	go.etcd.io/etcd/client/v2 v2.305.0
-	gorm.io/gorm v1.21.7
+	gorm.io/gorm v1.23.5
 )
 
 require (
@@ -33,7 +33,6 @@ require (
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/go-resty/resty/v2 v2.6.0
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/jinzhu/now v1.1.4 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mr-tron/base58 v1.2.0
 	github.com/near/borsh-go v0.3.1
@@ -43,5 +42,7 @@ require (
 	google.golang.org/api v0.58.0 // indirect
 	google.golang.org/genproto v0.0.0-20211007155348-82e027067bd4 // indirect
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/hints v1.1.0
+	gorm.io/sharding v0.5.2
 	k8s.io/apimachinery v0.18.0
 )

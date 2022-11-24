@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"git.cplus.link/go/akit/errors"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -24,4 +25,63 @@ func QuerySwapTransactionsV2(ctx context.Context, limit, offset int, filter ...F
 		return nil, errors.RecordNotFound
 	}
 	return list, nil
+}
+
+func DeleteSwapTransactionV2(ctx context.Context, filter ...Filter) error {
+	res := wDB(ctx).Scopes(filter...).Delete(&domain.SwapTransactionV2{})
+	if err := res.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	if res.RowsAffected <= 0 {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+	return nil
+}
+
+func QueryTransActionUserCount(ctx context.Context, filter ...Filter) (*domain.TransActionUserCount, error) {
+	var (
+		info domain.TransActionUserCount
+	)
+	if err := rDB(ctx).Scopes(filter...).Take(&info).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.RecordNotFound
+		}
+		return nil, errors.Wrap(err)
+	}
+	return &info, nil
+}
+
+func CreateTransActionUserCount(ctx context.Context, info *domain.TransActionUserCount) error {
+	if err := wDB(ctx).Create(info).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func QuerySwapUserCount(ctx context.Context, filter ...Filter) (*domain.SwapUserCount, error) {
+	var (
+		info domain.SwapUserCount
+	)
+	if err := rDB(ctx).Scopes(filter...).Take(&info).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.RecordNotFound
+		}
+		return nil, errors.Wrap(err)
+	}
+	return &info, nil
+}
+
+func CreateSwapUserCount(ctx context.Context, info *domain.SwapUserCount) error {
+	if err := wDB(ctx).Create(info).Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
+}
+
+func UpdateSwapUserCount(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
+	db := wDB(ctx).Model(&domain.SwapUserCount{}).Scopes(filter...).Updates(updates)
+	if err := db.Error; err != nil {
+		return errors.Wrap(err)
+	}
+	return nil
 }

@@ -77,6 +77,11 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
+	// 等迁移完成后才能解析其他数据
+	err = migrateSwapCountKline()
+	if err != nil {
+		return errors.Wrap(err)
+	}
 	err = conf.UnmarshalKey("collection_mint", &collectionMint)
 	if err != nil {
 		return errors.Wrap(err)
@@ -95,11 +100,6 @@ func Init(viperConf *config.Config) error {
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
 	if err != nil {
 		return errors.Wrap(err)
-	}
-
-	_, err = job.Cron.AddFunc(getSpec("sync_swap_cache"), transactionIDCache)
-	if err != nil {
-		panic(err)
 	}
 
 	_, err = job.Cron.AddFunc(getSpec("sum_total_swap_account"), sumTotalSwapAccount)
@@ -123,6 +123,17 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
+	// 清理数据
+	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), clearSwapCountKline)
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
+	if err != nil {
+		panic(err)
+	}
+
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncSwapCountKline")
 	job.JobList["SyncSwapCountKline"] = syncTransactionJob
@@ -130,7 +141,7 @@ func Init(viperConf *config.Config) error {
 
 	userSyncTransactionJob := NewJobInfo("SyncUserCountKLine")
 	job.JobList["SyncUserCountKLine"] = userSyncTransactionJob
-	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
+	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
 	if err != nil {
 		panic(err)
 	}

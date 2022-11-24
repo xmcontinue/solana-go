@@ -32,8 +32,18 @@ func main() {
 		panic(err)
 	}
 
-	// sol 初始化
+	// sol初始化
 	if err := sol.Init(configer); err != nil {
+		panic(err)
+	}
+
+	// 添加支持分表
+	configs := sol.SwapConfigList()
+	shardingValues := make([]string, 0, len(configs))
+	for _, v := range configs {
+		shardingValues = append(shardingValues, v.SwapAccount)
+	}
+	if err := model.InitWithSharding(shardingValues); err != nil {
 		panic(err)
 	}
 
