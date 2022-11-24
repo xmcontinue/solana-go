@@ -232,7 +232,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		Suffix("token_b_usd = ?,", swapCount.TokenBUSD).
 		Suffix("tvl_in_usd = ?,", swapCount.TvlInUsd).
 		Suffix("max_block_time_with_date_type = ?,", maxBlockTimeWithDateType).
-		Suffix("tx_num = "+fullName+".tx_num + 1,").
+		Suffix("tx_num = "+fullName+".tx_num + ?,", swapCount.TxNum).
 		Suffix("vol_in_usd = "+fullName+".vol_in_usd + ?,", swapCount.VolInUsd).
 		Suffix("vol_in_usd_for_contract = "+fullName+".vol_in_usd_for_contract + ?,", swapCount.VolInUsdForContract).
 		Suffix(avgFmt, swapCount.Avg).
