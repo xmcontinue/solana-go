@@ -6,6 +6,7 @@ import (
 	"syscall"
 
 	"git.cplus.link/go/akit/config"
+	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -46,6 +47,7 @@ func main() {
 	if err := model.InitWithSharding(shardingValues); err != nil {
 		panic(err)
 	}
+	logger.Info("sharding complete!")
 
 	// coinGecko初始化
 	// coingecko.Init()
