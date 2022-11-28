@@ -85,6 +85,8 @@ func Init(viperConf *config.Config) error {
 
 	logger.Info("migrate done")
 	logger.Info("migrate done")
+
+	return nil
 	err = conf.UnmarshalKey("collection_mint", &collectionMint)
 	if err != nil {
 		return errors.Wrap(err)
