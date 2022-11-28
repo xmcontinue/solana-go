@@ -105,13 +105,19 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 		if err != nil {
 			continue
 		}
+
+		transaction, err := e.Transaction.GetTransaction()
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
 		if history == nil {
 			if event.EventName == "ClaimRewardEvent" {
 				model.CreateActivityHistory(context.Background(), &domain.ActivityHistory{
 					UserKey:      event.User,
 					MintKey:      event.Mint,
 					Crm:          event.Amount,
-					SignatureCrm: e.Transaction.GetParsedTransaction().Signatures[0].String(),
+					SignatureCrm: transaction.Signatures[0].String(),
 					BlockTime:    blockTime.Unix(),
 					Degree:       event.Degree,
 					Caffeine:     event.Caffeine,
@@ -125,7 +131,7 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 					Port:      event.Amounts[1],
 					Hubble:    event.Amounts[2],
 					Nirv:      event.Amounts[3],
-					Signature: e.Transaction.GetParsedTransaction().Signatures[0].String(),
+					Signature: transaction.Signatures[0].String(),
 					BlockTime: blockTime.Unix(),
 					Degree:    event.Degree,
 					Caffeine:  event.Caffeine,
@@ -135,7 +141,7 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 			if event.EventName == "ClaimRewardEvent" {
 				model.UpdateActivityHistory(context.Background(), history.ID, map[string]interface{}{
 					"Crm":          event.Amount,
-					"SignatureCrm": e.Transaction.GetParsedTransaction().Signatures[0].String(),
+					"SignatureCrm": transaction.Signatures[0].String(),
 				})
 			}
 			if event.EventName == "ClaimSecondPartyEvent" {
@@ -144,7 +150,7 @@ func writeEventToDb(signatures []*rpc.TransactionSignature, transactions []*rpc.
 					"Port":      event.Amounts[1],
 					"Hubble":    event.Amounts[2],
 					"Nirv":      event.Amounts[3],
-					"Signature": e.Transaction.GetParsedTransaction().Signatures[0].String(),
+					"Signature": transaction.Signatures[0].String(),
 				})
 			}
 		}

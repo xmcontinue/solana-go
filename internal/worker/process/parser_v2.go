@@ -151,6 +151,13 @@ func (s *parserV2) ParserSwapInstruction() error {
 
 		swapRecordIface := make([]parse.SwapRecordIface, len(tx.SwapRecords), len(tx.SwapRecords))
 		for i := range tx.SwapRecords {
+			if tx.SwapRecords[i].Price.IsZero() {
+				lastKline, err := model.QuerySwapCountKLine(context.Background(), model.SwapAddressFilter(transaction.SwapAddress), model.NewFilter("date_type = ?", domain.DateMin), model.OrderFilter("date desc"))
+				if err != nil {
+					return errors.Wrap(err)
+				}
+				tx.SwapRecords[i].Price = lastKline.Avg
+			}
 			swapRecordIface[i] = tx.SwapRecords[i]
 		}
 

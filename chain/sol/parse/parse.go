@@ -66,8 +66,8 @@ func NewTx(txData *domain.TxData) *Tx {
 	tx, err = solana.TransactionFromDecoder(bin.NewBinDecoder(rpc.GetTransactionResult(*txData).Transaction.GetBinary()))
 	if err != nil {
 		// 说明是通过json格式拉取的数据，在这里统一转换成solana.Transaction
-		ParsedTransaction := rpc.GetTransactionResult(*txData).Transaction.GetParsedTransaction()
-		if ParsedTransaction == nil {
+		ParsedTransaction, err := rpc.GetTransactionResult(*txData).Transaction.GetTransaction()
+		if err != nil {
 			logger.Error("TransactionFromDecoder：mismatched data format", logger.Errorv(err))
 			return nil
 		}
@@ -80,7 +80,7 @@ func NewTx(txData *domain.TxData) *Tx {
 					for _, v := range ParsedTransaction.Message.Instructions {
 						instructions = append(instructions, solana.CompiledInstruction{
 							ProgramIDIndex: v.ProgramIDIndex,
-							Accounts:       int64ListTouInt16List(v.Accounts),
+							Accounts:       v.Accounts,
 							Data:           v.Data,
 						})
 					}

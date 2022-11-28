@@ -37,10 +37,11 @@ func PullSignatures(key solana.PublicKey, before *solana.Signature, until *solan
 
 func GetTransactionsForSignature(signatures []*rpc.TransactionSignature) ([]*rpc.GetTransactionResult, error) {
 	transactions := make([]*rpc.GetTransactionResult, 0, len(signatures))
-
+	MaxSupportedTransactionVersion := uint64(0)
 	opts := rpc.GetTransactionOpts{
-		Encoding:   solana.EncodingBase64,
-		Commitment: rpc.CommitmentFinalized,
+		Encoding:                       solana.EncodingBase58,
+		Commitment:                     rpc.CommitmentFinalized,
+		MaxSupportedTransactionVersion: &MaxSupportedTransactionVersion,
 	}
 
 	for _, value := range signatures {

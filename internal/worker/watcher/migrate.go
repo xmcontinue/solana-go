@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"git.cplus.link/go/akit/errors"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -12,7 +13,10 @@ import (
 func migrateSingleSwapPairPriceKlineBySwapAddress(swapAddress string) error {
 	pairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddressFilter(swapAddress))
 	if err != nil {
-		return errors.Wrap(err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.Wrap(err)
+		}
+		return nil
 	}
 
 	beginID := pairBase.PairPriceMigrateID
@@ -85,7 +89,10 @@ func migrateSwapPairPriceKline() error {
 func migrateSwapTransactionBySwapAddress(swapAddress string) error {
 	pairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddressFilter(swapAddress))
 	if err != nil {
-		return errors.Wrap(err)
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.Wrap(err)
+		}
+		return nil
 	}
 
 	beginID := pairBase.MigrateID
@@ -98,7 +105,8 @@ func migrateSwapTransactionBySwapAddress(swapAddress string) error {
 		}
 		// 只在原始表查询数据
 		transactions, err := model.QuerySwapTransactionsV2InBaseTable(context.Background(), 100, 0, filters...)
-		if err != nil {
+		if err != nil && !errors.Is(err, errors.RecordNotFound) {
+
 			return errors.Wrap(err)
 		}
 
