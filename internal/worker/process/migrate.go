@@ -311,18 +311,18 @@ func migrate() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("migrate migrateSwapTransaction done")
 	// swap price 数据迁移
 	err = migrateSwapPairPriceKline()
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("migrate migrateSwapPairPriceKline done")
 	// 等迁移完成后才能解析其他数据
 	err = migrateSwapCountKline()
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("migrate migrateSwapCountKline done")
 	return nil
 }
