@@ -77,11 +77,12 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
-	// 等迁移完成后才能解析其他数据
-	err = migrateSwapCountKline()
+	// 先做数据迁移，做完后才能获取新数据
+	err = migrate()
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	err = conf.UnmarshalKey("collection_mint", &collectionMint)
 	if err != nil {
 		return errors.Wrap(err)

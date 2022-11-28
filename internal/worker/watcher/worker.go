@@ -78,11 +78,6 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTvl"] = syncTvlJob
 	// _, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTvl)
 
-	// 先做数据迁移，做完后才能获取新数据
-	err = migrate()
-	if err != nil {
-		return errors.Wrap(err)
-	}
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTransaction"] = syncTransactionJob
