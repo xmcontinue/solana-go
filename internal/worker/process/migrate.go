@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -120,7 +121,7 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(swapAddress string) error {
 		if len(priceKLines) == 0 {
 			return nil
 		}
-		logger.Info("migrate "+swapAddress, logger.String(string(beginID), "a"))
+		logger.Info("migrate "+swapAddress, logger.String(strconv.Itoa(int(beginID)), "a"))
 		syncMigrateID := priceKLines[len(priceKLines)-1].ID
 
 		trans := func(ctx context.Context) error {
