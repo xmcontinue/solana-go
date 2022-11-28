@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -121,15 +122,15 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(swapAddress string) error {
 		}
 
 		syncMigrateID := priceKLines[len(priceKLines)-1].ID
-		// 去掉主键
-		for _, v := range priceKLines {
-			v.ID = 0
-		}
 
 		trans := func(ctx context.Context) error {
-			err = model.CreateSwapPairPriceKLine(ctx, priceKLines)
-			if err != nil {
-				return errors.Wrap(err)
+			// 插入数据
+			for _, v := range priceKLines {
+				v.ID = 0 // 去掉主键
+				_, err = model.UpsertSwapPairPriceKLine(ctx, v)
+				if err != nil {
+					return errors.Wrap(err)
+				}
 			}
 
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
@@ -154,6 +155,60 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(swapAddress string) error {
 		beginID = syncMigrateID
 
 	}
+}
+
+func updateSwapPairPrice(ctx context.Context, config *domain.SwapConfig, t *kline.Type, swapPairPriceKLine *domain.SwapPairPriceKLine) error {
+	swapPriceKline, err := model.QuerySwapPairPriceKLine(ctx,
+		model.SwapAddressFilter(config.SwapAccount),
+		model.NewFilter("date = ?", t.Date),
+		model.NewFilter("date_type = ?", t.DateType))
+
+	if err != nil && !errors.Is(err, errors.RecordNotFound) {
+		return errors.Wrap(err)
+	}
+
+	if swapPriceKline != nil {
+		if swapPriceKline.High.GreaterThan(swapPairPriceKLine.High) {
+			swapPairPriceKLine.High = swapPriceKline.High
+		}
+		if swapPriceKline.Low.LessThan(swapPairPriceKLine.Low) {
+			swapPairPriceKLine.Low = swapPriceKline.Low
+		}
+	}
+
+	if t.DateType != domain.DateMin {
+
+		InnerAvg, err := t.CalculateAvg(func(endTime time.Time, avgList *[]*kline.InterTime) error {
+			swapCountKLines, err := model.QuerySwapPairPriceKLines(ctx, t.Interval, 0,
+				model.SwapAddressFilter(config.SwapAccount),
+				model.NewFilter("date_type = ?", t.BeforeIntervalDateType),
+				model.NewFilter("date < ?", endTime),
+				model.OrderFilter("date desc"),
+			)
+
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			for index := range swapCountKLines {
+				for _, avg := range *avgList {
+					if swapCountKLines[len(swapCountKLines)-1-index].Date.Equal(avg.Date) || swapCountKLines[len(swapCountKLines)-1-index].Date.Before(avg.Date) {
+						avg.Avg = swapCountKLines[len(swapCountKLines)-1-index].Avg // 以上一个时间区间的平均值作为新的时间区间的平均值
+					}
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		swapPairPriceKLine.Avg = InnerAvg.Avg
+
+	}
+
+	return nil
 }
 
 func migrateSwapPairPriceKline() error {
