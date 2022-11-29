@@ -154,7 +154,7 @@ func SwapTotalCount() error {
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
-
+		logger.Info("SwapTotalCount", logger.String(v.SwapAccount, strconv.Itoa(int(swapCount24h.TxNum))))
 		// 汇总处理
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
