@@ -58,8 +58,8 @@ func Init(viperConf *config.Config) error {
 	conf = viperConf
 
 	event.Init()
-
-	err := conf.UnmarshalKey("cron_job_conf", &job.CronConf)
+	var err error
+	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
 
 	if err != nil {
 		return errors.Wrap(err)
