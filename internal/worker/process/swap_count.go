@@ -205,7 +205,7 @@ func SwapTotalCount() error {
 		}
 
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-
+		logger.Info(v.SwapAccount)
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
