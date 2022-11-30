@@ -133,7 +133,7 @@ func Init(viperConf *config.Config) error {
 	//	panic(err)
 	//}
 
-	_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
+	//_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
 	if err != nil {
 		panic(err)
 	}
