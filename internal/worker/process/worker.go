@@ -122,7 +122,7 @@ func Init(viperConf *config.Config) error {
 	}
 
 	// 统计相同币种的tvl
-	_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), tvlOfToken)
+	//_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), tvlOfToken)
 	if err != nil {
 		panic(err)
 	}
