@@ -62,7 +62,7 @@ func autoMigrate() error {
 		&domain.UserCountKLine{},
 		&domain.SwapUserCount{},
 		&domain.TransActionUserCount{},
-		&domain.SwapPairBase{},
+		&domain.SwapPairBaseSharding{},
 		&domain.SwapPairPriceKLine{},
 		&domain.SwapTokenPriceKLine{},
 		&domain.ActivityHistory{},

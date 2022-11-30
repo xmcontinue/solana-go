@@ -9,29 +9,29 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func QuerySwapPairBase(ctx context.Context, filter ...Filter) (*domain.SwapPairBase, error) {
-	var info *domain.SwapPairBase
-	if err := wDB(ctx).Model(&domain.SwapPairBase{}).Scopes(filter...).First(&info).Error; err != nil {
+func QuerySwapPairBase(ctx context.Context, filter ...Filter) (*domain.SwapPairBaseSharding, error) {
+	var info *domain.SwapPairBaseSharding
+	if err := wDB(ctx).Model(&domain.SwapPairBaseSharding{}).Scopes(filter...).First(&info).Error; err != nil {
 		return info, errors.Wrap(err)
 	}
 	return info, nil
 }
 
-func QuerySwapPairBases(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapPairBase, error) {
+func QuerySwapPairBases(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapPairBaseSharding, error) {
 	var (
 		db        = rDB(ctx)
 		err       error
-		pairBases []*domain.SwapPairBase
+		pairBases []*domain.SwapPairBaseSharding
 	)
 
-	if err = db.Model(&domain.SwapPairBase{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&pairBases).Error; err != nil {
+	if err = db.Model(&domain.SwapPairBaseSharding{}).Scopes(filter...).Limit(limit).Offset(offset).Scan(&pairBases).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 
 	return pairBases, nil
 }
 
-func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBase) error {
+func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBaseSharding) error {
 	if err := wDB(ctx).Create(swapPairBase).Error; err != nil {
 		return errors.Wrap(err)
 	}
@@ -39,7 +39,7 @@ func CreateSwapPairBase(ctx context.Context, swapPairBase *domain.SwapPairBase) 
 }
 
 func UpdateSwapPairBase(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
-	db := wDB(ctx).Model(&domain.SwapPairBase{}).Scopes(filter...).Updates(updates)
+	db := wDB(ctx).Model(&domain.SwapPairBaseSharding{}).Scopes(filter...).Updates(updates)
 	if err := db.Error; err != nil {
 		return errors.Wrap(err)
 	}

@@ -83,6 +83,14 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTransaction"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
+	logger.Info("migrate begin")
+	err = migrate()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	logger.Info("migrate done")
+
 	// 同步vol(24h)
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)
 
