@@ -281,7 +281,7 @@ func SwapTotalCount() error {
 		return errors.Wrap(err)
 	}
 
-	swapCountKey := domain.SwapTotalCountKey()
+	swapCountKey := domain.SwapTotalCountKeyWithSharding()
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}
