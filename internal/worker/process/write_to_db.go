@@ -257,7 +257,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			return nil
 		}
 
-		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCount{
+		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCountSharding{
 			LastSwapTransactionID: swapCountKLine.LastSwapTransactionID,
 			SwapAddress:           swapCountKLine.SwapAddress,
 			TokenAAddress:         swapCountKLine.TokenAAddress,

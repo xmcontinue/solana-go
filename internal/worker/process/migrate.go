@@ -34,11 +34,14 @@ func migrateSwapCountKline1(swapAddress string) error {
 		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
 
 		trans := func(ctx context.Context) error {
-			model.UpdateSwapCount(ctx, map[string]interface{}{
+			err = model.UpdateSwapCount(ctx, map[string]interface{}{
 				"migrate_swap_cont_k_line_id": syncMigrateID,
 			},
 				model.SwapAddressFilter(swapAddress),
 			)
+			if err != nil {
+				return errors.Wrap(err)
+			}
 
 			err = model.CreateSwapCountKLine(ctx, swapCountKLines)
 			if err != nil {
