@@ -104,7 +104,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "8"))
+
 	var tokenABalance, tokenBBalance decimal.Decimal
 	var maxBlockTimeWithDateType *time.Time
 	if currentSwapCountKLine != nil {
@@ -178,7 +178,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 		if err != nil {
 			return errors.Wrap(err)
 		}
-		logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "9"))
+
 		swapCountKLine.Avg = innerAvg.Avg
 		swapCountKLine.TokenAUSD = innerAvg.TokenAUSD
 		swapCountKLine.TokenBUSD = innerAvg.TokenBUSD
@@ -188,7 +188,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "20"))
+
 	return nil
 }
 
@@ -248,7 +248,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			fmt.Println("Recovered in f", err)
 		}
 	}()
-	logger.Info("测试", logger.String(writeTyp.SwapAccount, "5"))
+
 	var err error
 	trans := func(ctx context.Context) error {
 		swapCountKLine := createSwapCountKLine(writeTyp, tokenAUSD, tokenBUSD)
@@ -256,7 +256,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 		if swapCountKLine == nil {
 			return nil
 		}
-		logger.Info("测试", logger.String(writeTyp.SwapAccount, "6"))
+
 		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCount{
 			LastSwapTransactionID: swapCountKLine.LastSwapTransactionID,
 			SwapAddress:           swapCountKLine.SwapAddress,
@@ -285,7 +285,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			if t.DateType == domain.DateMin {
 				swapCountKLine.VolInUsdForContract = swapCountKLine.TokenAVolume.Mul(swapCountKLine.TokenAUSDForContract).Abs().Add(swapCountKLine.TokenBVolume.Mul(swapCountKLine.TokenBUSDForContract)).Abs()
 			}
-			logger.Info("测试", logger.String(writeTyp.SwapAccount, "7"))
+
 			if err = updateSwapCountKline(ctx, swapCountKLine, t); err != nil {
 				return errors.Wrap(err)
 			}
@@ -298,7 +298,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 		logger.Error("transaction error", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(writeTyp.SwapAccount, "8"))
+
 	return nil
 }
 

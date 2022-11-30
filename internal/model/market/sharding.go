@@ -120,7 +120,7 @@ func autoMigrateWithSharding(shardingValues []string) error {
 	}
 
 	shardingConfig = sharding.Config{
-		DoubleWrite:         false, // todo 删除
+		DoubleWrite:         false,
 		ShardingKey:         "swap_address",
 		NumberOfShards:      uint(len(shardingValues)),
 		PrimaryKeyGenerator: sharding.PKSnowflake,
