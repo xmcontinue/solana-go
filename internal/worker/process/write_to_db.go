@@ -183,12 +183,12 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 		swapCountKLine.TokenAUSD = innerAvg.TokenAUSD
 		swapCountKLine.TokenBUSD = innerAvg.TokenBUSD
 	}
-
+	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "10"), logger.String(string(t.DateType), "aaaaa"))
 	_, err = model.UpsertSwapCountKLine(ctx, swapCountKLine, tokenABalance, tokenBBalance, maxBlockTimeWithDateType)
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "10"))
+	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "20"))
 	return nil
 }
 
