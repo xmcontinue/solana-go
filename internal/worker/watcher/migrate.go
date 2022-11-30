@@ -121,6 +121,9 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 		}
 
 	} else {
+		if pairBase.IsPriceMigrateFinished == true {
+			return nil
+		}
 		beginID = pairBase.PairPriceMigrateID
 	}
 
