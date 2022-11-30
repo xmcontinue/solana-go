@@ -123,7 +123,7 @@ func autoMigrateWithSharding(shardingValues []string) error {
 		DoubleWrite:         false,
 		ShardingKey:         "swap_address",
 		NumberOfShards:      uint(len(shardingValues)),
-		PrimaryKeyGenerator: sharding.PKSnowflake,
+		PrimaryKeyGenerator: sharding.PKPGSequence,
 		ShardingAlgorithm:   shardingAlgorithm,
 		ShardingSuffixs:     shardingSuffixs,
 	}
