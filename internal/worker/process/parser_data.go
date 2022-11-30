@@ -232,9 +232,9 @@ func CreateSyncKLine() error {
 
 	keys := sol.SwapConfigList()
 	for _, v := range keys {
-		if v.SwapAccount != "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
-			continue
-		}
+		//if v.SwapAccount != "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
+		//	continue
+		//}
 		m.Store(v.SwapAccount, v)
 	}
 
