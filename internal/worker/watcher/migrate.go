@@ -147,12 +147,6 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 		}
 
 		trans := func(ctx context.Context) error {
-			// 插入数据
-			err = model.CreateSwapPairPriceKLine(ctx, priceKLines)
-			if err != nil {
-				return errors.Wrap(err)
-			}
-
 			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
 				"pair_price_migrate_id": syncMigrateID,
 			},
@@ -160,6 +154,12 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 				model.NewFilter("pair_price_migrate_id < ?", syncMigrateID),
 			)
 
+			if err != nil {
+				return errors.Wrap(err)
+			}
+
+			// 插入数据
+			err = model.CreateSwapPairPriceKLine(ctx, priceKLines)
 			if err != nil {
 				return errors.Wrap(err)
 			}
@@ -219,7 +219,7 @@ func migrate() error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	logger.Info("migrate migrateSwapPairPriceKline done")
+	logger.Info("migrate done")
 	// 等迁移完成后才能解析其他数据
 
 	return nil
