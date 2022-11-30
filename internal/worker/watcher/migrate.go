@@ -146,31 +146,48 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 			v.ID = 0 // 去掉主键
 		}
 
-		trans := func(ctx context.Context) error {
-			err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
-				"pair_price_migrate_id": syncMigrateID,
-			},
-				model.SwapAddressFilter(swapConfig.SwapAccount),
-				model.NewFilter("pair_price_migrate_id < ?", syncMigrateID),
-			)
+		err = model.UpdateSwapPairBase(context.Background(), map[string]interface{}{
+			"pair_price_migrate_id": syncMigrateID,
+		},
+			model.SwapAddressFilter(swapConfig.SwapAccount),
+			model.NewFilter("pair_price_migrate_id < ?", syncMigrateID),
+		)
 
-			if err != nil {
-				return errors.Wrap(err)
-			}
-
-			// 插入数据
-			err = model.CreateSwapPairPriceKLine(ctx, priceKLines)
-			if err != nil {
-				return errors.Wrap(err)
-			}
-
-			return nil
-		}
-
-		err = model.Transaction(context.Background(), trans)
 		if err != nil {
 			return errors.Wrap(err)
 		}
+
+		// 插入数据
+		err = model.CreateSwapPairPriceKLine(context.Background(), priceKLines)
+		if err != nil {
+			return errors.Wrap(err)
+		}
+
+		//trans := func(ctx context.Context) error {
+		//	err = model.UpdateSwapPairBase(ctx, map[string]interface{}{
+		//		"pair_price_migrate_id": syncMigrateID,
+		//	},
+		//		model.SwapAddressFilter(swapConfig.SwapAccount),
+		//		model.NewFilter("pair_price_migrate_id < ?", syncMigrateID),
+		//	)
+		//
+		//	if err != nil {
+		//		return errors.Wrap(err)
+		//	}
+		//
+		//	// 插入数据
+		//	err = model.CreateSwapPairPriceKLine(ctx, priceKLines)
+		//	if err != nil {
+		//		return errors.Wrap(err)
+		//	}
+		//
+		//	return nil
+		//}
+		//
+		//err = model.Transaction(context.Background(), trans)
+		//if err != nil {
+		//	return errors.Wrap(err)
+		//}
 
 		beginID = syncMigrateID
 
