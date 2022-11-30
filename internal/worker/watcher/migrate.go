@@ -196,7 +196,9 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 	//同步完了就更新状态
 	err = model.UpdateSwapPairBase(context.Background(), map[string]interface{}{
 		"is_price_migrate_finished": true,
-	})
+	},
+		model.SwapAddressFilter(swapConfig.SwapAccount),
+	)
 	if err != nil {
 		return errors.Wrap(err)
 	}
