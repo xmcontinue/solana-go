@@ -98,25 +98,25 @@ func ParserSwapInstruction(iface parserIface) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("测试", logger.String(iface.GetSwapAccount(), "1"))
 	for {
 		filters := []model.Filter{
 			model.SwapAddressFilter(iface.GetSwapAccount()),
 			model.OrderFilter("id asc"),
 			model.NewFilter("id > ?", beginID),
 		}
-
+		logger.Info("测试", logger.String(iface.GetSwapAccount(), "2"))
 		if err = iface.GetTransactions(100, 0, filters...); err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
 				break
 			}
 			return errors.Wrap(err)
 		}
-
+		logger.Info("测试", logger.String(iface.GetSwapAccount(), "3"))
 		if err = iface.ParserSwapInstruction(); err != nil {
 			return errors.Wrap(err)
 		}
-
+		logger.Info("测试", logger.String(iface.GetSwapAccount(), "4"))
 		if err = iface.UpdateLastTransActionID(); err != nil {
 			return errors.Wrap(err)
 		}
