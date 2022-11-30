@@ -228,7 +228,7 @@ func migrateSwapPairPriceKline() error {
 }
 
 func migrate() error {
-	var err error
+
 	// 原始tx 数据迁移
 	//err = migrateSwapTransaction()
 	//if err != nil {
@@ -236,10 +236,8 @@ func migrate() error {
 	//}
 	logger.Info("migrate migrateSwapTransaction done")
 	// swap price 数据迁移
-	err = migrateSwapPairPriceKline()
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	_ = migrateSwapPairPriceKline()
+
 	logger.Info("migrate done")
 	// 等迁移完成后才能解析其他数据
 
