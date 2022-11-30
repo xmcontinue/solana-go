@@ -76,17 +76,16 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
-	logger.Info("migrate begin")
-	// 先做数据迁移，做完后才能获取新数据
-	err = migrate()
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	//logger.Info("migrate begin")
+	//// 先做数据迁移，做完后才能获取新数据
+	//err = migrate()
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
+	//
+	//logger.Info("migrate done")
+	//logger.Info("migrate done")
 
-	logger.Info("migrate done")
-	logger.Info("migrate done")
-
-	return nil
 	err = conf.UnmarshalKey("collection_mint", &collectionMint)
 	if err != nil {
 		return errors.Wrap(err)
