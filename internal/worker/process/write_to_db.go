@@ -104,7 +104,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "8"))
 	var tokenABalance, tokenBBalance decimal.Decimal
 	var maxBlockTimeWithDateType *time.Time
 	if currentSwapCountKLine != nil {
@@ -178,7 +178,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 		if err != nil {
 			return errors.Wrap(err)
 		}
-
+		logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "9"))
 		swapCountKLine.Avg = innerAvg.Avg
 		swapCountKLine.TokenAUSD = innerAvg.TokenAUSD
 		swapCountKLine.TokenBUSD = innerAvg.TokenBUSD
@@ -188,7 +188,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "10"))
 	return nil
 }
 
