@@ -181,6 +181,62 @@ func (t *MarketService) GetHistogram(ctx context.Context, args *iface.GetHistogr
 	return nil
 }
 
+func (t *MarketService) GetHistogramSharding(ctx context.Context, args *iface.GetHistogramReq, reply *iface.GetHistogramResp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	var (
+		key    string
+		offset = int64(0)
+		list   = make([]*process.SwapHistogramNumber, 0, histogramLimit(args.Limit))
+		err    error
+	)
+
+	if args.SwapAccount == "" {
+		key = domain.TotalHistogramKeySharding(args.DateType)
+	} else {
+		key = domain.HistogramKeySharding(args.DateType, args.SwapAccount)
+	}
+
+	if args.Offset == 0 {
+		offset = -1
+	} else {
+		offset = -int64(args.Offset)
+	}
+
+	values, err := t.redisClient.ZRange(ctx, key, -int64(histogramLimit(args.Limit))+offset, offset).Result()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if len(values) == 0 {
+		return nil
+	}
+
+	for i := range values {
+		innerSwapHistogram := &process.SwapHistogram{}
+		_ = json.Unmarshal([]byte(values[i]), innerSwapHistogram)
+
+		if args.Typ == "vol" {
+			list = append(list, &process.SwapHistogramNumber{
+				Num:  innerSwapHistogram.Vol,
+				Date: innerSwapHistogram.Date,
+			})
+		} else {
+			list = append(list, &process.SwapHistogramNumber{
+				Num:  innerSwapHistogram.Tvl,
+				Date: innerSwapHistogram.Date,
+			})
+		}
+	}
+
+	reply.List = list
+
+	return nil
+}
+
 func (t *MarketService) TvlOfSingleToken(ctx context.Context, args *iface.TvlOfSingleTokenReq, reply *iface.TvlOfSingleTokenResp) error {
 	defer rpcx.Recover(ctx)
 	if err := validate(args); err != nil {

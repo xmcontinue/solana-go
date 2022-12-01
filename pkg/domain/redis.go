@@ -63,8 +63,16 @@ func HistogramKey(dateType DateType, swapAccount string) string {
 	return fmt.Sprintf("%s:histogram:swap:count:%s:%s", publicPrefix, dateType, swapAccount)
 }
 
+func HistogramKeySharding(dateType DateType, swapAccount string) string {
+	return fmt.Sprintf("%s:histogram:swap:count:sharding:%s:%s", publicPrefix, dateType, swapAccount)
+}
+
 func TotalHistogramKey(dateType DateType) string {
 	return fmt.Sprintf("%s:histogram:total:swap:count:%s", publicPrefix, dateType)
+}
+
+func TotalHistogramKeySharding(dateType DateType) string {
+	return fmt.Sprintf("%s:histogram:total:swap:count:sharding:%s", publicPrefix, dateType)
 }
 
 func SetPublicPrefix(key string) {

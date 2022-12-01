@@ -78,6 +78,23 @@ func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *i
 	return nil
 }
 
+// SwapCountSharding ...
+func (t *MarketService) SwapCountSharding(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
+	defer rpcx.Recover(ctx)
+
+	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKeyWithSharding().Key).Result()
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	err = json.Unmarshal([]byte(res), reply)
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	return nil
+}
+
 // GetTvl ...
 func (t *MarketService) GetTvl(ctx context.Context, args *iface.GetTvlReq, reply *iface.GetTvlResp) error {
 	defer rpcx.Recover(ctx)
