@@ -106,12 +106,12 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 
-	//_, err = job.Cron.AddFunc(getSpec("sum_total_swap_account"), sumTotalSwapAccount)
+	_, err = job.Cron.AddFunc(getSpec("sum_total_swap_account"), sumTotalSwapAccount)
 	if err != nil {
 		panic(err)
 	}
 
-	//_, err = job.Cron.AddFunc(getSpec("sync_total_swap_cache"), SwapTotalCount)
+	_, err = job.Cron.AddFunc(getSpec("sync_total_swap_cache"), SwapTotalCount)
 	if err != nil {
 		panic(err)
 	}
@@ -127,11 +127,11 @@ func Init(viperConf *config.Config) error {
 		panic(err)
 	}
 
-	// 清理数据
-	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), clearSwapCountKline)
-	//if err != nil {
-	//	panic(err)
-	//}
+	//清理数据
+	_, err = job.Cron.AddFunc(getSpec("clear_old_data"), clearSwapCountKline)
+	if err != nil {
+		panic(err)
+	}
 
 	//_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
 	if err != nil {
