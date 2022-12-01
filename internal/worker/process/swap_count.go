@@ -160,7 +160,7 @@ func SwapTotalCount() error {
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
-
+		logger.Info("人数", logger.String(v.SwapAccount, strconv.Itoa(int(swapCountTotal.TxNum))))
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 
 		if strings.ToLower(v.Version) != "v2" {
