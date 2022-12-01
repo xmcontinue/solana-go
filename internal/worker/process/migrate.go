@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"strconv"
+	"sync"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -14,7 +15,11 @@ import (
 
 // swap count kline 数据迁移
 
-func migrateSwapCountKline1(swapAddress string) error {
+func migrateSwapCountKline1(swapAddress string, wg *sync.WaitGroup, limitChan chan struct{}) error {
+	defer func() {
+		<-limitChan
+		wg.Done()
+	}()
 	beginID := int64(0)
 	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapAddress))
 	if err != nil {
@@ -84,13 +89,17 @@ func migrateSwapCountKline1(swapAddress string) error {
 func migrateSwapCountKline() error {
 	configs := sol.SwapConfigListV1()
 
+	limitChan := make(chan struct{}, len(configs))
+
+	wg := &sync.WaitGroup{}
+	wg.Add(len(configs))
+
 	for _, v := range configs {
-		err := migrateSwapCountKline1(v.SwapAccount)
-		if err != nil {
-			return errors.Wrap(err)
-		}
+		limitChan <- struct{}{}
+		go migrateSwapCountKline1(v.SwapAccount, wg, limitChan)
 	}
 
+	wg.Wait()
 	return nil
 
 }
