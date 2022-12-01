@@ -20,11 +20,10 @@ func migrateSwapCountKline1(swapAddress string, wg *sync.WaitGroup, limitChan ch
 		<-limitChan
 		wg.Done()
 	}()
+
 	beginID := int64(0)
 	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapAddress))
-	if err != nil {
-
-	} else {
+	if err == nil {
 		beginID = swapCount.MigrateSwapContKLineID
 	}
 
