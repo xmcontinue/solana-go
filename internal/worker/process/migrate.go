@@ -81,12 +81,9 @@ func migrateSwapCountKline1(swapAddress string) error {
 }
 
 func migrateSwapCountKline() error {
-	configs := sol.SwapConfigList()
+	configs := sol.SwapConfigListV1()
 
 	for _, v := range configs {
-		if v.Version != "v1" {
-			continue
-		}
 		err := migrateSwapCountKline1(v.SwapAccount)
 		if err != nil {
 			return errors.Wrap(err)
