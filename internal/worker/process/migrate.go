@@ -11,29 +11,39 @@ import (
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 // swap count kline 数据迁移
 
-func migrateSwapCountKline1(swapAddress string, wg *sync.WaitGroup, limitChan chan struct{}) error {
+func migrateSwapCountKline1(swapConfig *domain.SwapConfig, wg *sync.WaitGroup, limitChan chan struct{}) error {
 	defer func() {
 		<-limitChan
 		wg.Done()
 	}()
 
 	beginID := int64(0)
-	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapAddress))
-	if err == nil {
+	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapConfig.SwapAccount))
+	if err != nil {
+		err = model.CreateSwapCount(context.Background(), &domain.SwapCountSharding{
+			SwapAddress:   swapConfig.SwapAccount,
+			TokenAAddress: swapConfig.TokenA.SwapTokenAccount,
+			TokenBAddress: swapConfig.TokenB.SwapTokenAccount,
+		})
+		if err != nil {
+			return errors.Wrap(err)
+		}
+	} else {
 		beginID = swapCount.MigrateSwapContKLineID
 	}
 
 	for {
 		filters := []model.Filter{
-			model.SwapAddressFilter(swapAddress),
+			model.SwapAddressFilter(swapConfig.SwapAccount),
 			model.NewFilter("id > ?", beginID),
 			model.OrderFilter("id asc"),
 		}
-		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
+		logger.Info(swapConfig.SwapAccount, logger.String("begin", strconv.FormatInt(beginID, 10)))
 		// 只在原始表查询数据
 		swapCountKLines, err := model.QuerySwapCountKLinesInBaseTable(context.Background(), 100, 0, filters...)
 		if err != nil {
@@ -47,7 +57,7 @@ func migrateSwapCountKline1(swapAddress string, wg *sync.WaitGroup, limitChan ch
 			break
 		}
 
-		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
+		logger.Info(swapConfig.SwapAccount, logger.String("begin", strconv.FormatInt(beginID, 10)))
 		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
 
 		for _, v := range swapCountKLines {
@@ -55,21 +65,21 @@ func migrateSwapCountKline1(swapAddress string, wg *sync.WaitGroup, limitChan ch
 		}
 
 		trans := func(ctx context.Context) error {
-			logger.Info("aaaaa", logger.String(swapAddress, "1"))
+			logger.Info("aaaaa", logger.String(swapConfig.SwapAccount, "1"))
 			err = model.UpdateSwapCount(ctx, map[string]interface{}{
 				"migrate_swap_cont_k_line_id": syncMigrateID,
 			},
-				model.SwapAddressFilter(swapAddress),
+				model.SwapAddressFilter(swapConfig.SwapAccount),
 			)
 			if err != nil {
 				return errors.Wrap(err)
 			}
-			logger.Info("aaaaa", logger.String(swapAddress, "2"))
+			logger.Info("aaaaa", logger.String(swapConfig.SwapAccount, "2"))
 			err = model.CreateSwapCountKLine(ctx, swapCountKLines)
 			if err != nil {
 				return errors.Wrap(err)
 			}
-			logger.Info("aaaaa", logger.String(swapAddress, "3"))
+			logger.Info("aaaaa", logger.String(swapConfig.SwapAccount, "3"))
 			return nil
 		}
 
@@ -93,9 +103,9 @@ func migrateSwapCountKline() error {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(configs))
 
-	for _, v := range configs {
+	for i := range configs {
 		limitChan <- struct{}{}
-		go migrateSwapCountKline1(v.SwapAccount, wg, limitChan)
+		go migrateSwapCountKline1(configs[i], wg, limitChan)
 	}
 
 	wg.Wait()
