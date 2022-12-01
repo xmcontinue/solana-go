@@ -43,11 +43,12 @@ func migrateSwapCountKline1(swapAddress string) error {
 			break
 		}
 
+		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
+		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
+
 		for _, v := range swapCountKLines {
 			v.ID = 0
 		}
-		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
-		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
 
 		trans := func(ctx context.Context) error {
 			logger.Info("aaaaa", logger.String(swapAddress, "1"))
