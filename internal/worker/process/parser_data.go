@@ -238,6 +238,7 @@ func CreateSyncKLine() error {
 		if v.SwapAccount != "7MPnn7k6uYSMcW7VvB8GUcEedLApmsAG1Fesfufv7rBk" {
 			continue
 		}
+
 		m.Store(v.SwapAccount, v)
 	}
 
