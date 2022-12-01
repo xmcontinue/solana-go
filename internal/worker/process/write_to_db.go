@@ -104,7 +104,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)
 	}
-	logger.Info("youwenti"+swapCountKLine.SwapAddress, logger.String(string(swapCountKLine.DateType), "1"))
+	logger.Info("youwenti"+swapCountKLine.SwapAddress, logger.String(string(swapCountKLine.DateType), "2"))
 	var tokenABalance, tokenBBalance decimal.Decimal
 	var maxBlockTimeWithDateType *time.Time
 	if currentSwapCountKLine != nil {
