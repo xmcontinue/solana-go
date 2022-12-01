@@ -95,7 +95,7 @@ func createSwapCountKLine(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decim
 
 // updateSwapCountKline 按照时间类型更新表
 func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountKLine, t *kline.Type) error {
-	logger.Info("youwenti"+swapCountKLine.SwapAddress, logger.String(string(swapCountKLine.DateType), "1"))
+
 	currentSwapCountKLine, err := model.QuerySwapCountKLine(ctx,
 		model.NewFilter("swap_address = ?", swapCountKLine.SwapAddress),
 		model.NewFilter("date = ?", swapCountKLine.Date),
@@ -104,7 +104,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil && !errors.Is(err, errors.RecordNotFound) {
 		return errors.Wrap(err)
 	}
-	logger.Info("youwenti"+swapCountKLine.SwapAddress, logger.String(string(swapCountKLine.DateType), "2"))
+
 	var tokenABalance, tokenBBalance decimal.Decimal
 	var maxBlockTimeWithDateType *time.Time
 	if currentSwapCountKLine != nil {
@@ -188,7 +188,7 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 	if err != nil {
 		return errors.Wrap(err)
 	}
-
+	logger.Info("测试", logger.String(swapCountKLine.SwapAddress, "10"), logger.String(string(t.DateType), "aaaaa"))
 	return nil
 }
 

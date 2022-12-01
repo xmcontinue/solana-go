@@ -7,7 +7,6 @@ import (
 
 	dbPool "git.cplus.link/go/akit/client/psql"
 	"git.cplus.link/go/akit/errors"
-	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	sq "github.com/Masterminds/squirrel"
 	"gorm.io/gorm"
@@ -204,7 +203,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(swapCount.SwapAddress, "11"), logger.String(string(swapCount.DateType), fullName))
+
 	// 除了domain.DateMin 类型，其他的都是根据前一个类型求平均值
 	if swapCount.DateType == domain.DateMin {
 		avgFmt = "avg = (" + fullName + ".avg * " + fullName + ".tx_num + ? )/(" + fullName + ".tx_num+ 1)"
@@ -250,7 +249,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
-	logger.Info("测试", logger.String(swapCount.SwapAddress, "12"), logger.String(string(swapCount.DateType), fullName))
+
 	//if res.RowsAffected == 0 {
 	//	swapCountKLine, _ := QuerySwapCountKLine(ctx, SwapAddressFilter(swapCount.SwapAddress), NewFilter("date = ?", swapCount.DateType), NewFilter("date_type = ?", swapCount.DateType))
 	//	fmt.Println("RowsAffected=0", swapCount.SwapAddress, swapCount.LastSwapTransactionID, swapCountKLine.LastSwapTransactionID, swapCountKLine.Date, swapCountKLine.DateType)
