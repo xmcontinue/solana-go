@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"strconv"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -31,9 +32,14 @@ func migrateSwapCountKline1(swapAddress string) error {
 			break
 		}
 
+		for _, v := range swapCountKLines {
+			v.ID = 0
+		}
+		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
 		syncMigrateID := swapCountKLines[len(swapCountKLines)-1].ID
 
 		trans := func(ctx context.Context) error {
+			logger.Info("aaaaa", logger.String(swapAddress, "1"))
 			err = model.UpdateSwapCount(ctx, map[string]interface{}{
 				"migrate_swap_cont_k_line_id": syncMigrateID,
 			},
@@ -42,12 +48,12 @@ func migrateSwapCountKline1(swapAddress string) error {
 			if err != nil {
 				return errors.Wrap(err)
 			}
-
+			logger.Info("aaaaa", logger.String(swapAddress, "2"))
 			err = model.CreateSwapCountKLine(ctx, swapCountKLines)
 			if err != nil {
 				return errors.Wrap(err)
 			}
-
+			logger.Info("aaaaa", logger.String(swapAddress, "3"))
 			return nil
 		}
 
