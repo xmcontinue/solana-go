@@ -110,7 +110,7 @@ func SyncTotalVol() error {
 }
 
 // compute 计算 tvl vol apr数量
-func compute(count *domain.SwapPairCount, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
+func compute(count *domain.SwapPairCountSharding, feeStr string) (decimal.Decimal, decimal.Decimal, string) {
 	tvlInUsd, volInUsd, apr := decimal.Decimal{}, decimal.Decimal{}, ""
 	// 获取token价格
 	tokenAPrice, err := model.GetPriceForSymbol(context.TODO(), count.TokenASymbol)

@@ -6,7 +6,7 @@ import (
 	"git.cplus.link/go/akit/util/decimal"
 )
 
-type SwapPairCount struct {
+type SwapPairCountSharding struct {
 	ID                int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -27,8 +27,8 @@ type SwapPairCount struct {
 	TxNum             uint64          `json:"tx_num" gorm:""`
 }
 
-func (*SwapPairCount) TableName() string {
-	return "swap_pairs_counts"
+func (*SwapPairCountSharding) TableName() string {
+	return "swap_pairs_count_sharding"
 }
 
 // UserCountKLine 用户统计表

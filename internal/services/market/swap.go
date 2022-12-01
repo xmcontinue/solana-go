@@ -21,9 +21,9 @@ import (
 func (t *MarketService) SwapCountOld(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountOldResp) error {
 	defer rpcx.Recover(ctx)
 
-	reply.SwapPairCount = market.GetSwapCountCache(args.TokenSwapAddress)
+	reply.SwapPairCountSharding = market.GetSwapCountCache(args.TokenSwapAddress)
 
-	if reply.SwapPairCount == nil {
+	if reply.SwapPairCountSharding == nil {
 		return errors.Wrap(errors.RecordNotFound)
 	}
 

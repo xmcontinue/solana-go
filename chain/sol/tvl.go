@@ -86,7 +86,7 @@ func (tvl *TVL) Start() error {
 	tokenABalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenABalance, 10))
 	tokenBBalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBBalance, 10))
 
-	swapPairCount := &domain.SwapPairCount{
+	swapPairCount := &domain.SwapPairCountSharding{
 		TokenAVolume:      parse.PrecisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
 		TokenBVolume:      parse.PrecisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
 		TokenABalance:     parse.PrecisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),

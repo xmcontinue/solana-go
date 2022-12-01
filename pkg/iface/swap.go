@@ -44,7 +44,7 @@ type SwapCountListResp struct {
 }
 
 type SwapCountOldResp struct {
-	*domain.SwapPairCount `json:"swap_pair_count"`
+	*domain.SwapPairCountSharding `json:"swap_pair_count"`
 }
 
 type GetConfigReq struct {

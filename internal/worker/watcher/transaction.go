@@ -46,7 +46,7 @@ func CreateSyncTransaction() error {
 
 	keys := sol.SwapConfigList()
 	for _, v := range keys {
-		if v.Version == "v1" {
+		if v.Version != "v2" {
 			continue
 		}
 		m.Store(v.SwapAccount, v)
