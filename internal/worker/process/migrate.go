@@ -17,12 +17,10 @@ import (
 
 func migrateSwapCountKline1(swapConfig *domain.SwapConfig) error {
 	beginID := int64(0)
-	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapConfig.SwapAccount))
+	swapCount, err := model.QuerySwapCountMigrate(context.Background(), model.SwapAddressFilter(swapConfig.SwapAccount))
 	if err != nil {
-		err = model.CreateSwapCount(context.Background(), &domain.SwapCountSharding{
-			SwapAddress:   swapConfig.SwapAccount,
-			TokenAAddress: swapConfig.TokenA.SwapTokenAccount,
-			TokenBAddress: swapConfig.TokenB.SwapTokenAccount,
+		err = model.CreateSwapCountMigrate(context.Background(), &domain.SwapCountMigrate{
+			SwapAddress: swapConfig.SwapAccount,
 		})
 		if err != nil {
 			return errors.Wrap(err)
@@ -60,7 +58,7 @@ func migrateSwapCountKline1(swapConfig *domain.SwapConfig) error {
 
 		trans := func(ctx context.Context) error {
 			logger.Info("aaaaa", logger.String(swapConfig.SwapAccount, "1"))
-			err = model.UpdateSwapCount(ctx, map[string]interface{}{
+			err = model.UpdateSwapCountMigrate(ctx, map[string]interface{}{
 				"migrate_swap_cont_k_line_id": syncMigrateID,
 			},
 				model.SwapAddressFilter(swapConfig.SwapAccount),

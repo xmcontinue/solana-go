@@ -32,7 +32,7 @@ type NetRecode struct {
 	Enable           bool       `json:"enable" gorm:"default:false"`                // 是否已启用，默认不启用
 }
 
-type SwapCountSharding struct {
+type SwapCount struct {
 	ID                     int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
 	UpdatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
@@ -46,6 +46,14 @@ type SwapCountSharding struct {
 	TokenBBalance          decimal.Decimal `json:"token_b_balance" gorm:"type:decimal(36,18);default:0"`      // swap token b 余额
 	TxNum                  int64           `json:"tx_num"`                                                    // 交易笔数
 	MigrateSwapContKLineID int64           `json:"migrate_swap_cont_k_line_id" gorm:"default:0"`              // swapCountKline 迁移进度
+}
+
+type SwapCountMigrate struct {
+	ID                     int64      `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
+	CreatedAt              *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	UpdatedAt              *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	SwapAddress            string     `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex"` // swap地址
+	MigrateSwapContKLineID int64      `json:"migrate_swap_cont_k_line_id" gorm:"default:0"`              // swapCountKline 迁移进度
 }
 
 type SwapCountKLine struct {
