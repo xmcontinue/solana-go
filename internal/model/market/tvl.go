@@ -212,7 +212,7 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 		avgFmt = "avg = ?"
 	}
 
-	sqlStem, args, err := sq.Insert("swap_count_k_lines").SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
+	sqlStem, args, err := sq.Insert(fullName).SetMap(inserts).Suffix("ON CONFLICT(swap_address,date,date_type) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
 		Suffix("token_a_volume = "+fullName+".token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
 		Suffix("token_b_volume = "+fullName+".token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
