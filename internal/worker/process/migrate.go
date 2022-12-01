@@ -6,6 +6,7 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -15,6 +16,12 @@ import (
 
 func migrateSwapCountKline1(swapAddress string) error {
 	beginID := int64(0)
+	swapCount, err := model.QuerySwapCount(context.Background(), model.SwapAddressFilter(swapAddress))
+	if err != nil {
+
+	} else {
+		beginID = swapCount.MigrateSwapContKLineID
+	}
 
 	for {
 		filters := []model.Filter{
@@ -22,9 +29,13 @@ func migrateSwapCountKline1(swapAddress string) error {
 			model.NewFilter("id > ?", beginID),
 			model.OrderFilter("id asc"),
 		}
+		logger.Info(swapAddress, logger.String("begin", strconv.FormatInt(beginID, 10)))
 		// 只在原始表查询数据
 		swapCountKLines, err := model.QuerySwapCountKLinesInBaseTable(context.Background(), 100, 0, filters...)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				break
+			}
 			return errors.Wrap(err)
 		}
 
