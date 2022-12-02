@@ -160,7 +160,7 @@ func SwapTotalCount() error {
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
-
+		logger.Info("人数", logger.String(v.SwapAccount, strconv.FormatInt(int64(swapCount24h.TxNum), 10)))
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 
 		if strings.ToLower(v.Version) != "v2" {
@@ -205,7 +205,7 @@ func SwapTotalCount() error {
 		}
 
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-		logger.Info(v.SwapAccount)
+
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
