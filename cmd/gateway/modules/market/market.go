@@ -5,8 +5,8 @@ import (
 )
 
 var (
-	SwapCountList = handleFunc(marketClient, "SwapCountList", &iface.SwapCountListReq{}, &iface.SwapCountListResp{})
-	//SwapCount                = handleFunc(marketClient, "SwapCount", &iface.NilReq{}, &iface.SwapCountResp{})
+	SwapCountList            = handleFunc(marketClient, "SwapCountList", &iface.SwapCountListReq{}, &iface.SwapCountListResp{})
+	SwapCount                = handleFunc(marketClient, "SwapCount", &iface.NilReq{}, &iface.SwapCountResp{})
 	SwapCountSharding        = handleFunc(marketClient, "SwapCountSharding", &iface.NilReq{}, &iface.SwapCountResp{})
 	GetConfig                = handleFunc(marketClient, "GetConfig", &iface.GetConfigReq{}, &iface.JsonString{})
 	GetTokenConfig           = handleFunc(marketClient, "GetTokenConfig", &iface.NilReq{}, &iface.JsonString{})

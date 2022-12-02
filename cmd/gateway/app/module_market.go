@@ -29,8 +29,8 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("activity/nft/:Mint", handler.GetActivityNftMetadata)
 	engine.GET("activity/history/:User", handler.GetActivityHistoryByUser)
 
-	engine.GET("/v1/swap/count", handler.SwapCountSharding)
-	//engine.GET("/v2/swap/count", handler.SwapCountSharding)
+	engine.GET("/v1/swap/count", handler.SwapCount)
+	engine.GET("/v2/swap/count", handler.SwapCountSharding)
 
 	engine.GET("/v1/swap/count/list", handler.SwapCountList)
 	engine.GET("/v1/swap/count/kline", handler.QuerySwapKline)
