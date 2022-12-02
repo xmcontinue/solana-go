@@ -64,6 +64,7 @@ func clearSwapPriceKline() error {
 
 	return nil
 }
+
 func ClearOldData() error {
 
 	// 清除一个月以前的数据
