@@ -106,7 +106,7 @@ func Init(viperConf *config.Config) error {
 	_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
 
 	// 清除旧数据,最后才上
-	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)
+	_, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)
 
 	job.Cron.Start()
 

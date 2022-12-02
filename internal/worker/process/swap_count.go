@@ -58,29 +58,29 @@ func SwapTotalCount() error {
 		if err != nil || newTokenAPrice.IsZero() || newTokenBPrice.IsZero() {
 			continue
 		}
-		logger.Info("jishu", logger.String(v.SwapAccount, "1"))
+
 		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
 		}
-		logger.Info("jishu", logger.String(v.SwapAccount, "2"))
+
 		beforeTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenBPrice.IsZero() {
 			beforeTokenBPrice = newTokenBPrice
 		}
-		logger.Info("jishu", logger.String(v.SwapAccount, "3"))
+
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
-		logger.Info("jishu", logger.String(v.SwapAccount, "4"))
+
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		logger.Info("jishu", logger.String(v.SwapAccount, "5"))
+
 		// 获取过去30天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount30d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before30dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		logger.Info("jishu", logger.String(v.SwapAccount, "6"))
+
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		logger.Info("jishu", logger.String(v.SwapAccount, "7"))
+
 		var tvlInUsd, volInUsd decimal.Decimal
 
 		// 计算pairs vol,tvl 计算单边
@@ -149,12 +149,12 @@ func SwapTotalCount() error {
 			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
-		logger.Info("jishu", logger.String(v.SwapAccount, "8"))
+
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "mon"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
-		logger.Info("jishu", logger.String(v.SwapAccount, "9"))
+
 		// 汇总处理
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)

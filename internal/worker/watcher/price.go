@@ -29,7 +29,7 @@ type tokenPrice struct {
 func SyncSwapPrice() error {
 	logger.Info("price syncing ......")
 
-	configs := sol.SwapConfigList()
+	configs := sol.SwapConfigListV2()
 
 	ctx, swapPairPrices := context.Background(), make([]*swapPairPrice, 0, len(configs))
 

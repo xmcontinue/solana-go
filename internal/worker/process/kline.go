@@ -14,35 +14,8 @@ var (
 		DataCount:              500,
 	}
 
-	DateTwelfth = KLineTyp{
-		BeforeIntervalDateType: domain.DateMin,
-		DateType:               domain.DateTwelfth,
-		Interval:               5,
-		InnerTimeInterval:      time.Minute,
-		TimeInterval:           time.Minute * 5,
-		DataCount:              500,
-	}
-
-	DateQuarter = KLineTyp{
-		BeforeIntervalDateType: domain.DateTwelfth,
-		DateType:               domain.DateQuarter,
-		Interval:               3,
-		InnerTimeInterval:      time.Minute * 5,
-		TimeInterval:           time.Minute * 15,
-		DataCount:              500,
-	}
-
-	DateHalfAnHour = KLineTyp{
-		BeforeIntervalDateType: domain.DateQuarter,
-		DateType:               domain.DateHalfAnHour,
-		Interval:               2,
-		InnerTimeInterval:      time.Minute * 15,
-		TimeInterval:           time.Minute * 30,
-		DataCount:              500,
-	}
-
 	DateHour = KLineTyp{
-		BeforeIntervalDateType: domain.DateHalfAnHour,
+		BeforeIntervalDateType: domain.DateMin,
 		DateType:               domain.DateHour,
 		Interval:               2,
 		InnerTimeInterval:      time.Minute * 30,
