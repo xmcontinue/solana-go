@@ -24,8 +24,8 @@ var (
 
 type NetRecode struct {
 	ID               int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt        *time.Time `json:"-" gorm:"not null;index"`
+	UpdatedAt        *time.Time `json:"-" gorm:"not null;index"`
 	RpcURL           string     `json:"rpc_url"  gorm:"not null;type:varchar(128)"` // Rpc地址
 	LastSlot         int64      `json:"last_slot" gorm:"not null"`                  // 最新区块高度
 	FailedRequestNum int64      `json:"failed_request_num" gorm:"not null"`         // 请求失败次数
@@ -34,8 +34,8 @@ type NetRecode struct {
 
 type SwapCountSharding struct {
 	ID                     int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt              *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt              *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt              *time.Time      `json:"-" gorm:"not null;index"`
 	LastSwapTransactionID  int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`        // 最后同步的transaction id
 	SwapAddress            string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex"` // swap地址
 	TokenAAddress          string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"`  // swap token a 地址
@@ -50,8 +50,8 @@ type SwapCountSharding struct {
 
 type SwapCountMigrate struct {
 	ID                     int64      `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt              *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt              *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt              *time.Time `json:"-" gorm:"not null;index"`
+	UpdatedAt              *time.Time `json:"-" gorm:"not null;index"`
 	SwapAddress            string     `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex"` // swap地址
 	MigrateSwapContKLineID int64      `json:"migrate_swap_cont_k_line_id" gorm:"default:0"`              // swapCountKline 迁移进度
 }
@@ -79,7 +79,7 @@ type SwapCountKLine struct {
 	TokenASymbol             string          `json:"token_a_symbol"      gorm:"not null;type:varchar(64);  index:swap_count_k_line_token_a_symbol_date_type_date"` // token A 币种符号
 	TokenBSymbol             string          `json:"token_b_symbol"      gorm:"not null;type:varchar(64);  index:swap_count_k_line_token_b_symbol_date_type_date"`
 	DateType                 DateType        `json:"date_type"  gorm:"not null;type:varchar(64);  uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index:swap_count_k_line_token_a_symbol_date_type_date;index:swap_count_k_line_token_b_symbol_date_type_date;index:swap_count_k_line_date_type_swap_address_date,priority:1;index:swap_count_k_line_swap_address_date_type_date"` // 时间类型（min,quarter,hour,day,wek,mon）
-	Date                     *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index:swap_count_k_line_token_a_symbol_date_type_date;index:swap_count_k_line_token_b_symbol_date_type_date;index;index:swap_count_k_line_date_type_swap_address_date,priority:3;index:swap_count_k_line_swap_address_date_type_date"`  // 统计日期
+	Date                     *time.Time      `json:"date" gorm:"not null;uniqueIndex:swap_count_k_line_date_swap_address_unique_key; index:swap_count_k_line_token_a_symbol_date_type_date;index:swap_count_k_line_token_b_symbol_date_type_date;index;index:swap_count_k_line_date_type_swap_address_date,priority:3;index:swap_count_k_line_swap_address_date_type_date"`                    // 统计日期
 	TxNum                    int64           `json:"tx_num"`                                                                                                                                                                                                                                                                                                                                   // 交易笔数
 	Open                     decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                                                                                                                                                                                                                                                // 统计时间段累的第一个值
 	High                     decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                                                                                                                                                                                                                                                // 最大值
@@ -103,8 +103,8 @@ func (*SwapCountKLine) TableName() string {
 
 type Tvl struct {
 	ID            int64        `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt     *time.Time   `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt     *time.Time   `json:"-" gorm:"not null;index"`
+	UpdatedAt     *time.Time   `json:"-" gorm:"not null;index"`
 	TotalTvlInUsd string       `json:"total_tvl_in_usd" gorm:"type:text;"`
 	TotalVolInUsd string       `json:"total_vol_in_usd" gorm:"type:text;"`
 	TxNum         uint64       `json:"tx_num"`
@@ -234,8 +234,8 @@ func (pt *PairTvlList) Scan(v interface{}) error {
 
 type ShardingKeyAndTableName struct {
 	ID               int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt        *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt        *time.Time `json:"-" gorm:"not null;index"`
+	UpdatedAt        *time.Time `json:"-" gorm:"not null;index"`
 	ShardingKeyValue string     `json:"sharding_key_value" gorm:"unique"`
 	Suffix           int        `json:"suffix"             gorm:"unique"`
 }
