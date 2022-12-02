@@ -8,8 +8,8 @@ import (
 
 type SwapPairCountSharding struct {
 	ID                int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt         *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt         *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt         *time.Time      `json:"-" gorm:"not null;index"`
 	TokenAVolume      decimal.Decimal `json:"token_a_volume" gorm:"type:decimal(36,18);"`
 	TokenBVolume      decimal.Decimal `json:"token_b_volume" gorm:"type:decimal(36,18);"`
 	TokenABalance     decimal.Decimal `json:"token_a_balance" gorm:"type:decimal(36,18);"`
@@ -34,8 +34,8 @@ func (*SwapPairCountSharding) TableName() string {
 // UserCountKLine 用户统计表
 type UserCountKLine struct {
 	ID                            int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt                     *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt                     *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt                     *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt                     *time.Time      `json:"-" gorm:"not null;index"`
 	LastSwapTransactionID         int64           `json:"last_swap_transaction_id" gorm:"not null;default:0;index:idx_user_count_k_lines_last_swap_transaction_id_date_type,priority:3"`                                                          // 最后同步的transaction id
 	UserAddress                   string          `json:"user_address" gorm:"not null;type:varchar(64);  uniqueIndex:user_swap_tvl_count_day_swap_address_unique_key"`                                                                            // 用户 address
 	Date                          *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:user_swap_tvl_count_day_swap_address_unique_key"`                                                                                     // 统计日期
@@ -60,16 +60,16 @@ type UserCountKLine struct {
 
 type SwapUserCount struct {
 	ID          int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt   *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt   *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt   *time.Time `json:"-" gorm:"not null;index"`
+	UpdatedAt   *time.Time `json:"-" gorm:"not null;index"`
 	SwapAddress string     `json:"swap_address" gorm:"not null;type:text;  uniqueIndex"` // swap地址 ，因为每个swap_address 同步进度不一致，通过swap地址来管理进度，如果是v1,那么SyncUtilID表示的是v1版本的进度
 	SyncUtilID  int64      `json:"sync_util_id"`                                         // 解析数据位置
 }
 
 type TransActionUserCount struct {
 	ID          int64      `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt   *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt   *time.Time `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt   *time.Time `json:"-" gorm:"not null;index"`
+	UpdatedAt   *time.Time `json:"-" gorm:"not null;index"`
 	UserAddress string     `json:"user_address" gorm:"not null;type:text;uniqueIndex"` // 用户 address
 }
 
@@ -79,8 +79,8 @@ func (*TransActionUserCount) TableName() string {
 
 type SwapPairPriceKLine struct {
 	ID          int64           `json:"-" gorm:"primaryKey;auto_increment;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt   *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt   *time.Time      `json:"-" gorm:"not null;index"`
 	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // swap地址
 	Open        decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                                                                                             // 统计时间段第一个值
 	High        decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                                                                                             // 最大值
@@ -89,7 +89,7 @@ type SwapPairPriceKLine struct {
 	Avg         decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                                                                                              // 平均值
 	Num         int64           `json:"num"`                                                                                                                                                                                   // 获取次数
 	DateType    DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"`    // 时间类型（min,quarter,hour,day,wek,mon）
-	Date        *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // 统计日期
+	Date        *time.Time      `json:"date" gorm:"not null;uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"`                   // 统计日期
 }
 
 func (*SwapPairPriceKLine) TableName() string {
@@ -98,8 +98,8 @@ func (*SwapPairPriceKLine) TableName() string {
 
 type SwapTokenPriceKLine struct {
 	ID        int64           `json:"-" gorm:"primaryKey;auto_increment; Index:SwapTokenPriceKLine_symbol_date_date_type_id_index"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt *time.Time      `json:"-" gorm:"not null;index"`
 	Symbol    string          `json:"symbol" gorm:"not null;type:varchar(64);uniqueIndex:idx_swap_token_price_k_line_symbol_date_date_type_unique_key; Index:SwapTokenPriceKLine_symbol_date_date_type_id_index"`    // symbol
 	Open      decimal.Decimal `json:"open" gorm:"type:decimal(36,18);default:0"`                                                                                                                                     // 统计时间段第一个值
 	High      decimal.Decimal `json:"high" gorm:"type:decimal(36,18);default:0"`                                                                                                                                     // 最大值
@@ -108,7 +108,7 @@ type SwapTokenPriceKLine struct {
 	Avg       decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                                                                                      // 平均值
 	Num       int64           `json:"num"`                                                                                                                                                                           // 获取次数
 	DateType  DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:idx_swap_token_price_k_line_symbol_date_date_type_unique_key; Index:SwapTokenPriceKLine_symbol_date_date_type_id_index"` // 时间类型（min,quarter,hour,day,wek,mon）
-	Date      *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:idx_swap_token_price_k_line_symbol_date_date_type_unique_key; Index:SwapTokenPriceKLine_symbol_date_date_type_id_index"`     // 统计日期
+	Date      *time.Time      `json:"date" gorm:"not null;uniqueIndex:idx_swap_token_price_k_line_symbol_date_date_type_unique_key; Index:SwapTokenPriceKLine_symbol_date_date_type_id_index"`                       // 统计日期
 }
 
 func (*SwapTokenPriceKLine) TableName() string {

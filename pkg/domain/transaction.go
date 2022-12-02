@@ -11,11 +11,11 @@ import (
 
 type SwapTransaction struct {
 	ID             int64           `json:"id" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt      *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt      *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt      *time.Time      `json:"-" gorm:"not null;index"`
 	Signature      string          `json:"signature" gorm:"not null;type:varchar(128);  index; uniqueIndex:swap_transaction_signature_swap_address_unique_key"`         // 交易签名
 	Fee            decimal.Decimal `json:"fee" gorm:"type:decimal(36,18)"`                                                                                              // 手续费
-	BlockTime      *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6);index"`                                                                          // 打包时间
+	BlockTime      *time.Time      `json:"block_time" gorm:"not null;index"`                                                                                            // 打包时间
 	Slot           uint64          `json:"slot"  gorm:"not null"`                                                                                                       // 区块高度
 	UserAddress    string          `json:"user_address" gorm:"not null;type:varchar(64);  index"`                                                                       // 用户账户
 	InstructionLen uint64          `json:"instruction_len" gorm:"not null;default:0;"`                                                                                  // instruction 第一个data长度
@@ -39,13 +39,13 @@ func (*SwapTransaction) TableName() string {
 
 type SwapTransactionV2 struct {
 	ID          int64           `json:"id" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6)"`
-	UpdatedAt   *time.Time      `json:"-" gorm:"not null;type:timestamp(6)"`
+	CreatedAt   *time.Time      `json:"-" gorm:"not null"`
+	UpdatedAt   *time.Time      `json:"-" gorm:"not null"`
 	Signature   string          `json:"signature" gorm:"not null;type:varchar(128); uniqueIndex"` // 交易签名
 	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);index"`
 	UserAddress string          `json:"user_address" gorm:"type:varchar(64)"`
 	FeePayer    string          `json:"fee_payer"`
-	BlockTime   *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6);index"`                  // 打包时间
+	BlockTime   *time.Time      `json:"block_time" gorm:"not null;index"`                                    // 打包时间
 	Slot        uint64          `json:"slot"  gorm:"not null"`                                               // 区块高度
 	Msg         string          `json:"msg"   gorm:"type:text"`                                              // 日志信息
 	TokenAUSD   decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"` // swap token a usd价格
