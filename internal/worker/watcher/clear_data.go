@@ -22,18 +22,22 @@ func clearTokenPriceKline() error {
 }
 
 func clearSwapTransactions() error {
-	before30Day := time.Now().UTC().Add(-time.Hour * 24 * 30)
-	err := model.DeleteSwapTokenPriceKLine(
-		context.Background(),
+	swapConfigs := sol.SwapConfigList()
 
-		model.NewFilter("date < ?", before30Day),
-		model.DateTypeFilter(domain.DateMin),
-	)
-	if err != nil {
-		if errors.Is(err, errors.RecordNotFound) {
-			return nil
+	beforeOneMonth := time.Now().UTC().Add(-time.Hour * 24 * 30 * 12)
+	for _, v := range swapConfigs {
+		err := model.DeleteSwapTransactionV2(
+			context.Background(),
+			model.SwapAddressFilter(v.SwapAccount),
+			model.NewFilter("date < ?", beforeOneMonth),
+			model.DateTypeFilter(domain.DateMin),
+		)
+		if err != nil {
+			if errors.Is(err, errors.RecordNotFound) {
+				continue
+			}
+			return errors.Wrap(err)
 		}
-		return errors.Wrap(err)
 	}
 
 	return nil
