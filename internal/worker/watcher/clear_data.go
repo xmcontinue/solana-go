@@ -29,7 +29,7 @@ func clearSwapTransactions() error {
 		err := model.DeleteSwapTransactionV2(
 			context.Background(),
 			model.SwapAddressFilter(v.SwapAccount),
-			model.NewFilter("date < ?", beforeOneMonth),
+			model.NewFilter("block_time < ?", beforeOneMonth),
 			model.DateTypeFilter(domain.DateMin),
 		)
 		if err != nil {
