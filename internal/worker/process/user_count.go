@@ -19,7 +19,7 @@ func parserTransactionV2UserCount() error {
 		}
 
 		//err := parserSingleTransactionV2UserCount(swap)
-		err := processTransactionUserCount(swap.SwapAccount)
+		err := processTransactionUserCount("v2", swap.SwapAccount)
 		if err != nil {
 			logger.Error("sync block time error", logger.Errorv(err))
 			return errors.Wrap(err)
@@ -28,7 +28,7 @@ func parserTransactionV2UserCount() error {
 	return nil
 }
 
-func processTransactionUserCount(swapAddress string) error {
+func processTransactionUserCount(version, swapAddress string) error {
 	ctx := context.Background()
 	beginID := int64(0)
 	userCount, err := model.QuerySwapUserCount(ctx, model.SwapAddressFilter(swapAddress))
@@ -48,20 +48,32 @@ func processTransactionUserCount(swapAddress string) error {
 		beginID = userCount.SyncUtilID
 	}
 
+	var userAddress []*model.UserAddressId
 	for {
-		transactions, err := model.QuerySwapTransactions(ctx, 1000, 0, model.OrderFilter("id asc"), model.NewFilter("id > ?", beginID))
-		if err != nil {
-			if errors.Is(err, errors.RecordNotFound) {
-				break
+
+		if version == "v1" {
+			userAddress, err = model.QuerySwapTransactionsUserAddress(ctx, 1000, 0, model.OrderFilter("id asc"), model.NewFilter("id > ?", beginID))
+			if err != nil {
+				if errors.Is(err, errors.RecordNotFound) {
+					break
+				}
+				return errors.Wrap(err)
 			}
-			return errors.Wrap(err)
+		} else {
+			userAddress, err = model.QuerySwapTransactionsUserAddressV2(ctx, 1000, 0, model.OrderFilter("id asc"), model.NewFilter("id > ?", beginID), model.SwapAddressFilter(swapAddress))
+			if err != nil {
+				if errors.Is(err, errors.RecordNotFound) {
+					break
+				}
+				return errors.Wrap(err)
+			}
 		}
 
-		if len(transactions) == 0 {
+		if len(userAddress) == 0 {
 			return nil
 		}
 
-		for _, v := range transactions {
+		for _, v := range userAddress {
 			trans := func(ctx context.Context) error {
 				err = model.UpdateSwapUserCount(ctx, map[string]interface{}{
 					"sync_util_id": v.ID,
@@ -100,7 +112,7 @@ func processTransactionUserCount(swapAddress string) error {
 
 		}
 
-		beginID = transactions[len(transactions)-1].ID
+		beginID = userAddress[len(userAddress)-1].ID
 
 	}
 
@@ -109,7 +121,7 @@ func processTransactionUserCount(swapAddress string) error {
 
 func parserTransactionUserCount() error {
 	// 先解析v1
-	err := processTransactionUserCount("v1")
+	err := processTransactionUserCount("v1", "v1")
 	if err != nil {
 		return errors.Wrap(err)
 	}

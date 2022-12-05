@@ -52,6 +52,9 @@ func SwapTotalCount() error {
 
 	for _, v := range sol.SwapConfigList() {
 
+		if v.SwapAccount != "PxQamXYLP1KVcv7Adi1adCpx8CPtsMbtdsXQ4BgZNCb" {
+			continue
+		}
 		// 获取token价格
 		newTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
 		newTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
@@ -236,7 +239,13 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	total, err := model.CountUserNumber(context.Background())
+	//total, err := model.CountUserNumber(context.Background())
+	//if err != nil {
+	//	logger.Error("get user number err", logger.Errorv(err))
+	//	return errors.Wrap(err)
+	//}
+
+	total, err := model.CountTransActionUserCount(context.Background())
 	if err != nil {
 		logger.Error("get user number err", logger.Errorv(err))
 		return errors.Wrap(err)

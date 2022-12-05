@@ -128,12 +128,12 @@ func Init(viperConf *config.Config) error {
 	}
 
 	//清理数据
-	_, err = job.Cron.AddFunc(getSpec("clear_old_data"), clearSwapCountKline)
-	if err != nil {
-		panic(err)
-	}
+	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), clearSwapCountKline)
+	//if err != nil {
+	//	panic(err)
+	//}
 
-	//_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
+	_, err = job.Cron.AddFunc(getSpec("tvl_of_token"), parserTransactionUserCount)
 	if err != nil {
 		panic(err)
 	}

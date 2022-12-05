@@ -30,6 +30,39 @@ func QuerySwapTransactions(ctx context.Context, limit, offset int, filter ...Fil
 	return list, nil
 }
 
+type UserAddressId struct {
+	ID          int64  `json:"id"`
+	UserAddress string `json:"user_address"`
+}
+
+func QuerySwapTransactionsUserAddress(ctx context.Context, limit, offset int, filter ...Filter) ([]*UserAddressId, error) {
+	var (
+		db          = rDB(ctx)
+		userAddress []*UserAddressId
+		err         error
+	)
+
+	if err = db.Model(&domain.SwapTransaction{}).Select("id", "user_address").Scopes(filter...).Limit(limit).Offset(offset).Find(&userAddress).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return userAddress, nil
+}
+
+func QuerySwapTransactionsUserAddressV2(ctx context.Context, limit, offset int, filter ...Filter) ([]*UserAddressId, error) {
+	var (
+		db          = rDB(ctx)
+		userAddress []*UserAddressId
+		err         error
+	)
+
+	if err = db.Model(&domain.SwapTransactionV2{}).Select("id", "user_address").Scopes(filter...).Limit(limit).Offset(offset).Find(&userAddress).Error; err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	return userAddress, nil
+}
+
 func QuerySwapTransactionsV2InBaseTable(ctx context.Context, limit, offset int, filter ...Filter) ([]*domain.SwapTransactionV2, error) {
 	var (
 		db   = rDB(ctx)

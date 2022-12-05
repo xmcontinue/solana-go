@@ -51,6 +51,19 @@ func QueryTransActionUserCount(ctx context.Context, filter ...Filter) (*domain.T
 	return &info, nil
 }
 
+func CountTransActionUserCount(ctx context.Context) (int64, error) {
+	var (
+		db    = rDB(ctx)
+		err   error
+		total int64
+	)
+
+	if err = db.Model(&domain.TransActionUserCount{}).Count(&total).Error; err != nil {
+		return 0, errors.Wrap(err)
+	}
+	return total, nil
+}
+
 func CreateTransActionUserCount(ctx context.Context, info *domain.TransActionUserCount) error {
 	if err := wDB(ctx).Create(info).Error; err != nil {
 		return errors.Wrap(err)
