@@ -94,7 +94,7 @@ func SwapTotalCount() error {
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
 		volInUsd = tokenAVol.Add(tokenBVol)
 		// -------------1day 计算--------------
-		Apr24h := "%0"
+		Apr24h := "0%"
 		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
 		if swapCount24h.TxNum != 0 {
 			tokenAVol24h, tokenBVol24h = swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
@@ -239,11 +239,11 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	//total, err := model.CountUserNumber(context.Background())
-	//if err != nil {
+	// total, err := model.CountUserNumber(context.Background())
+	// if err != nil {
 	//	logger.Error("get user number err", logger.Errorv(err))
 	//	return errors.Wrap(err)
-	//}
+	// }
 
 	total, err := model.CountTransActionUserCount(context.Background())
 	if err != nil {
