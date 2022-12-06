@@ -202,6 +202,10 @@ type SwapCountToApiPool struct {
 	Apr7Day                     string         `json:"apr_7day"`
 	Apr30Day                    string         `json:"apr_30day"`
 	RewarderApr                 string         `json:"rewarder_apr"`
+	Fee7D                       string         `json:"fee_7_d"`
+	Fee30D                      string         `json:"fee_30_d"`
+	Apr7DayCount                int64          `json:"apr_7_day_count"`
+	Apr30DayCount               int64          `json:"apr_30_day_count"`
 }
 
 type SwapCountToApiToken struct {

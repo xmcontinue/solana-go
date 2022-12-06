@@ -117,6 +117,7 @@ func SwapTotalCount() error {
 			rewarderApr = v.RewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd.Mul(decimal.NewFromInt(100))).StringFixedBank(2) + "%"
 		}
 		var tokenAVol7d, tokenBVol7d, volInUsd7d decimal.Decimal
+		var apr7DayCount int64
 		if swapCount7d.TxNum != 0 {
 			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
 			volInUsd7d = tokenAVol7d.Add(tokenBVol7d)
@@ -128,10 +129,12 @@ func SwapTotalCount() error {
 			if !tvlInUsd.IsZero() {
 				fee, _ := decimal.NewFromString(v.Fee)
 				apr = parse.BankToString(volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
+				apr7DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 7)
 				Apr7day = parse.BankToString(swapCount7d.FeeAmount.Div(decimal.NewFromInt(differenceDays(*swapCountInfo.Date, time.Now(), 7))).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
 			}
 		}
 
+		var apr30DayCount int64
 		// ----------30 day 计算---------------
 		Apr30day := "0%"
 		if swapCount30d.TxNum != 0 {
@@ -140,6 +143,7 @@ func SwapTotalCount() error {
 			}
 
 			if !tvlInUsd.IsZero() {
+				apr30DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 30)
 				Apr30day = parse.BankToString(swapCount30d.FeeAmount.Div(decimal.NewFromInt(differenceDays(*swapCountInfo.Date, time.Now(), 30))).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
 			}
 		}
@@ -181,6 +185,10 @@ func SwapTotalCount() error {
 		}
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:                        v.Name,
+			Fee7D:                       swapCount7d.FeeAmount.String(),
+			Fee30D:                      swapCount30d.FeeAmount.String(),
+			Apr7DayCount:                apr7DayCount,
+			Apr30DayCount:               apr30DayCount,
 			SwapAccount:                 v.SwapAccount,
 			TokenAReserves:              v.TokenA.SwapTokenAccount,
 			TokenBReserves:              v.TokenB.SwapTokenAccount,
@@ -290,7 +298,7 @@ func SwapTotalCount() error {
 		return errors.Wrap(err)
 	}
 
-	swapCountKey := domain.SwapTotalCountKeyWithSharding()
+	swapCountKey := domain.SwapTotalCountKey()
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}

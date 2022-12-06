@@ -11,7 +11,7 @@ import (
 
 func QuerySwapPairBase(ctx context.Context, filter ...Filter) (*domain.SwapPairBaseSharding, error) {
 	var info *domain.SwapPairBaseSharding
-	if err := wDB(ctx).Model(&domain.SwapPairBaseSharding{}).Scopes(filter...).First(&info).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapPairBaseSharding{}).Scopes(filter...).Take(&info).Error; err != nil {
 		return info, errors.Wrap(err)
 	}
 	return info, nil
