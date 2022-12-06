@@ -114,7 +114,7 @@ func SwapTotalCount() error {
 		rewarderApr := "0%"
 
 		if !tvlInUsd.IsZero() {
-			rewarderApr = v.RewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd.Mul(decimal.NewFromInt(100))).StringFixedBank(2) + "%"
+			rewarderApr = parse.BankToString(v.RewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"
 		}
 		var tokenAVol7d, tokenBVol7d, volInUsd7d decimal.Decimal
 		if swapCount7d.TxNum != 0 {
