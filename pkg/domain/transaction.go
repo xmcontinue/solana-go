@@ -45,7 +45,7 @@ type SwapTransactionV2 struct {
 	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);index"`
 	UserAddress string          `json:"user_address" gorm:"type:varchar(64)"`
 	FeePayer    string          `json:"fee_payer"`
-	BlockTime   *time.Time      `json:"block_time" gorm:"not null;index"`                                    // 打包时间
+	BlockTime   *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6);index"`                  // 打包时间
 	Slot        uint64          `json:"slot"  gorm:"not null"`                                               // 区块高度
 	Msg         string          `json:"msg"   gorm:"type:text"`                                              // 日志信息
 	TokenAUSD   decimal.Decimal `json:"token_a_usd" gorm:"column:token_a_usd;type:decimal(36,18);default:1"` // swap token a usd价格
