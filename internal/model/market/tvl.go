@@ -164,7 +164,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCountSharding) (
 		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
 		Suffix("tx_num = swap_count_shardings.tx_num + 1").
 		Suffix("WHERE ").
-		Suffix("swap_count_shardings.last_swap_transaction_id <= ?", swapCount.LastSwapTransactionID).
+		Suffix("swap_count_shardings.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
@@ -175,6 +175,10 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCountSharding) (
 	res := wDB(ctx).Raw(sqlStem, args...).Scan(&after)
 	if err = res.Error; err != nil {
 		return nil, errors.Wrap(err)
+	}
+
+	if res.RowsAffected == 0 {
+		return nil, errors.AlreadyExists
 	}
 
 	return &after, nil
