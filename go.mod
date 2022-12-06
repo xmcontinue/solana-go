@@ -37,6 +37,7 @@ require (
 	github.com/mr-tron/base58 v1.2.0
 	github.com/near/borsh-go v0.3.1
 	github.com/prometheus/client_golang v1.11.0
+	github.com/shopspring/decimal v1.3.1
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
 	google.golang.org/api v0.58.0 // indirect
