@@ -7,7 +7,10 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	sDecimal "github.com/shopspring/decimal"
+
 	"git.cplus.link/go/akit/util/decimal"
+
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -50,7 +53,7 @@ func SetSwapConfig(configMap map[string]*domain.SwapConfig) {
 	swapConfigMap = configMap
 }
 
-//使用前提是 不会溢出
+// 使用前提是 不会溢出
 func int64ListTouInt16List(int16List []int64) []uint16 {
 	int64List := make([]uint16, 0, len(int16List))
 	for _, v := range int16List {
@@ -128,4 +131,16 @@ func FormatFloat(num decimal.Decimal, dc int) decimal.Decimal {
 
 func FormatFloatCarry(num decimal.Decimal, dc int) decimal.Decimal {
 	return num.Round(int32(dc))
+}
+
+func BankToString(v decimal.Decimal, r int32) string {
+	f, _ := v.Float64()
+	return sDecimal.NewFromFloat(f).RoundFloor(r).String()
+}
+
+func Bank(v decimal.Decimal, r int32) decimal.Decimal {
+	f, _ := v.Float64()
+	s := sDecimal.NewFromFloat(f).RoundFloor(r).String()
+	d, _ := decimal.NewFromString(s)
+	return d
 }
