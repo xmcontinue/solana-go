@@ -30,7 +30,8 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.GET("activity/history/:User", handler.GetActivityHistoryByUser)
 
 	engine.GET("/v1/swap/count", handler.SwapCount)
-	engine.GET("/v1/swap/count/new", handler.SwapCount)
+	engine.GET("/v2/swap/count", handler.SwapCountSharding)
+
 	engine.GET("/v1/swap/count/list", handler.SwapCountList)
 	engine.GET("/v1/swap/count/kline", handler.QuerySwapKline)
 	engine.POST("/v1/tvl", handler.GetTvlV2)
@@ -38,6 +39,7 @@ func (m *cremaMarket) Start(c *config.Config, engine *gin.Engine) error {
 	engine.POST("/v1/vol", handler.GetVolV2)
 	engine.POST("/v1/kline", handler.GetKline)
 	engine.GET("/v1/histogram", handler.GetHistogram)
+	engine.GET("/v2/histogram", handler.GetHistogramSharding)
 	engine.GET("/v1/token/tvl", handler.TvlOfSingleToken)
 	engine.GET("/v1/transaction", handler.GetTransaction)
 	engine.GET("/v1/position", handler.GetPosition)

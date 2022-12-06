@@ -48,11 +48,10 @@ func SwapTotalCount() error {
 
 	ctx := context.Background()
 
-	// 获取swap pair 24h 内交易统计
-	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
+	// 获取swap pair 24h 内交易统计,因为时间戳的原因，这里全部改成utc时间
+	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour).UTC(), time.Now().Add(-24*7*time.Hour).UTC(), time.Now().Add(-24*30*time.Hour).UTC()
 
 	for _, v := range sol.SwapConfigList() {
-
 		// 获取token价格
 		newTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
 		newTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
@@ -158,13 +157,13 @@ func SwapTotalCount() error {
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
-		logger.Info("SwapTotalCount", logger.String(v.SwapAccount, strconv.Itoa(int(swapCount24h.TxNum))))
+
 		// 汇总处理
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
-
+		logger.Info("人数", logger.String(v.SwapAccount, strconv.FormatInt(int64(swapCount24h.TxNum), 10)))
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 
 		if strings.ToLower(v.Version) != "v2" {
@@ -209,7 +208,7 @@ func SwapTotalCount() error {
 		}
 
 		swapCountToApi.Pools = append(swapCountToApi.Pools, swapCountToApiPool)
-		logger.Info(v.SwapAccount)
+
 		// token统计
 		appendTokensToSwapCount(
 			swapCountToApi,
@@ -240,7 +239,13 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	total, err := model.CountUserNumber(context.Background())
+	//total, err := model.CountUserNumber(context.Background())
+	//if err != nil {
+	//	logger.Error("get user number err", logger.Errorv(err))
+	//	return errors.Wrap(err)
+	//}
+
+	total, err := model.CountTransActionUserCount(context.Background())
 	if err != nil {
 		logger.Error("get user number err", logger.Errorv(err))
 		return errors.Wrap(err)
@@ -285,7 +290,7 @@ func SwapTotalCount() error {
 		return errors.Wrap(err)
 	}
 
-	swapCountKey := domain.SwapTotalCountKey()
+	swapCountKey := domain.SwapTotalCountKeyWithSharding()
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}

@@ -30,6 +30,10 @@ func SwapTotalCountKey() RedisKey {
 	return RedisKey{fmt.Sprintf("%s:swap:count:total", publicPrefix), 0, 0}
 }
 
+func SwapTotalCountKeyWithSharding() RedisKey {
+	return RedisKey{fmt.Sprintf("%s:swap:count:total:sharding", publicPrefix), 0, 0}
+}
+
 // LastSwapTransactionID 如果有新增的表，则新增redis key ，用以判断当前表同步数据位置，且LastSwapTransactionID为截止id
 func LastSwapTransactionID() RedisKey {
 	return RedisKey{fmt.Sprintf("%s:swap:transaction:last:id", publicPrefix), time.Hour, 0}
@@ -59,8 +63,16 @@ func HistogramKey(dateType DateType, swapAccount string) string {
 	return fmt.Sprintf("%s:histogram:swap:count:%s:%s", publicPrefix, dateType, swapAccount)
 }
 
+func HistogramKeySharding(dateType DateType, swapAccount string) string {
+	return fmt.Sprintf("%s:histogram:swap:count:sharding:%s:%s", publicPrefix, dateType, swapAccount)
+}
+
 func TotalHistogramKey(dateType DateType) string {
 	return fmt.Sprintf("%s:histogram:total:swap:count:%s", publicPrefix, dateType)
+}
+
+func TotalHistogramKeySharding(dateType DateType) string {
+	return fmt.Sprintf("%s:histogram:total:swap:count:sharding:%s", publicPrefix, dateType)
 }
 
 func SetPublicPrefix(key string) {

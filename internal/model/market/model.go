@@ -52,17 +52,18 @@ func initDB() error {
 // 初始化/同步数据库表结构
 func autoMigrate() error {
 	if err := dbWPool.NewConn().AutoMigrate(
-		&domain.SwapPairCount{},
+		&domain.SwapPairCountSharding{},
 		&domain.Tvl{},
 		&domain.SwapTransaction{},
 		&domain.SwapTransactionV2{},
 		&domain.NetRecode{},
-		&domain.SwapCount{},
+		&domain.SwapCountSharding{},
+		&domain.SwapCountMigrate{},
 		&domain.SwapCountKLine{},
 		&domain.UserCountKLine{},
 		&domain.SwapUserCount{},
 		&domain.TransActionUserCount{},
-		&domain.SwapPairBase{},
+		&domain.SwapPairBaseSharding{},
 		&domain.SwapPairPriceKLine{},
 		&domain.SwapTokenPriceKLine{},
 		&domain.ActivityHistory{},

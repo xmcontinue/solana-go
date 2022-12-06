@@ -47,27 +47,6 @@ func NewKline(date *time.Time) *Kline {
 				DataCount:              500,
 			}, {
 				BeforeIntervalDateType: domain.DateMin,
-				DateType:               domain.DateTwelfth,
-				Interval:               5,
-				InnerTimeInterval:      time.Minute,
-				TimeInterval:           time.Minute * 5,
-				DataCount:              500,
-			}, {
-				BeforeIntervalDateType: domain.DateTwelfth,
-				DateType:               domain.DateQuarter,
-				Interval:               3,
-				InnerTimeInterval:      time.Minute * 5,
-				TimeInterval:           time.Minute * 15,
-				DataCount:              500,
-			}, {
-				BeforeIntervalDateType: domain.DateQuarter,
-				DateType:               domain.DateHalfAnHour,
-				Interval:               2,
-				InnerTimeInterval:      time.Minute * 15,
-				TimeInterval:           time.Minute * 30,
-				DataCount:              500,
-			}, {
-				BeforeIntervalDateType: domain.DateHalfAnHour,
 				DateType:               domain.DateHour,
 				Interval:               2,
 				InnerTimeInterval:      time.Minute * 30,

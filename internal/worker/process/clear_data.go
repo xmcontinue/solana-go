@@ -11,6 +11,7 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
+// 删除之后  分钟数量(tx_num)总和就不等于day 数量总和了
 func clearSwapCountKline() error {
 	swapConfigs := sol.SwapConfigList()
 

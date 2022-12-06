@@ -13,19 +13,19 @@ import (
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
-func CreateSwapPairCount(ctx context.Context, tokenVolumeCount *domain.SwapPairCount) error {
+func CreateSwapPairCount(ctx context.Context, tokenVolumeCount *domain.SwapPairCountSharding) error {
 	if err := wDB(ctx).Create(tokenVolumeCount).Error; err != nil {
 		return errors.Wrap(err)
 	}
 	return nil
 }
 
-func QuerySwapPairCount(ctx context.Context, filter ...Filter) (*domain.SwapPairCount, error) {
+func QuerySwapPairCount(ctx context.Context, filter ...Filter) (*domain.SwapPairCountSharding, error) {
 	var (
 		db   = rDB(ctx)
-		info *domain.SwapPairCount
+		info *domain.SwapPairCountSharding
 	)
-	if err := db.Model(&domain.SwapPairCount{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
+	if err := db.Model(&domain.SwapPairCountSharding{}).Scopes(filter...).Order("id desc").First(&info).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 

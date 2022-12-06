@@ -83,6 +83,11 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTransaction"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
+	err = migrate()
+	if err != nil {
+		return errors.Wrap(err)
+	}
+	logger.Info("migrate done")
 	// 同步vol(24h)
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)
 
@@ -94,11 +99,12 @@ func Init(viperConf *config.Config) error {
 
 	// 同步swap status
 	_, err = job.Cron.AddFunc(getSpec("tvl_cache"), syncSwapStatus)
+
 	// TODO 由于未测试完成其他功能上线，此处暂时关闭
 	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
 	// 解析已经同步的数据，这些数据在第一次同步时没有解析类型和user_address
-	_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
+	//_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
 
 	// 清除旧数据,最后才上
 	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)

@@ -153,10 +153,10 @@ func updateSwapCountKline(ctx context.Context, swapCountKLine *domain.SwapCountK
 			// 找到第一个数据
 			lastAvg := &domain.SwapCountKLine{}
 			for index := range swapCountKLines {
+				lastAvg = swapCountKLines[len(swapCountKLines)-index-1]
 				if swapCountKLines[len(swapCountKLines)-index-1].Date.After((*avgList)[0].Date) {
 					break
 				}
-				lastAvg = swapCountKLines[len(swapCountKLines)-index-1]
 			}
 
 			for index, avg := range *avgList {
@@ -257,7 +257,7 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			return nil
 		}
 
-		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCount{
+		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCountSharding{
 			LastSwapTransactionID: swapCountKLine.LastSwapTransactionID,
 			SwapAddress:           swapCountKLine.SwapAddress,
 			TokenAAddress:         swapCountKLine.TokenAAddress,

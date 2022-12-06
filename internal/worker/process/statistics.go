@@ -24,7 +24,7 @@ func sumTotalSwapAccount() error {
 		now = time.Now()
 	)
 
-	for _, v := range []KLineTyp{DateMin, DateTwelfth, DateQuarter, DateHalfAnHour, DateHour, DateDay, DateWek, DateMon} {
+	for _, v := range []KLineTyp{DateMin, DateHour, DateDay, DateWek, DateMon} {
 		date := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute(), now.Second(), 0, time.UTC)
 		v.Date = &date
 		if err := sumDateTypeSwapAccount(ctx, v); err != nil {
@@ -38,7 +38,7 @@ func sumTotalSwapAccount() error {
 
 func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
 	var (
-		key = domain.TotalHistogramKey(klineT.DateType)
+		key = domain.TotalHistogramKeySharding(klineT.DateType)
 	)
 
 	// 构造初始零值数据

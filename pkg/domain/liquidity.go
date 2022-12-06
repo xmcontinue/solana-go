@@ -9,8 +9,8 @@ import (
 // LiquidityDistributionCount 流动性区间分布统计
 type LiquidityDistributionCount struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt             *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt             *time.Time      `json:"-" gorm:"not null;index"`
 	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`       // 最后同步的transaction id
 	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);     index"` // swap地址
 	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"` // swap token a 地址
@@ -25,8 +25,8 @@ type LiquidityDistributionCount struct {
 // LiquidityChangeCount 流动性变动统计
 type LiquidityChangeCount struct {
 	ID                    int64           `json:"-" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
-	CreatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
-	UpdatedAt             *time.Time      `json:"-" gorm:"not null;type:timestamp(6);index"`
+	CreatedAt             *time.Time      `json:"-" gorm:"not null;index"`
+	UpdatedAt             *time.Time      `json:"-" gorm:"not null;index"`
 	LastSwapTransactionID int64           `json:"last_swap_transaction_id" gorm:"not null;default:0"`       // 最后同步的transaction id
 	SwapAddress           string          `json:"swap_address" gorm:"not null;type:varchar(64);     index"` // swap地址
 	TokenAAddress         string          `json:"token_a_address" gorm:"not null;type:varchar(64);  index"` // swap token a 地址

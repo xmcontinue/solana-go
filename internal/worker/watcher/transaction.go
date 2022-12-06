@@ -46,6 +46,9 @@ func CreateSyncTransaction() error {
 
 	keys := sol.SwapConfigList()
 	for _, v := range keys {
+		if v.Version != "v2" {
+			continue
+		}
 		m.Store(v.SwapAccount, v)
 	}
 
@@ -121,7 +124,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
+			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBaseSharding{
 				SwapAddress:      s.swapConfig.SwapAccount,
 				TokenAAddress:    s.swapConfig.TokenA.SwapTokenAccount,
 				TokenBAddress:    s.swapConfig.TokenB.SwapTokenAccount,

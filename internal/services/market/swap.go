@@ -21,9 +21,9 @@ import (
 func (t *MarketService) SwapCountOld(ctx context.Context, args *iface.SwapCountReq, reply *iface.SwapCountOldResp) error {
 	defer rpcx.Recover(ctx)
 
-	reply.SwapPairCount = market.GetSwapCountCache(args.TokenSwapAddress)
+	reply.SwapPairCountSharding = market.GetSwapCountCache(args.TokenSwapAddress)
 
-	if reply.SwapPairCount == nil {
+	if reply.SwapPairCountSharding == nil {
 		return errors.Wrap(errors.RecordNotFound)
 	}
 
@@ -66,6 +66,23 @@ func (t *MarketService) SwapCount(ctx context.Context, _ *iface.NilReq, reply *i
 	defer rpcx.Recover(ctx)
 
 	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKey().Key).Result()
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	err = json.Unmarshal([]byte(res), reply)
+	if err != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	return nil
+}
+
+// SwapCountSharding ...
+func (t *MarketService) SwapCountSharding(ctx context.Context, _ *iface.NilReq, reply *iface.SwapCountResp) error {
+	defer rpcx.Recover(ctx)
+
+	res, err := t.redisClient.Get(ctx, domain.SwapTotalCountKeyWithSharding().Key).Result()
 	if err != nil {
 		return errors.Wrap(errors.RecordNotFound)
 	}
