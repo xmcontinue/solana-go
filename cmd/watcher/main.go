@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"git.cplus.link/go/akit/config"
-	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
@@ -37,17 +36,6 @@ func main() {
 	if err := sol.Init(configer); err != nil {
 		panic(err)
 	}
-
-	// 添加支持分表
-	configs := sol.SwapConfigList()
-	shardingValues := make([]string, 0, len(configs))
-	for _, v := range configs {
-		shardingValues = append(shardingValues, v.SwapAccount)
-	}
-	if err := model.InitWithSharding(shardingValues); err != nil {
-		panic(err)
-	}
-	logger.Info("sharding complete!")
 
 	// coinGecko初始化
 	// coingecko.Init()
