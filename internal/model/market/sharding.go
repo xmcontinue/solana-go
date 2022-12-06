@@ -12,6 +12,7 @@ import (
 )
 
 var shardingConfig sharding.Config //分表配置
+var ISSharding bool
 
 // ShardingKeyAndTableName 分表的表名和分表建之间的关系
 type ShardingKeyAndTableName struct {
@@ -128,6 +129,8 @@ func autoMigrateWithSharding(shardingValues []string) error {
 	}
 
 	shardingTables := []interface{}{
+		&domain.SwapPairBase{},
+		&domain.SwapCount{},
 		&domain.SwapCountKLine{},
 		&domain.SwapPairPriceKLine{},
 		&domain.SwapTransactionV2{},
@@ -209,6 +212,8 @@ func InitWithSharding(shardingValue []string) error {
 	if err := createIndex(); err != nil {
 		rErr = errors.Wrapf(err, "auto migrate")
 	}
+
+	ISSharding = true
 
 	return rErr
 }

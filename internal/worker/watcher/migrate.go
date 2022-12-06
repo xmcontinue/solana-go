@@ -108,7 +108,7 @@ func migrateSingleSwapPairPriceKlineBySwapAddress(wg *sync.WaitGroup, limitChan 
 			return errors.Wrap(err)
 		}
 
-		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBaseSharding{
+		err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
 			SwapAddress:      swapConfig.SwapAccount,
 			TokenAAddress:    swapConfig.TokenA.SwapTokenAccount,
 			TokenBAddress:    swapConfig.TokenB.SwapTokenAccount,

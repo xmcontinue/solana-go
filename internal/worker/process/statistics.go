@@ -37,9 +37,12 @@ func sumTotalSwapAccount() error {
 }
 
 func sumDateTypeSwapAccount(ctx context.Context, klineT KLineTyp) error {
-	var (
+	var key string
+	if model.ISSharding {
 		key = domain.TotalHistogramKeySharding(klineT.DateType)
-	)
+	} else {
+		key = domain.TotalHistogramKey(klineT.DateType)
+	}
 
 	// 构造初始零值数据
 	for index := range swapHistogramZ {

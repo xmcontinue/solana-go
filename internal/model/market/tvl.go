@@ -137,9 +137,9 @@ type UserSwapVol struct {
 	Num           int             `json:"num"`
 }
 
-func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCountSharding) (*domain.SwapCountSharding, error) {
+func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.SwapCount, error) {
 	var (
-		after   domain.SwapCountSharding
+		after   domain.SwapCount
 		now     = time.Now().UTC()
 		inserts = map[string]interface{}{
 			"last_swap_transaction_id": swapCount.LastSwapTransactionID,
@@ -185,7 +185,7 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCountSharding) (
 }
 
 func UpdateSwapCount(ctx context.Context, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCountSharding{}).Scopes(filter...).Updates(updates).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Updates(updates).Error; err != nil {
 		return errors.Wrap(err)
 	}
 	return nil
@@ -396,9 +396,9 @@ func QueryPositions(ctx context.Context, limit, offset int, filter ...Filter) ([
 
 }
 
-func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCountSharding, error) {
+func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCount, error) {
 	var ids []int64
-	if err := wDB(ctx).Model(&domain.SwapCountSharding{}).Scopes(filter...).Select("max(last_swap_transaction_id)").Group("swap_address").Scan(&ids).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Select("max(last_swap_transaction_id)").Group("swap_address").Scan(&ids).Error; err != nil {
 		return nil, errors.Wrap(err)
 	}
 
@@ -406,14 +406,14 @@ func GetLastMaxTvls(ctx context.Context, filter ...Filter) ([]*domain.SwapCountS
 		return nil, nil
 	}
 
-	var list []*domain.SwapCountSharding
-	wDB(ctx).Model(&domain.SwapCountSharding{}).Select("swap_address").Where("id in ?", ids).Scan(&list)
+	var list []*domain.SwapCount
+	wDB(ctx).Model(&domain.SwapCount{}).Select("swap_address").Where("id in ?", ids).Scan(&list)
 	return list, nil
 }
 
-func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCountSharding, error) {
-	var swapCount = &domain.SwapCountSharding{}
-	if err := rDB(ctx).Model(&domain.SwapCountSharding{}).Scopes(filter...).Take(swapCount).Error; err != nil {
+func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCount, error) {
+	var swapCount = &domain.SwapCount{}
+	if err := rDB(ctx).Model(&domain.SwapCount{}).Scopes(filter...).Take(swapCount).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.Wrap(errors.RecordNotFound)
 		}
@@ -423,7 +423,7 @@ func QuerySwapCount(ctx context.Context, filter ...Filter) (*domain.SwapCountSha
 
 }
 
-func CreateSwapCount(ctx context.Context, swapCount *domain.SwapCountSharding) error {
+func CreateSwapCount(ctx context.Context, swapCount *domain.SwapCount) error {
 	if err := wDB(ctx).Create(swapCount).Error; err != nil {
 		return errors.Wrap(err)
 	}
@@ -479,7 +479,7 @@ func GetMaxUserCountKLineID(ctx context.Context, swapAccount string) (int64, err
 	return 0, nil
 }
 func UpdateSwapCountBySwapAccount(ctx context.Context, swapAccount string, updates map[string]interface{}, filter ...Filter) error {
-	if err := wDB(ctx).Model(&domain.SwapCountSharding{}).Scopes(append(filter, SwapAddressFilter(swapAccount))...).Updates(updates).Error; err != nil {
+	if err := wDB(ctx).Model(&domain.SwapCount{}).Scopes(append(filter, SwapAddressFilter(swapAccount))...).Updates(updates).Error; err != nil {
 		if dbPool.IsDuplicateKeyError(err) {
 			return errors.Wrap(errors.AlreadyExists)
 		}
