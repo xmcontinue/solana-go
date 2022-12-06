@@ -92,6 +92,10 @@ func initShardingKeyValue(shardingValues []string) error {
 }
 
 func getTableFullName(table string, swapAddress string) (string, error) {
+	if !ISSharding {
+		return table, nil
+	}
+
 	suffix, err := shardingConfig.ShardingAlgorithm(swapAddress)
 	if err != nil {
 		return "", errors.Wrap(err)
