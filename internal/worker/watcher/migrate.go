@@ -228,7 +228,9 @@ func migrateSwapPairPriceKline() error {
 }
 
 func migrate() error {
-
+	if !model.ISSharding {
+		return nil
+	}
 	// 原始tx 数据迁移
 	//err = migrateSwapTransaction()
 	//if err != nil {

@@ -70,7 +70,10 @@ func SwapTotalCount() error {
 		}
 
 		// 获取最开始的日期，为了统计apr
-		swapCountInfo, _ := model.QuerySwapCountKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"), model.OrderFilter("id asc"))
+		swapCountInfo, err := model.QuerySwapCountKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"), model.OrderFilter("id asc"))
+		if err != nil {
+			continue
+		}
 
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))

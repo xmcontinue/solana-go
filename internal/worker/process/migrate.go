@@ -103,6 +103,9 @@ func migrateSwapCountKline() error {
 }
 
 func migrate() error {
+	if !model.ISSharding {
+		return nil
+	}
 	var err error
 
 	logger.Info("migrate migrateSwapPairPriceKline done")
