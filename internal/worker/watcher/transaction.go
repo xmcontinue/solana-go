@@ -124,7 +124,7 @@ func (s *SyncTransaction) getBeforeAndUntil() (*solana.Signature, *solana.Signat
 	swapPairBase, err := model.QuerySwapPairBase(context.Background(), model.SwapAddressFilter(s.swapConfig.SwapAccount))
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBaseSharding{
+			err = model.CreateSwapPairBase(context.Background(), &domain.SwapPairBase{
 				SwapAddress:      s.swapConfig.SwapAccount,
 				TokenAAddress:    s.swapConfig.TokenA.SwapTokenAccount,
 				TokenBAddress:    s.swapConfig.TokenB.SwapTokenAccount,

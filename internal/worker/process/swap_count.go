@@ -49,7 +49,7 @@ func SwapTotalCount() error {
 	ctx := context.Background()
 
 	// 获取swap pair 24h 内交易统计,因为时间戳的原因，这里全部改成utc时间
-	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour).UTC(), time.Now().Add(-24*7*time.Hour).UTC(), time.Now().Add(-24*30*time.Hour).UTC()
+	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
 	for _, v := range sol.SwapConfigList() {
 		// 获取token价格
@@ -185,8 +185,8 @@ func SwapTotalCount() error {
 		}
 		swapCountToApiPool := &domain.SwapCountToApiPool{
 			Name:                        v.Name,
-			Fee7D:                       swapCount7d.FeeAmount.String(),
-			Fee30D:                      swapCount30d.FeeAmount.String(),
+			Fee7D:                       swapCount7d.FeeAmount.Round(countDecimal).String(),
+			Fee30D:                      swapCount30d.FeeAmount.Round(countDecimal).String(),
 			Apr7DayCount:                apr7DayCount,
 			Apr30DayCount:               apr30DayCount,
 			SwapAccount:                 v.SwapAccount,
@@ -298,7 +298,13 @@ func SwapTotalCount() error {
 		return errors.Wrap(err)
 	}
 
-	swapCountKey := domain.SwapTotalCountKey()
+	var swapCountKey domain.RedisKey
+	if model.ISSharding {
+		swapCountKey = domain.SwapTotalCountKeyWithSharding()
+	} else {
+		swapCountKey = domain.SwapTotalCountKey()
+	}
+
 	if err := redisClient.Set(context.Background(), swapCountKey.Key, data, swapCountKey.Timeout).Err(); err != nil {
 		return errors.Wrap(err)
 	}

@@ -32,7 +32,7 @@ type NetRecode struct {
 	Enable           bool       `json:"enable" gorm:"default:false"`                // 是否已启用，默认不启用
 }
 
-type SwapCountSharding struct {
+type SwapCount struct {
 	ID                     int64           `json:"-" gorm:"primaryKey;AUTO_INCREMENT"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt              *time.Time      `json:"-" gorm:"not null;index"`
 	UpdatedAt              *time.Time      `json:"-" gorm:"not null;index"`

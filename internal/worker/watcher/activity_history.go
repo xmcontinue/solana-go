@@ -176,7 +176,7 @@ func SyncTypeAndUserAddressHistory() error {
 	wg := &sync.WaitGroup{}
 	wg.Add(len(swapPairs))
 	for i := range swapPairs {
-		go func(swapPair *domain.SwapPairBaseSharding) {
+		go func(swapPair *domain.SwapPairBase) {
 			err = SyncTypeAndUserAddressSingle(swapPair, wg)
 			if err != nil {
 				logger.Error("SyncTypeAndUserAddressSingle err", logger.Errorv(err))
@@ -189,7 +189,7 @@ func SyncTypeAndUserAddressHistory() error {
 	return nil
 }
 
-func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBaseSharding, wg *sync.WaitGroup) error {
+func SyncTypeAndUserAddressSingle(swapPair *domain.SwapPairBase, wg *sync.WaitGroup) error {
 	defer func() {
 		wg.Done()
 	}()
