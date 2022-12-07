@@ -156,15 +156,20 @@ func UpsertSwapCount(ctx context.Context, swapCount *domain.SwapCount) (*domain.
 		}
 	)
 
-	sqlStem, args, err := sq.Insert("swap_count_shardings").SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
+	fullName, err := getTableFullName(after.TableName(), swapCount.SwapAddress)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+
+	sqlStem, args, err := sq.Insert(fullName).SetMap(inserts).Suffix("ON CONFLICT(swap_address) DO UPDATE SET").
 		Suffix("last_swap_transaction_id = ?,", swapCount.LastSwapTransactionID).
-		Suffix("token_a_volume = swap_count_shardings.token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
-		Suffix("token_b_volume = swap_count_shardings.token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
+		Suffix("token_a_volume = "+fullName+".token_a_volume + ?,", swapCount.TokenAVolume.Abs()).
+		Suffix("token_b_volume = "+fullName+".token_b_volume + ?,", swapCount.TokenBVolume.Abs()).
 		Suffix("token_a_balance = ?,", swapCount.TokenABalance).
 		Suffix("token_b_balance = ?,", swapCount.TokenBBalance).
-		Suffix("tx_num = swap_count_shardings.tx_num + 1").
+		Suffix("tx_num = "+fullName+".tx_num + 1").
 		Suffix("WHERE ").
-		Suffix("swap_count_shardings.last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
+		Suffix(fullName+".last_swap_transaction_id < ?", swapCount.LastSwapTransactionID).
 		Suffix("RETURNING *").
 		ToSql()
 
