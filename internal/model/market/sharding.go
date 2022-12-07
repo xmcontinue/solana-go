@@ -127,7 +127,7 @@ func autoMigrateWithSharding(shardingValues []string) error {
 	shardingConfig = sharding.Config{
 		ShardingKey:         "swap_address",
 		NumberOfShards:      uint(len(shardingValues)),
-		PrimaryKeyGenerator: sharding.PKPGSequence,
+		PrimaryKeyGenerator: sharding.PKSnowflake,
 		ShardingAlgorithm:   shardingAlgorithm,
 		ShardingSuffixs:     shardingSuffixs,
 	}

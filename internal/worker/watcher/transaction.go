@@ -346,9 +346,17 @@ func (s *SyncTransaction) writeTxToDbV2(before *solana.Signature, until *solana.
 		}
 
 		for _, v := range swapTransactionV2s {
-			_, err = model.GetSwapTransactionV2(ctx, model.SwapAddressFilter(v.SwapAddress), model.NewFilter("signature = ?", v.Signature))
-			if !errors.Is(err, errors.RecordNotFound) {
-				continue
+			// 因为一笔交易会再多个池子里面完成，以前只算在一个池子里面，现在分表后算在多个池子里面,为了和以前保持一样，故作修改
+			if model.ISSharding {
+				_, err = model.GetSwapTransactionV2(ctx, model.SwapAddressFilter(v.SwapAddress), model.NewFilter("signature = ?", v.Signature))
+				if !errors.Is(err, errors.RecordNotFound) {
+					continue
+				}
+			} else {
+				_, err = model.GetSwapTransactionV2(ctx, model.NewFilter("signature = ?", v.Signature))
+				if !errors.Is(err, errors.RecordNotFound) {
+					continue
+				}
 			}
 
 			tx := parse.NewTxV2()
