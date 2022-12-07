@@ -89,7 +89,7 @@ type SwapPairPriceKLine struct {
 	Avg         decimal.Decimal `json:"avg" gorm:"type:decimal(36,18);default:0"`                                                                                                                                              // 平均值
 	Num         int64           `json:"num"`                                                                                                                                                                                   // 获取次数
 	DateType    DateType        `json:"date_type" gorm:"not null;type:varchar(64);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"`    // 时间类型（min,quarter,hour,day,wek,mon）
-	Date        *time.Time      `json:"date" gorm:"not null;uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"`                   // 统计日期
+	Date        *time.Time      `json:"date" gorm:"not null;type:timestamp(6);uniqueIndex:swap_pair_price_k_line_swap_address_date_date_type_unique_key; index;Index:SwapPairPriceKLine_ID_swap_address_date_date_type_index"` // 统计日期
 }
 
 func (*SwapPairPriceKLine) TableName() string {
