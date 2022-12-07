@@ -48,8 +48,8 @@ func NewKline(date *time.Time) *Kline {
 			}, {
 				BeforeIntervalDateType: domain.DateMin,
 				DateType:               domain.DateHour,
-				Interval:               2,
-				InnerTimeInterval:      time.Minute * 30,
+				Interval:               60,
+				InnerTimeInterval:      time.Minute,
 				TimeInterval:           time.Hour,
 				DataCount:              500,
 			}, {
