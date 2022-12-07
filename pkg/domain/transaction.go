@@ -41,8 +41,8 @@ type SwapTransactionV2 struct {
 	ID          int64           `json:"id" gorm:"primaryKey;auto_increment"` // 自增主键，自增主键不能有任何业务含义。
 	CreatedAt   *time.Time      `json:"-" gorm:"not null"`
 	UpdatedAt   *time.Time      `json:"-" gorm:"not null"`
-	Signature   string          `json:"signature" gorm:"not null;type:varchar(128); uniqueIndex:swap_transaction_signature_swap_address"` // 交易签名
-	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);uniqueIndex:swap_transaction_signature_swap_address"`
+	Signature   string          `json:"signature" gorm:"not null;type:varchar(128); uniqueIndex"` // 交易签名
+	SwapAddress string          `json:"swap_address" gorm:"not null;type:varchar(64);index"`
 	UserAddress string          `json:"user_address" gorm:"type:varchar(64)"`
 	FeePayer    string          `json:"fee_payer"`
 	BlockTime   *time.Time      `json:"block_time" gorm:"not null;type:timestamp(6);index"`                  // 打包时间
