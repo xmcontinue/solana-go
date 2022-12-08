@@ -95,13 +95,22 @@ func SwapTotalCount() error {
 
 		tvlInUsd = tokenATvl.Add(tokenBTvl)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
-		volInUsd = tokenAVol.Add(tokenBVol)
+		if model.ISSharding {
+			volInUsd = swapCountTotal.VolInUsdForContract
+		} else {
+			volInUsd = tokenAVol.Add(tokenBVol)
+		}
+
 		// -------------1day 计算--------------
 		Apr24h := "0%"
 		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
 		if swapCount24h.TxNum != 0 {
 			tokenAVol24h, tokenBVol24h = swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
-			volInUsd24h = tokenAVol24h.Add(tokenBVol24h)
+			if model.ISSharding {
+				volInUsd24h = swapCount24h.VolInUsdForContract
+			} else {
+				volInUsd24h = tokenAVol24h.Add(tokenBVol24h)
+			}
 
 			// 下面为token交易额，算双边
 			tokenA24hVol, tokenB24hVol = tokenAVol24h.Add(swapCount24h.TokenAQuoteVolumeForUsd).Round(countDecimal), tokenBVol24h.Add(swapCount24h.TokenBQuoteVolumeForUsd).Round(countDecimal)
@@ -123,7 +132,11 @@ func SwapTotalCount() error {
 		var apr7DayCount int64
 		if swapCount7d.TxNum != 0 {
 			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
-			volInUsd7d = tokenAVol7d.Add(tokenBVol7d)
+			if model.ISSharding {
+				volInUsd7d = swapCount7d.VolInUsdForContract
+			} else {
+				volInUsd7d = tokenAVol7d.Add(tokenBVol7d)
+			}
 
 			if swapCount7d.DayNum == 0 {
 				swapCount7d.DayNum = 1
@@ -195,13 +208,13 @@ func SwapTotalCount() error {
 			SwapAccount:                 v.SwapAccount,
 			TokenAReserves:              v.TokenA.SwapTokenAccount,
 			TokenBReserves:              v.TokenB.SwapTokenAccount,
-			VolInUsd24h:                 volInUsd24h.String(),
+			VolInUsd24h:                 volInUsd24h.Round(countDecimal).String(),
 			TxNum24h:                    swapCount24h.TxNum,
-			VolInUsd:                    volInUsd.String(),
+			VolInUsd:                    volInUsd.Round(countDecimal).String(),
 			TxNum:                       swapCountTotal.TxNum,
 			Apr:                         apr,
 			Fee:                         v.Fee,
-			TvlInUsd:                    tvlInUsd.String(),
+			TvlInUsd:                    tvlInUsd.Round(countDecimal).String(),
 			PriceInterval:               v.PriceInterval,
 			Price:                       FormatFloat(newSwapPrice, countDecimal),
 			PriceRate24h:                newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
@@ -225,21 +238,21 @@ func SwapTotalCount() error {
 			swapCountToApi,
 			&domain.SwapCountToApiToken{
 				Name:         v.TokenA.Symbol,
-				VolInUsd24h:  tokenA24hVol.String(),
+				VolInUsd24h:  tokenA24hVol.Round(countDecimal).String(),
 				TxNum24h:     swapCount24h.TxNum,
-				VolInUsd:     tokenATotalVol.String(),
+				VolInUsd:     tokenATotalVol.Round(countDecimal).String(),
 				TxNum:        swapCountTotal.TxNum,
-				TvlInUsd:     tokenATvl.String(),
+				TvlInUsd:     tokenATvl.Round(countDecimal).String(),
 				Price:        newTokenAPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenA.SwapTokenAccount))),
 				PriceRate24h: newTokenAPrice.Sub(beforeTokenAPrice).Div(beforeTokenAPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
 			&domain.SwapCountToApiToken{
 				Name:         v.TokenB.Symbol,
-				VolInUsd24h:  tokenB24hVol.String(),
+				VolInUsd24h:  tokenB24hVol.Round(countDecimal).String(),
 				TxNum24h:     swapCount24h.TxNum,
-				VolInUsd:     tokenBTotalVol.String(),
+				VolInUsd:     tokenBTotalVol.Round(countDecimal).String(),
 				TxNum:        swapCountTotal.TxNum,
-				TvlInUsd:     tokenBTvl.String(),
+				TvlInUsd:     tokenBTvl.Round(countDecimal).String(),
 				Price:        newTokenBPrice.StringFixedBank(int32(sol.GetTokenShowDecimalForTokenAccount(v.TokenB.SwapTokenAccount))),
 				PriceRate24h: newTokenBPrice.Sub(beforeTokenBPrice).Div(beforeTokenBPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			},
@@ -264,9 +277,9 @@ func SwapTotalCount() error {
 
 	swapCountToApi.UserNum = total
 	// 总交易额
-	swapCountToApi.VolInUsd24h = totalVolInUsd24h.String()
-	swapCountToApi.VolInUsd = totalVolInUsd.String()
-	swapCountToApi.TvlInUsd = totalTvlInUsd.String()
+	swapCountToApi.VolInUsd24h = totalVolInUsd24h.Round(countDecimal).String()
+	swapCountToApi.VolInUsd = totalVolInUsd.Round(countDecimal).String()
+	swapCountToApi.TvlInUsd = totalTvlInUsd.Round(countDecimal).String()
 	swapCountToApi.TxNum24h = totalTxNum24h
 	swapCountToApi.TxNum = totalTxNum
 
