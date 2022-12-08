@@ -250,16 +250,20 @@ func SwapTotalCount() error {
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
 	// 用户数量
-	// total, err := model.CountUserNumber(context.Background())
-	// if err != nil {
-	//	logger.Error("get user number err", logger.Errorv(err))
-	//	return errors.Wrap(err)
-	// }
-
-	total, err := model.CountTransActionUserCount(context.Background())
-	if err != nil {
-		logger.Error("get user number err", logger.Errorv(err))
-		return errors.Wrap(err)
+	var total int64
+	var err error
+	if model.ISSharding {
+		total, err = model.CountTransActionUserCount(context.Background())
+		if err != nil {
+			logger.Error("get user number err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
+	} else {
+		total, err = model.CountUserNumber(context.Background())
+		if err != nil {
+			logger.Error("get user number err", logger.Errorv(err))
+			return errors.Wrap(err)
+		}
 	}
 
 	swapCountToApi.UserNum = total
