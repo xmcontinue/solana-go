@@ -95,7 +95,7 @@ func SwapTotalCount() error {
 
 		tvlInUsd = tokenATvl.Add(tokenBTvl)
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
-		if model.ISSharding {
+		if v.Version == "v2" {
 			volInUsd = swapCountTotal.VolInUsdForContract
 		} else {
 			volInUsd = tokenAVol.Add(tokenBVol)
@@ -106,7 +106,7 @@ func SwapTotalCount() error {
 		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
 		if swapCount24h.TxNum != 0 {
 			tokenAVol24h, tokenBVol24h = swapCount24h.TokenAVolumeForUsd.Round(countDecimal), swapCount24h.TokenBVolumeForUsd.Round(countDecimal)
-			if model.ISSharding {
+			if v.Version == "v2" {
 				volInUsd24h = swapCount24h.VolInUsdForContract
 			} else {
 				volInUsd24h = tokenAVol24h.Add(tokenBVol24h)
@@ -132,7 +132,7 @@ func SwapTotalCount() error {
 		var apr7DayCount int64
 		if swapCount7d.TxNum != 0 {
 			tokenAVol7d, tokenBVol7d = swapCount7d.TokenAVolumeForUsd.Round(countDecimal), swapCount7d.TokenBVolumeForUsd.Round(countDecimal)
-			if model.ISSharding {
+			if v.Version == "v2" {
 				volInUsd7d = swapCount7d.VolInUsdForContract
 			} else {
 				volInUsd7d = tokenAVol7d.Add(tokenBVol7d)
@@ -183,7 +183,7 @@ func SwapTotalCount() error {
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
 		totalTxNum24h = totalTxNum24h + swapCount24h.TxNum
 		totalTxNum = totalTxNum + swapCountTotal.TxNum
-		logger.Info("人数", logger.String(v.SwapAccount, strconv.FormatInt(int64(swapCount24h.TxNum), 10)))
+
 		totalVolInUsd24h = totalVolInUsd24h.Add(volInUsd24h)
 
 		if strings.ToLower(v.Version) != "v2" {
