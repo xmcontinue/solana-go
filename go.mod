@@ -29,6 +29,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/davidminor/uint128 v0.0.0-20141227063632-5745f1bf8041
+	github.com/deckarep/golang-set v1.7.1
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/go-resty/resty/v2 v2.6.0
