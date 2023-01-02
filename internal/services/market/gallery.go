@@ -24,6 +24,7 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 	if err := validate(args); err != nil {
 		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
 	}
+
 	gallery, err := t.getGalleryV2(ctx, args)
 	//gallery, err := t.getGallery(ctx, args)
 	if err != nil {

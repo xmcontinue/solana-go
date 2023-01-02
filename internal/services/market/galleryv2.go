@@ -9,7 +9,6 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
-	mapset "github.com/deckarep/golang-set"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/worker/market"
@@ -27,15 +26,13 @@ func (t *MarketService) GetGalleryV2(ctx context.Context, args *iface.GetGallery
 
 func (t *MarketService) getGalleryV2(ctx context.Context, args *iface.GetGalleryReq) ([]*sol.Gallery, error) {
 	fil := make([]string, 0, 2)
-	innerTypeSet := map[string]mapset.Set{}
+	innerTypeSet := map[string]market.GallerySet{}
 	valueOf := reflect.ValueOf(args.GalleryType)
 	typeOf := reflect.TypeOf(&args.GalleryType)
 
 	mintAccountType, mintAccountData := market.GetGalleryCache()
 	for i := 0; i < valueOf.NumField(); i++ {
-
 		fieldV := valueOf.Field(i)
-
 		if fieldV.String() == "<[]string Value>" {
 			galleryValues := make([]string, 0)
 			for j := 0; j < fieldV.Len(); j++ {
@@ -50,7 +47,7 @@ func (t *MarketService) getGalleryV2(ctx context.Context, args *iface.GetGallery
 			attributeType := tt.Tag.Get("yaml")
 
 			galleryAttributeKeys := getGalleryAttributeKey(attributeType, galleryValues)
-			galleryMintAccounts := mapset.NewSet()
+			galleryMintAccounts := make(market.GallerySet)
 			for _, v := range galleryAttributeKeys {
 				galleryMintAccounts = galleryMintAccounts.Union(mintAccountType[v]) // 同一个类型执行交集
 			}
@@ -62,26 +59,24 @@ func (t *MarketService) getGalleryV2(ctx context.Context, args *iface.GetGallery
 
 	}
 
-	out := mapset.NewSet()
+	out := make(market.GallerySet)
 	if len(fil) != 0 {
+
 		for _, v := range innerTypeSet {
-			if out.String() == "Set{}" {
-				out = v
+			if len(out) == 0 {
+				out = deepCopy(v)
 			}
 			out = out.Intersect(v)
 		}
 	} else {
 		for _, v := range mintAccountType {
-			if out.String() == "Set{}" {
-				out = v
-			}
 			out = out.Union(v)
 		}
 	}
 
-	gallerys := make([]*sol.Gallery, 0, len(out.ToSlice()))
-	for _, v := range out.ToSlice() {
-		gallerys = append(gallerys, mintAccountData[v.(string)])
+	gallerys := make([]*sol.Gallery, 0, len(out))
+	for v := range out {
+		gallerys = append(gallerys, mintAccountData[v])
 	}
 
 	if args.ISPositive {
@@ -105,6 +100,13 @@ func (t *MarketService) getGalleryV2(ctx context.Context, args *iface.GetGallery
 			return false
 		})
 	}
-
 	return gallerys, nil
+}
+
+func deepCopy(src market.GallerySet) market.GallerySet {
+	dest := market.GallerySet{}
+	for k, v := range src {
+		dest[k] = v
+	}
+	return dest
 }

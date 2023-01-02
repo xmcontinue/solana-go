@@ -7,28 +7,38 @@ import (
 	"sync"
 
 	"git.cplus.link/go/akit/errors"
-	"github.com/deckarep/golang-set"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
 var (
-	mintAccountType map[string]mapset.Set   // gallery类型到mint地址的映射关系
+	mintAccountType map[string]GallerySet   // gallery类型到mint地址的映射关系
 	mintAccountData map[string]*sol.Gallery // mint 地址 到具体数据的映射
 	mu              sync.RWMutex
 )
 
+var (
+	galleryNameKeys   []string
+	galleryTypeKeys   []string
+	gallerySortedKeys []string
+)
+
+func init() {
+	galleryNameKeys = make([]string, 0, 11000)
+	galleryTypeKeys = make([]string, 0, 256)
+	gallerySortedKeys = make([]string, 0, 10)
+}
+
 func syncGalleryCache() error {
-	//redisClient.MGet(context.Background(), domain.GetGalleryPrefix())
 	keys, err := redisClient.Keys(context.Background(), domain.GetGalleryPrefix()+"*").Result()
 	if err != nil {
 		return errors.Wrap(err)
 	}
 
-	galleryNameKeys := make([]string, 0, len(keys))
-	galleryTypeKeys := make([]string, 0, 256)
-	gallerySortedKeys := make([]string, 0, 10)
+	galleryNameKeys = galleryNameKeys[:0]
+	galleryTypeKeys = galleryTypeKeys[:0]
+	gallerySortedKeys = gallerySortedKeys[:0]
 	for _, v := range keys {
 		if strings.HasPrefix(v, domain.GetGalleryPrefix()+":name:") {
 			galleryNameKeys = append(galleryNameKeys, v)
@@ -40,6 +50,7 @@ func syncGalleryCache() error {
 			galleryTypeKeys = append(galleryTypeKeys, v)
 		}
 	}
+
 	galleryNames, err := redisClient.MGet(context.Background(), galleryNameKeys...).Result()
 	if err != nil {
 		return errors.Wrap(err)
@@ -48,20 +59,23 @@ func syncGalleryCache() error {
 	mintAccountDataTemp := make(map[string]*sol.Gallery, len(galleryNames))
 	for _, v := range galleryNames {
 		gallery := &sol.Gallery{}
-		_ = json.Unmarshal([]byte(v.(string)), gallery)
+		err = json.Unmarshal([]byte(v.(string)), gallery)
+		if err != nil {
+			return errors.Wrap(err)
+		}
 		mintAccountDataTemp[gallery.Mint] = gallery
 	}
 
-	mintAccountTypeTemp := make(map[string]mapset.Set)
+	mintAccountTypeTemp := make(map[string]GallerySet)
 	for _, v := range galleryTypeKeys {
 		addrs, err := redisClient.SMembersMap(context.Background(), v).Result()
 		if err != nil {
 			return errors.Wrap(err)
 		}
 
-		addr := mapset.NewSet()
-		for k := range addrs {
-			addr.Add(k)
+		addr := GallerySet{}
+		for k, v := range addrs {
+			addr[k] = v
 		}
 
 		mintAccountTypeTemp[v] = addr
@@ -75,8 +89,41 @@ func syncGalleryCache() error {
 	return nil
 }
 
-func GetGalleryCache() (map[string]mapset.Set, map[string]*sol.Gallery) {
+func GetGalleryCache() (map[string]GallerySet, map[string]*sol.Gallery) {
 	mu.RLock()
 	defer mu.RUnlock()
+
 	return mintAccountType, mintAccountData
+}
+
+type GallerySet map[string]struct{}
+
+func (g *GallerySet) Union(g1 GallerySet) GallerySet {
+	for k, v := range g1 {
+		(*g)[k] = v
+	}
+
+	return *g
+}
+
+// Intersect 交集
+func (g *GallerySet) Intersect(g1 GallerySet) GallerySet {
+
+	var min int
+	if len(*g) > len(g1) {
+		min = len(g1)
+	} else {
+		min = len(*g)
+	}
+
+	rg := make(GallerySet, min)
+
+	for k, v := range *g {
+		_, ok := g1[k]
+		if ok {
+			rg[k] = v
+		}
+	}
+
+	return rg
 }
