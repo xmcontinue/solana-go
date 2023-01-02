@@ -2,7 +2,6 @@ package sol
 
 import (
 	"encoding/json"
-	"strings"
 
 	token_metadata "github.com/gagliardetto/metaplex-go/clients/token-metadata"
 )
@@ -43,20 +42,6 @@ type Gallery struct {
 	Name         string                   `json:"name,omitempty"`
 	Mint         string                   `json:"mint,omitempty"`
 	Owner        string                   `json:"owner"`
-}
-
-// 按照 Person.Age 从大到小排序
-type GallerySlice []Gallery
-
-func (a GallerySlice) Len() int { // 重写 Len() 方法
-	return len(a)
-}
-func (a GallerySlice) Swap(i, j int) { // 重写 Swap() 方法
-	a[i], a[j] = a[j], a[i]
-}
-func (a GallerySlice) Less(i, j int) bool {
-	return strings.Compare(a[j].Name, a[i].Name) > 0 // 重写 Less() 方法， 从大到小排序
-
 }
 
 type MainGallery struct {
