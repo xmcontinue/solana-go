@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"strings"
-	"sync"
 
 	"git.cplus.link/go/akit/errors"
 
@@ -15,7 +14,6 @@ import (
 var (
 	mintAccountType map[string]GallerySet   // gallery类型到mint地址的映射关系
 	mintAccountData map[string]*sol.Gallery // mint 地址 到具体数据的映射
-	mu              sync.RWMutex
 )
 
 var (
@@ -81,8 +79,6 @@ func syncGalleryCache() error {
 		mintAccountTypeTemp[v] = addr
 	}
 
-	mu.Lock()
-	defer mu.Unlock()
 	mintAccountType = mintAccountTypeTemp
 	mintAccountData = mintAccountDataTemp
 
@@ -90,9 +86,6 @@ func syncGalleryCache() error {
 }
 
 func GetGalleryCache() (map[string]GallerySet, map[string]*sol.Gallery) {
-	mu.RLock()
-	defer mu.RUnlock()
-
 	return mintAccountType, mintAccountData
 }
 
