@@ -173,7 +173,7 @@ func SwapTotalCount() error {
 			continue
 		}
 
-		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "mon"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
+		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "1min"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
