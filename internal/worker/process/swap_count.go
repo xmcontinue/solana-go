@@ -221,7 +221,7 @@ func SwapTotalCount() error {
 			Fee:                         v.Fee,
 			TvlInUsd:                    tvlInUsd.Round(countDecimal).String(),
 			PriceInterval:               v.PriceInterval,
-			Price:                       FormatFloat(newSwapPrice, countDecimal),
+			Price:                       PriceFormatFloat(newSwapPrice),
 			PriceRate24h:                newSwapPrice.Sub(beforeSwapPrice).Div(beforeSwapPrice).Mul(decimal.NewFromInt(100)).Round(2).String() + "%",
 			VolumeInTokenA24h:           swapCount24h.TokenAVolume.Add(swapCount24h.TokenAQuoteVolume).Round(countDecimal).String(),
 			VolumeInTokenB24h:           swapCount24h.TokenBVolume.Add(swapCount24h.TokenBQuoteVolume).Round(countDecimal).String(),
@@ -371,6 +371,19 @@ func appendTokensToSwapCount(swapCountToApi *domain.SwapCountToApi, tokens ...*d
 func FormatFloat(num decimal.Decimal, d int) string {
 	f, _ := num.Float64()
 	return strconv.FormatFloat(f, 'f', d, 64)
+}
+
+func PriceFormatFloat(num decimal.Decimal) string {
+	f, _ := num.Float64()
+	if num.LessThan(decimal.NewFromFloat(0.000001)) {
+		if num.LessThan(decimal.NewFromFloat(0.00000001)) {
+			return strconv.FormatFloat(f, 'f', 10, 64)
+		} else {
+			return strconv.FormatFloat(f, 'f', 8, 64)
+		}
+	} else {
+		return strconv.FormatFloat(f, 'f', 6, 64)
+	}
 }
 
 func differenceDays(start, end time.Time, max int64) int64 {
