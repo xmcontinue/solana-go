@@ -70,10 +70,7 @@ func SwapTotalCount() error {
 		}
 
 		// 获取最开始的日期，为了统计apr
-		swapCountInfo, err := model.QuerySwapCountKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"), model.OrderFilter("id asc"))
-		if err != nil {
-			continue
-		}
+		swapCountInfo, _ := model.QuerySwapCountKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"), model.OrderFilter("id asc"))
 
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
@@ -145,8 +142,12 @@ func SwapTotalCount() error {
 			if !tvlInUsd.IsZero() {
 				fee, _ := decimal.NewFromString(v.Fee)
 				apr = parse.BankToString(volInUsd7d.Div(decimal.NewFromInt(7)).Mul(fee).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%" // 7天vol均值 * fee * 36500（365天*百分比转化100得出）/tvl
-				apr7DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 7)
-				Apr7day = parse.BankToString(swapCount7d.FeeAmount.Div(decimal.NewFromInt(differenceDays(*swapCountInfo.Date, time.Now(), 7))).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
+				if swapCountInfo == nil {
+					apr7DayCount = 1
+				} else {
+					apr7DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 7)
+				}
+				Apr7day = parse.BankToString(swapCount7d.FeeAmount.Div(decimal.NewFromInt(apr7DayCount)).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
 			}
 		}
 
@@ -159,8 +160,12 @@ func SwapTotalCount() error {
 			}
 
 			if !tvlInUsd.IsZero() {
-				apr30DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 30)
-				Apr30day = parse.BankToString(swapCount30d.FeeAmount.Div(decimal.NewFromInt(differenceDays(*swapCountInfo.Date, time.Now(), 30))).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
+				if swapCountInfo == nil {
+					apr30DayCount = 1
+				} else {
+					apr30DayCount = differenceDays(*swapCountInfo.Date, time.Now(), 30)
+				}
+				Apr30day = parse.BankToString(swapCount30d.FeeAmount.Div(decimal.NewFromInt(apr30DayCount)).Div(tvlInUsd).Mul(decimal.NewFromInt(36500)), 2) + "%"
 			}
 		}
 		// 下面为token交易额，算双边
@@ -191,8 +196,8 @@ func SwapTotalCount() error {
 		}
 
 		// pool统计
-		newSwapPrice, beforeSwapPrice := newContractPrice.Settle.Round(countDecimal), beforeContractPrice.Open.Round(countDecimal)
-		if newContractPrice.Settle.Round(countDecimal).IsZero() {
+		newSwapPrice, beforeSwapPrice := newContractPrice.Settle, beforeContractPrice.Open
+		if newContractPrice.Settle.IsZero() {
 			logger.Error("settle is zero", logger.Errorv(errors.New("settle is zero")))
 			continue
 		}
