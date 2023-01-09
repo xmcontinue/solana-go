@@ -114,7 +114,7 @@ func SyncSwapPrice() error {
 		now := time.Now().UTC()
 		Kline := kline.NewKline(&now)
 
-		if v.Price.IsZero() {
+		if v.Price.LessThan(decimal.NewFromFloat(0.000000001)) {
 			continue
 		}
 
