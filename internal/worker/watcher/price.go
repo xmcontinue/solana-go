@@ -263,14 +263,14 @@ func pairPriceToTokenPrice(pairPriceList []*swapPairPrice, tokenPriceList map[st
 
 		if tokenAHas && !tokenBHas {
 			tokenPriceList[v.TokenBSymbol] = &tokenPrice{
-				Price: tokenAPrice.Price.Div(v.Price).Round(6),
+				Price: tokenAPrice.Price.Div(v.Price).Round(12),
 			}
 			continue
 		}
 
 		if tokenBHas && !tokenAHas {
 			tokenPriceList[v.TokenASymbol] = &tokenPrice{
-				Price: tokenBPrice.Price.Mul(v.Price).Round(6),
+				Price: tokenBPrice.Price.Mul(v.Price).Round(12),
 			}
 			continue
 		}
