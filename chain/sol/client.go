@@ -421,7 +421,7 @@ func watchBalance() {
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
 				if err != nil {
-					logger.Error("get rewarder usd err", logger.Errorv(err))
+					logger.Error("get rewarder usd err:"+v.SwapAccount, logger.Errorv(err))
 					continue
 				}
 
