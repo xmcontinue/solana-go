@@ -25,11 +25,19 @@ func (d *Data) LoadConfig(eConfig *config.ExchangeConfig) {
 }
 
 func (d *Data) LoadRawData(raw map[string]map[string][]*domain.Price) {
-	r := make(Markets, len(raw))
+	r := make(Markets)
 	for p, qs := range raw {
 		r[p] = NewCoins()
 		r[p].LoadRawData(qs)
 	}
+	if d.raw != nil {
+		for k, v := range *d.raw {
+			if _, ok := raw[k]; !ok {
+				r[k] = v
+			}
+		}
+	}
+
 	d.raw = &r
 }
 
