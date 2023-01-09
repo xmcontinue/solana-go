@@ -96,7 +96,6 @@ func GetPriceForSymbol(ctx context.Context, symbol string, filter ...Filter) (de
 	newFilters := make([]Filter, 0, len(filter)+3)
 	newFilters = append(newFilters, NewFilter("date_type = ?", "1min"))
 	newFilters = append(newFilters, NewFilter("symbol = ?", symbol))
-	newFilters = append(newFilters, NewFilter("settle != ?", 0))
 	if len(filter) != 0 {
 		newFilters = append(newFilters, filter...)
 	}

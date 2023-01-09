@@ -407,7 +407,7 @@ func watchBalance() {
 				}
 				return nil
 			}
-
+			logger.Info("begin get reward:" + v.SwapAccount)
 			for _, f := range rewarders {
 				if f.Mint.IsZero() {
 					continue
@@ -421,9 +421,10 @@ func watchBalance() {
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
 				if err != nil {
+					logger.Error("get rewarder usd err:"+v.SwapAccount+"，symbol："+tokenInfo.Symbol, logger.Errorv(err))
 					continue
 				}
-
+				logger.Info("get rewarder usd err:"+v.SwapAccount+"，symbol："+tokenInfo.Symbol, logger.Errorv(err))
 				rewarderUsd = rewarderUsd.Add(emissionsPerSecond.Mul(tokenPrice))
 			}
 

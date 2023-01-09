@@ -114,10 +114,6 @@ func SyncSwapPrice() error {
 		now := time.Now().UTC()
 		Kline := kline.NewKline(&now)
 
-		if v.Price.LessThan(decimal.NewFromFloat(0.000000001)) {
-			continue
-		}
-
 		swapTokenPriceKLine := &domain.SwapTokenPriceKLine{
 			Symbol:   k,
 			Open:     v.Price,
@@ -267,14 +263,14 @@ func pairPriceToTokenPrice(pairPriceList []*swapPairPrice, tokenPriceList map[st
 
 		if tokenAHas && !tokenBHas {
 			tokenPriceList[v.TokenBSymbol] = &tokenPrice{
-				Price: tokenAPrice.Price.Div(v.Price).Round(12),
+				Price: tokenAPrice.Price.Div(v.Price),
 			}
 			continue
 		}
 
 		if tokenBHas && !tokenAHas {
 			tokenPriceList[v.TokenASymbol] = &tokenPrice{
-				Price: tokenBPrice.Price.Mul(v.Price).Round(12),
+				Price: tokenBPrice.Price.Mul(v.Price),
 			}
 			continue
 		}
