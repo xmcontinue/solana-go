@@ -114,6 +114,10 @@ func SyncSwapPrice() error {
 		now := time.Now().UTC()
 		Kline := kline.NewKline(&now)
 
+		if v.Price.IsZero() {
+			continue
+		}
+
 		swapTokenPriceKLine := &domain.SwapTokenPriceKLine{
 			Symbol:   k,
 			Open:     v.Price,
