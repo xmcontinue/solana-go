@@ -48,7 +48,7 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 
 			var tempAVolForUsd, tempBVolForUsd, feeVolForUsd decimal.Decimal
 			for _, v := range tx.SwapRecords {
-				if v.Direction == 0 {
+				if v.Direction == 1 {
 					tempAVolForUsd = v.AmountIn.Mul(transaction.TokenAUSD)
 					tempBVolForUsd = v.AmountOut.Mul(transaction.TokenBUSD)
 					feeVolForUsd = v.FeeAmount.Mul(transaction.TokenAUSD)
@@ -62,12 +62,11 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 				swapAVolForUsd = swapAVolForUsd.Add(tempAVolForUsd)
 				swapBVolForUsd = swapBVolForUsd.Add(tempBVolForUsd)
 				swapFeeVolForUsd = swapFeeVolForUsd.Add(feeVolForUsd)
-
-			}
-
-			if transaction.SwapAddress == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-				if !tempAVolForUsd.LessThan(decimal.NewFromInt(50)) {
-					fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd)
+				if transaction.SwapAddress == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
+					fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
+					if !tempAVolForUsd.LessThan(decimal.NewFromInt(50)) {
+						fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
+					}
 				}
 			}
 
