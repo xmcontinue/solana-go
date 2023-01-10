@@ -69,7 +69,7 @@ func Init(viperConf *config.Config) error {
 	httpClient = akHttp.DefaultClient()
 
 	event.Init()
-
+	yanzheng()
 	job = NewJob()
 
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)

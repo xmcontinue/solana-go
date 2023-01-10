@@ -2,11 +2,13 @@ package process
 
 import (
 	"context"
+	"fmt"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 
 	"git.cplus.link/crema/backend/chain/sol"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
@@ -131,5 +133,32 @@ func parserTransactionUserCount() error {
 		return errors.Wrap(err)
 	}
 
+	return nil
+}
+func yanzheng() error {
+	transaction, err := model.QuerySwapTransactionsV2(context.Background(), 1, 0, model.SwapAddressFilter("BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa"),
+		model.NewFilter("signature = ?", "rQDK3ThejjehLvUb8sN6qRFEzjyqLzVPeZMZiFZq2F4JAAnZknEE2ANmx1vgzSfSAbP28NmHXoh5Ng4QLnHV4bh"))
+	if err != nil {
+		logger.Error("fix", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
+	tx := parse.NewTxV2()
+
+	err = tx.ParseSwapV2(transaction[0].Msg)
+	if err != nil {
+		if errors.Is(err, errors.RecordNotFound) {
+			logger.Error("fix", logger.Errorv(err))
+		}
+		logger.Error("sync transaction id err", logger.Errorv(err))
+		return errors.Wrap(err)
+	}
+
+	if len(tx.SwapRecords) == 0 {
+		return nil
+	}
+
+	fmt.Println("AmountIn:", tx.SwapRecords[0].AmountIn.String(), "AmountOut", tx.SwapRecords[0].AmountOut.String())
+	fmt.Println("方向：", tx.SwapRecords[0].Direction)
 	return nil
 }
