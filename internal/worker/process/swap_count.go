@@ -96,28 +96,28 @@ func SwapTotalCount() error {
 		if v.Version == "v2" {
 			t := time.Now()
 			if swapCount24h.TxNum != 0 {
-				swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolume, swapCount24h.TokenBVolume, swapCount24h.FeeAmount, err = syncPrice(v.SwapAccount, before24hDate)
+				_, _, _, _, err = syncPrice(v.SwapAccount, before24hDate)
 				if err != nil {
 					return errors.Wrap(err)
 				}
 			}
 
 			if swapCount7d.TxNum != 0 {
-				swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolume, swapCount7d.TokenBVolume, swapCount7d.FeeAmount, err = syncPrice(v.SwapAccount, before7dDate)
+				_, _, _, _, err = syncPrice(v.SwapAccount, before7dDate)
 				if err != nil {
 					return errors.Wrap(err)
 				}
 			}
 
 			if swapCount30d.TxNum != 0 {
-				swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolume, swapCount30d.TokenBVolume, swapCount30d.FeeAmount, err = syncPrice(v.SwapAccount, before30dDate)
+				_, _, _, _, err = syncPrice(v.SwapAccount, before30dDate)
 				if err != nil {
 					return errors.Wrap(err)
 				}
 			}
 
 			if swapCountTotal.TxNum != 0 {
-				swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolume, swapCountTotal.TokenBVolume, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
+				_, _, _, _, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
 				if err != nil {
 					return errors.Wrap(err)
 				}

@@ -18,7 +18,7 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 	var volForUsd, swapAVolForUsd, swapBVolForUsd, swapFeeVolForUsd decimal.Decimal
 
 	for {
-		transactions, err := model.QuerySwapTransactionsV2(context.Background(), 1000, 0, model.SwapAddressFilter(swapAccount), model.NewFilter("block_time > ?", t), model.OrderFilter("id asc"))
+		transactions, err := model.QuerySwapTransactionsV2(context.Background(), 1000, 0, model.SwapAddressFilter(swapAccount), model.NewFilter("block_time > ?", t), model.OrderFilter("block_time asc"))
 		if err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
 				break
@@ -62,8 +62,8 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 				swapAVolForUsd = swapAVolForUsd.Add(tempAVolForUsd)
 				swapBVolForUsd = swapBVolForUsd.Add(tempBVolForUsd)
 				swapFeeVolForUsd = swapFeeVolForUsd.Add(feeVolForUsd)
-				if transaction.SwapAddress == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
+				if transaction.SwapAddress == "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
+					//fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
 					if !tempAVolForUsd.LessThan(decimal.NewFromInt(50)) {
 						fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
 					}
