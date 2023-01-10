@@ -67,16 +67,13 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 				swapAVolForUsd = swapAVolForUsd.Add(tempAVolForUsd)
 				swapBVolForUsd = swapBVolForUsd.Add(tempBVolForUsd)
 				swapFeeVolForUsd = swapFeeVolForUsd.Add(feeVolForUsd)
-				if transaction.SwapAddress == "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
-					//fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
-					if !tempAVolForUsd.LessThan(decimal.NewFromInt(50)) {
-						fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd.String(), "v.AmountIn", v.AmountIn, "v.AmountOut", v.AmountOut)
-					}
-				}
+
 			}
 
 		}
 	}
-
+	if swapAccount == "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
+		fmt.Println("ssssssss", volForUsd.String())
+	}
 	return volForUsd, swapAVolForUsd, swapBVolForUsd, swapFeeVolForUsd, nil
 }
