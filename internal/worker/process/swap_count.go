@@ -102,26 +102,26 @@ func SwapTotalCount() error {
 				}
 			}
 
-			if swapCount7d.TxNum != 0 {
-				_, _, _, _, err = syncPrice(v.SwapAccount, before7dDate)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-			}
-
-			if swapCount30d.TxNum != 0 {
-				_, _, _, _, err = syncPrice(v.SwapAccount, before30dDate)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-			}
-
-			if swapCountTotal.TxNum != 0 {
-				_, _, _, _, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
-				if err != nil {
-					return errors.Wrap(err)
-				}
-			}
+			//if swapCount7d.TxNum != 0 {
+			//	_, _, _, _, err = syncPrice(v.SwapAccount, before7dDate)
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//}
+			//
+			//if swapCount30d.TxNum != 0 {
+			//	_, _, _, _, err = syncPrice(v.SwapAccount, before30dDate)
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//}
+			//
+			//if swapCountTotal.TxNum != 0 {
+			//	_, _, _, _, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//}
 			fmt.Println("时间：", time.Now().Sub(t))
 			volInUsd = swapCountTotal.VolInUsdForContract
 		} else {
