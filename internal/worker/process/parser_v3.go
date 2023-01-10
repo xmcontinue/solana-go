@@ -17,7 +17,7 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 	var volForUsd, swapAVolForUsd, swapBVolForUsd, swapFeeVolForUsd decimal.Decimal
 
 	for {
-		transactions, err := model.QuerySwapTransactionsV2(context.Background(), 10000, 0, model.SwapAddressFilter(swapAccount), model.NewFilter("block_time > ?", t), model.OrderFilter("id asc"))
+		transactions, err := model.QuerySwapTransactionsV2(context.Background(), 1000, 0, model.SwapAddressFilter(swapAccount), model.NewFilter("block_time > ?", t), model.OrderFilter("id asc"))
 		if err != nil {
 			if errors.Is(err, errors.RecordNotFound) {
 				break
