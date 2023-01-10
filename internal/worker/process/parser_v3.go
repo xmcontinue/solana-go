@@ -32,7 +32,9 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 
 		for _, transaction := range transactions {
 			tx := parse.NewTxV2()
-
+			//if transaction.Signature != "2zKn3ENsXeWptVFMQ4bPmjs6ug3GyZHHNEjuw3y2LrcaBDnB5JD89vvZeMJQ8P2r1cJYvVj1TXq1a5BVzES5mVjL" {
+			//	continue
+			//}
 			err := tx.ParseSwapV2(transaction.Msg)
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
@@ -48,6 +50,9 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 
 			var tempAVolForUsd, tempBVolForUsd, feeVolForUsd decimal.Decimal
 			for _, v := range tx.SwapRecords {
+				if v.SwapAccount != swapAccount {
+					continue
+				}
 				if v.Direction == 1 {
 					tempAVolForUsd = v.AmountIn.Mul(transaction.TokenAUSD)
 					tempBVolForUsd = v.AmountOut.Mul(transaction.TokenBUSD)

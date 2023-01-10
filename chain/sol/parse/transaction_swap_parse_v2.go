@@ -172,6 +172,7 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
+		SwapAccount:       swap.Pool.String(),
 		EventName:         event.SwapEventName,
 		UserOwnerAddress:  swap.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
@@ -236,6 +237,7 @@ func (t *Txv2) createSwapWithPartnerRecord(logMessageEvent event.EventRep) error
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
+		SwapAccount:       swapWithPartnerEvent.Pool.String(),
 		EventName:         event.SwapEventName,
 		UserOwnerAddress:  swapWithPartnerEvent.Owner.String(),
 		UserTokenAAddress: UserTokenA.String(),
