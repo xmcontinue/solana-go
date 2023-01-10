@@ -2,6 +2,7 @@ package process
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -45,8 +46,8 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 				continue
 			}
 
+			var tempAVolForUsd, tempBVolForUsd, feeVolForUsd decimal.Decimal
 			for _, v := range tx.SwapRecords {
-				var tempAVolForUsd, tempBVolForUsd, feeVolForUsd decimal.Decimal
 				if v.Direction == 0 {
 					tempAVolForUsd = v.AmountIn.Mul(transaction.TokenAUSD)
 					tempBVolForUsd = v.AmountOut.Mul(transaction.TokenBUSD)
@@ -62,6 +63,12 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 				swapBVolForUsd = swapBVolForUsd.Add(tempBVolForUsd)
 				swapFeeVolForUsd = swapFeeVolForUsd.Add(feeVolForUsd)
 
+			}
+
+			if transaction.SwapAddress == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
+				if !tempAVolForUsd.LessThan(decimal.NewFromInt(50)) {
+					fmt.Println(transaction.Signature, tempAVolForUsd.String(), tempBVolForUsd)
+				}
 			}
 
 		}
