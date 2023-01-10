@@ -2,7 +2,6 @@ package process
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -32,9 +31,7 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 
 		for _, transaction := range transactions {
 			tx := parse.NewTxV2()
-			//if transaction.Signature != "2zKn3ENsXeWptVFMQ4bPmjs6ug3GyZHHNEjuw3y2LrcaBDnB5JD89vvZeMJQ8P2r1cJYvVj1TXq1a5BVzES5mVjL" {
-			//	continue
-			//}
+
 			err := tx.ParseSwapV2(transaction.Msg)
 			if err != nil {
 				if errors.Is(err, errors.RecordNotFound) {
@@ -72,8 +69,6 @@ func syncPrice(swapAccount string, t time.Time) (decimal.Decimal, decimal.Decima
 
 		}
 	}
-	if swapAccount == "DV569UDdnjkYWJDnpJfJZE4HyzYKYyRGowtdPQrFUZpm" {
-		fmt.Println("ssssssss", volForUsd.String())
-	}
+
 	return volForUsd, swapAVolForUsd, swapBVolForUsd, swapFeeVolForUsd, nil
 }
