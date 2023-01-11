@@ -91,11 +91,9 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 		if eventName, exist := parser.Discriminators[eventPrefix]; !exist {
 			continue
 		} else {
-			var event interface{}
-			if eventName == "SwapEvent" {
-				event = &SwapEvent{}
-			} else {
-				event = &SwapWithPartnerEvent{}
+			event := fetchEvent(eventName)
+			if event == nil {
+				continue
 			}
 			//event := parser.Layout[eventName]
 			//fmt.Println(event)
@@ -113,6 +111,24 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 	return events, nil
 }
 
+func fetchEvent(eventName string) interface{} {
+	switch eventName {
+	case SwapEventName:
+		return &SwapEvent{}
+	case SwapWithPartnerEventName:
+		return &SwapWithPartnerEvent{}
+	case CollectEventName:
+		return &CollectEvent{}
+	case IncreaseLiquidityWithFixedTokenEventName:
+		return &IncreaseLiquidityWithFixedTokenEvent{}
+	case DecreaseLiquidityEventName:
+		return &DecreaseLiquidityEvent{}
+	case IncreaseLiquidityEventName:
+		return &IncreaseLiquidityEvent{}
+	}
+
+	return nil
+}
 func Init() {
 	eventDecoder = NewEventDecoder()
 }
