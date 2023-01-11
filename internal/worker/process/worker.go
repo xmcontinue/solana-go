@@ -79,10 +79,11 @@ func Init(viperConf *config.Config) error {
 	}
 	logger.Info("migrate begin")
 	//先做数据迁移，做完后才能获取新数据
-	err = migrate()
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	// 迁移完了 可以注释
+	//err = migrate()
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
 
 	logger.Info("migrate done")
 
