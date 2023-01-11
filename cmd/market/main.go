@@ -23,7 +23,9 @@ func main() {
 	if err := etcd.Init(configer); err != nil {
 		panic(err)
 	}
-
+	if err := etcd.InitV3(configer); err != nil {
+		panic(err)
+	}
 	// sol初始化
 	if err := sol.Init(configer); err != nil {
 		panic(err)

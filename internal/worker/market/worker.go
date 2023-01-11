@@ -49,7 +49,9 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		return errors.Wrap(err)
 	}
+
 	cronConf.WithLogger(xlog.Config{}.Build())
+	cronConf.Config = etcd.ConfigV3()
 	cron = cronConf.Build()
 
 	_, err = cron.AddFunc(getSpec("swap_count_cache"), SwapCountCacheJob)
