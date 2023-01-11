@@ -122,7 +122,7 @@ func UpsertSwapPairPriceKLine(ctx context.Context, swapPairPriceKLine *domain.Sw
 			"date":         swapPairPriceKLine.Date,
 		}
 	)
-	//fullName := "swap_pair_price_k_lines" // todo 取消
+	// fullName := "swap_pair_price_k_lines" // todo 取消
 	fullName, err := getTableFullName(after.TableName(), swapPairPriceKLine.SwapAddress)
 	if err != nil {
 		return nil, errors.Wrap(err)
@@ -176,9 +176,9 @@ func QuerySwapTokenPriceKLine(ctx context.Context, filter ...Filter) (*domain.Sw
 
 	if err = db.Model(&domain.SwapTokenPriceKLine{}).Scopes(filter...).Take(swapTokenPriceKLine).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.Wrap(errors.RecordNotFound)
+			return swapTokenPriceKLine, errors.Wrap(errors.RecordNotFound)
 		}
-		return nil, errors.Wrap(err)
+		return swapTokenPriceKLine, errors.Wrap(err)
 	}
 
 	return swapTokenPriceKLine, nil
