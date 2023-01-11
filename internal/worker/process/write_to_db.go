@@ -248,14 +248,15 @@ func writeSwapRecordToDB(writeTyp *WriteTyp, tokenAUSD, tokenBUSD decimal.Decima
 			fmt.Println("Recovered in f", err)
 		}
 	}()
-
 	var err error
-	trans := func(ctx context.Context) error {
-		swapCountKLine := createSwapCountKLine(writeTyp, tokenAUSD, tokenBUSD)
 
-		if swapCountKLine == nil {
-			return nil
-		}
+	swapCountKLine := createSwapCountKLine(writeTyp, tokenAUSD, tokenBUSD)
+
+	if swapCountKLine == nil {
+		return nil
+	}
+
+	trans := func(ctx context.Context) error {
 
 		if _, err = model.UpsertSwapCount(ctx, &domain.SwapCount{
 			LastSwapTransactionID: swapCountKLine.LastSwapTransactionID,

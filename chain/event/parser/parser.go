@@ -91,8 +91,15 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 		if eventName, exist := parser.Discriminators[eventPrefix]; !exist {
 			continue
 		} else {
+			//var event interface{}
+			//if eventName == "SwapEvent" {
+			//	event = &SwapEvent{}
+			//} else {
+			//	event = &SwapWithPartnerEvent{}
+			//}
 			event := parser.Layout[eventName]
-			if err := borsh.Deserialize(event, logArr[8:]); err == nil {
+			//fmt.Println(event)
+			if err = borsh.Deserialize(event, logArr[8:]); err == nil {
 				events = append(events, EventRep{
 					EventName: eventName,
 					Event:     event,

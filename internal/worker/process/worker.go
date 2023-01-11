@@ -69,7 +69,7 @@ func Init(viperConf *config.Config) error {
 	httpClient = akHttp.DefaultClient()
 
 	event.Init()
-	yanzheng()
+
 	job = NewJob()
 
 	err = conf.UnmarshalKey("cron_job_conf", &job.CronConf)
@@ -141,7 +141,7 @@ func Init(viperConf *config.Config) error {
 	syncTransactionJob := NewJobInfo("SyncSwapCountKline")
 	job.JobList["SyncSwapCountKline"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
-	//go model.Printtoken()
+
 	userSyncTransactionJob := NewJobInfo("SyncUserCountKLine")
 	job.JobList["SyncUserCountKLine"] = userSyncTransactionJob
 	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)

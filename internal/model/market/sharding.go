@@ -57,7 +57,7 @@ func initShardingKeyValue(shardingValues []string) error {
 	// 先初始化一张表用于存储表名和分表键之间的对应关系
 	ShardingKeyValueToTableIndex = make(map[string]int, len(shardingValues))
 	maxIndex := -1
-	shardings, err := QueryShardings(context.Background(), 0, 0, OrderFilter("suffix asc"))
+	shardings, err := QueryShardings(context.Background(), 1000, 0, OrderFilter("suffix asc"))
 	if err != nil {
 		return errors.Wrap(err)
 	}

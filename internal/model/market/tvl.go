@@ -3,8 +3,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"sync"
 	"time"
 
 	dbPool "git.cplus.link/go/akit/client/psql"
@@ -198,30 +196,6 @@ func UpdateSwapCount(ctx context.Context, updates map[string]interface{}, filter
 	return nil
 }
 
-var tokenAVolumeMap sync.Map
-var tokenAVolumeMapSwap sync.Map
-
-func init() {
-	tokenAVolumeMap = sync.Map{}
-	tokenAVolumeMapSwap = sync.Map{}
-}
-func Printtoken() {
-	for {
-		time.Sleep(time.Second * 10)
-		tokenAVolumeMap.Range(func(key, value interface{}) bool {
-
-			fmt.Println("token_a_volume:", key, value.(decimal.Decimal).String())
-			return true
-		})
-
-		tokenAVolumeMapSwap.Range(func(key, value interface{}) bool {
-			fmt.Println("swap:token_a_volume:", key, value.(decimal.Decimal).String())
-			return true
-		})
-
-	}
-}
-
 func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine, tokenABalance, tokenBBalance decimal.Decimal, maxBlockTimeWithDateType *time.Time) (*domain.SwapCountKLine, error) {
 	var (
 		after   domain.SwapCountKLine
@@ -271,22 +245,6 @@ func UpsertSwapCountKLine(ctx context.Context, swapCount *domain.SwapCountKLine,
 	if err != nil {
 		return nil, errors.Wrap(err)
 	}
-
-	//if swapCount.DateType == "1min" {
-	//	value, ok := tokenAVolumeMap.Load(fullName)
-	//	if ok {
-	//		tokenAVolumeMap.Store(fullName, value.(decimal.Decimal).Add(swapCount.TokenAVolume))
-	//	} else {
-	//		tokenAVolumeMap.Store(fullName, swapCount.TokenAVolume)
-	//	}
-	//
-	//	valueSwap, ok := tokenAVolumeMapSwap.Load(swapCount.SwapAddress)
-	//	if ok {
-	//		tokenAVolumeMapSwap.Store(swapCount.SwapAddress, valueSwap.(decimal.Decimal).Add(swapCount.TokenAVolume))
-	//	} else {
-	//		tokenAVolumeMapSwap.Store(swapCount.SwapAddress, swapCount.TokenAVolume)
-	//	}
-	//}
 
 	// 除了domain.DateMin 类型，其他的都是根据前一个类型求平均值
 	if swapCount.DateType == domain.DateMin {
