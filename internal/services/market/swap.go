@@ -352,7 +352,7 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 func (t *MarketService) QueryPriceForSymbol(ctx context.Context, args *iface.QueryPriceForSymbolReq, reply *iface.QueryPriceForSymbolResp) error {
 	defer rpcx.Recover(ctx)
 
-	date := time.Unix(int64(args.Time), 0)
+	date := time.Unix(args.Time, 0)
 	newPrice, newErr := model.QuerySwapTokenPriceKLine(
 		ctx,
 		model.NewFilter("symbol = ?", args.Symbol),
@@ -371,11 +371,11 @@ func (t *MarketService) QueryPriceForSymbol(ctx context.Context, args *iface.Que
 		return errors.Wrap(errors.RecordNotFound)
 	}
 
-	newDifference := uint64(newPrice.Date.Unix()) - args.Time
+	newDifference := newPrice.Date.Unix() - args.Time
 	if newDifference < 0 {
 		newDifference = -newDifference
 	}
-	oldDifference := uint64(oldPrice.Date.Unix()) - args.Time
+	oldDifference := oldPrice.Date.Unix() - args.Time
 	if oldDifference < 0 {
 		oldDifference = -oldDifference
 	}

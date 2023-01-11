@@ -45,11 +45,11 @@ type SwapCountListResp struct {
 }
 
 type QueryPriceForSymbolReq struct {
-	Time   uint64 `form:"time"                   binding:"required"`
+	Time   int64  `form:"time"                   binding:"required"`
 	Symbol string `form:"symbol"                 binding:"required"`
 }
 type QueryPriceForSymbolResp struct {
-	Price float64 `json:"vol"`
+	Price float64 `json:"price"`
 }
 
 type SwapCountOldResp struct {
