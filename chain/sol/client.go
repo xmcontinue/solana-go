@@ -410,7 +410,8 @@ func watchBalance() {
 
 			for _, f := range rewarders {
 				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, f)
+					fmt.Println(v.SwapAccount, "01", f)
+					fmt.Println(v.SwapAccount, "01", f.Mint)
 				}
 
 				if f.Mint.IsZero() {
@@ -419,7 +420,7 @@ func watchBalance() {
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
 				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, tokenInfo)
+					fmt.Println(v.SwapAccount, "02", tokenInfo)
 				}
 				if tokenInfo == nil {
 					continue
@@ -428,14 +429,14 @@ func watchBalance() {
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
 				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, tokenPrice, err)
+					fmt.Println(v.SwapAccount, tokenPrice, "03", err)
 				}
 				if err != nil {
 					continue
 				}
 				rewarderUsd = rewarderUsd.Add(emissionsPerSecond.Mul(tokenPrice))
 				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, emissionsPerSecond, emissionsPerSecond.Mul(tokenPrice))
+					fmt.Println(v.SwapAccount, emissionsPerSecond, "04", emissionsPerSecond.Mul(tokenPrice))
 				}
 			}
 
