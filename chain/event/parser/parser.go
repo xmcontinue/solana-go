@@ -91,13 +91,13 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 		if eventName, exist := parser.Discriminators[eventPrefix]; !exist {
 			continue
 		} else {
-			//var event interface{}
-			//if eventName == "SwapEvent" {
-			//	event = &SwapEvent{}
-			//} else {
-			//	event = &SwapWithPartnerEvent{}
-			//}
-			event := parser.Layout[eventName]
+			var event interface{}
+			if eventName == "SwapEvent" {
+				event = &SwapEvent{}
+			} else {
+				event = &SwapWithPartnerEvent{}
+			}
+			//event := parser.Layout[eventName]
 			//fmt.Println(event)
 			if err = borsh.Deserialize(event, logArr[8:]); err == nil {
 				events = append(events, EventRep{
