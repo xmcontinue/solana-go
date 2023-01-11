@@ -114,7 +114,7 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		panic(err)
 	}
-
+	// todo 要打开注释
 	_, err = job.Cron.AddFunc(getSpec("sync_gallery"), SyncGalleryJob)
 	if err != nil {
 		panic(err)
@@ -141,7 +141,7 @@ func Init(viperConf *config.Config) error {
 	syncTransactionJob := NewJobInfo("SyncSwapCountKline")
 	job.JobList["SyncSwapCountKline"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncKLine)
-
+	//go model.Printtoken()
 	userSyncTransactionJob := NewJobInfo("SyncUserCountKLine")
 	job.JobList["SyncUserCountKLine"] = userSyncTransactionJob
 	//_, err = job.Cron.AddFunc(defaultBaseSpec, CreateUserSyncKLine)
