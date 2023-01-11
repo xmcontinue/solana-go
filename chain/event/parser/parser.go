@@ -96,7 +96,7 @@ func (parser *EventParser) Decode(logMessages []string) ([]EventRep, error) {
 				continue
 			}
 			//event := parser.Layout[eventName]
-			//fmt.Println(event)
+			//fmt.Printf("event: %p\n", event)
 			if err = borsh.Deserialize(event, logArr[8:]); err == nil {
 				events = append(events, EventRep{
 					EventName: eventName,

@@ -26,6 +26,9 @@ func main() {
 	if err := etcd.Init(configer); err != nil {
 		panic(err)
 	}
+	if err := etcd.InitV3(configer); err != nil {
+		panic(err)
+	}
 
 	// 数据库初始化
 	if err := model.Init(configer); err != nil {
