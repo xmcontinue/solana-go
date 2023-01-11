@@ -23,6 +23,7 @@ type MarketService interface {
 	GetTransactions(context.Context, *GetTransactionsReq, *GetTransactionsResp) error
 	QueryPositions(ctx context.Context, req *QueryPositionsReq, resp *QueryPositionsResp) error
 	GetGallery(ctx context.Context, req *GetGalleryReq, resp *GetGalleryResp) error
+	QueryPriceForSymbol(ctx context.Context, args *QueryPriceForSymbolReq, reply *QueryPriceForSymbolResp) error
 }
 
 type SwapCountReq struct {
@@ -41,6 +42,14 @@ type SwapCountListReq struct {
 
 type SwapCountListResp struct {
 	List []*domain.SwapCountListInfo `json:"list"`
+}
+
+type QueryPriceForSymbolReq struct {
+	Time   uint64 `form:"time"                   binding:"required"`
+	Symbol string `form:"symbol"                 binding:"required"`
+}
+type QueryPriceForSymbolResp struct {
+	Price float64 `json:"vol"`
 }
 
 type SwapCountOldResp struct {

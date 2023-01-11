@@ -65,6 +65,7 @@ func (s *swapKline) Run() error {
 		logger.Error("query swap_pair_bases err", logger.Errorv(err))
 		return errors.Wrap(err)
 	}
+
 	if swapPairBase == nil {
 		return nil
 	}
@@ -235,9 +236,9 @@ func CreateSyncKLine() error {
 		if v.Version != "v2" {
 			continue
 		}
-		//if v.SwapAccount != "7MPnn7k6uYSMcW7VvB8GUcEedLApmsAG1Fesfufv7rBk" {
+		// if v.SwapAccount != "7MPnn7k6uYSMcW7VvB8GUcEedLApmsAG1Fesfufv7rBk" {
 		//	continue
-		//}
+		// }
 
 		m.Store(v.SwapAccount, v)
 	}

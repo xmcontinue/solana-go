@@ -25,4 +25,5 @@ var (
 	GetPosition              = handleFunc(marketClient, "QueryPositions", &iface.QueryPositionsReq{}, &iface.QueryPositionsResp{})
 	GetGallery               = handleFunc(marketClient, "GetGallery", &iface.GetGalleryReq{}, &iface.GetGalleryResp{})
 	GetGalleryType           = handleFunc(marketClient, "GetGalleryType", &iface.NilReq{}, &iface.GetGalleryTypeResp{})
+	QueryPriceForSymbol      = handleFunc(marketClient, "QueryPriceForSymbol", &iface.QueryPriceForSymbolReq{}, &iface.QueryPriceForSymbolResp{})
 )

@@ -60,6 +60,10 @@ func (c *CremaMarketClient) GetGallery(ctx context.Context, args *iface.GetGalle
 	return c.Call(ctx, "GetGallery", args, reply)
 }
 
+func (c *CremaMarketClient) QueryPriceForSymbol(ctx context.Context, args *iface.QueryPriceForSymbolReq, reply *iface.QueryPriceForSymbolResp) error {
+	return c.Call(ctx, "QueryPriceForSymbol", args, reply)
+}
+
 // NewCremaMarketClient NewCremaMarketClient Rpc客户端
 func NewCremaMarketClient(ctx context.Context, config *transport.ServiceConfig) (iface.MarketService, error) {
 	client, err := rpcx.NewClient(ctx, config)

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
@@ -344,6 +345,47 @@ func (t *MarketService) QueryPositions(ctx context.Context, args *iface.QueryPos
 	}
 
 	reply.List = list
+	return nil
+}
+
+// QueryPriceForSymbol ...
+func (t *MarketService) QueryPriceForSymbol(ctx context.Context, args *iface.QueryPriceForSymbolReq, reply *iface.QueryPriceForSymbolResp) error {
+	defer rpcx.Recover(ctx)
+
+	date := time.Unix(int64(args.Time), 0)
+	newPrice, newErr := model.QuerySwapTokenPriceKLine(
+		ctx,
+		model.NewFilter("symbol = ?", args.Symbol),
+		model.NewFilter("date_type = ?", "1min"),
+		model.NewFilter("date >= ?", date),
+	)
+
+	oldPrice, oldErr := model.QuerySwapTokenPriceKLine(
+		ctx,
+		model.NewFilter("symbol = ?", args.Symbol),
+		model.NewFilter("date_type = ?", "1min"),
+		model.NewFilter("date <= ?", date),
+	)
+
+	if newErr != nil && oldErr != nil {
+		return errors.Wrap(errors.RecordNotFound)
+	}
+
+	newDifference := uint64(newPrice.Date.Unix()) - args.Time
+	if newDifference < 0 {
+		newDifference = -newDifference
+	}
+	oldDifference := uint64(oldPrice.Date.Unix()) - args.Time
+	if oldDifference < 0 {
+		oldDifference = -oldDifference
+	}
+
+	if newDifference < oldDifference {
+		reply.Price, _ = newPrice.Settle.Float64()
+	} else {
+		reply.Price, _ = oldPrice.Settle.Float64()
+	}
+
 	return nil
 }
 
