@@ -171,7 +171,9 @@ func (t *Txv2) createSwapRecord(logMessageEvent event.EventRep) error {
 		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.FeeAmount)), int(swapConfig.TokenB.Decimal))
 
 		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swap.ProtocolAmount)), int(swapConfig.TokenB.Decimal))
-		price = (amountIn.Sub(feeAmount)).Div(amountOut)
+		if !amountOut.IsZero() {
+			price = (amountIn.Sub(feeAmount)).Div(amountOut)
+		}
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
@@ -241,8 +243,9 @@ func (t *Txv2) createSwapWithPartnerRecord(logMessageEvent event.EventRep) error
 		refAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.RefAmount)), int(swapConfig.TokenB.Decimal))
 		feeAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.FeeAmount)), int(swapConfig.TokenB.Decimal))
 		protocolAmount = PrecisionConversion(decimal.NewFromInt(int64(swapWithPartnerEvent.ProtocolAmount)), int(swapConfig.TokenB.Decimal))
-
-		price = (amountIn.Sub(feeAmount)).Div(amountOut)
+		if !amountOut.IsZero() {
+			price = (amountIn.Sub(feeAmount)).Div(amountOut)
+		}
 	}
 
 	t.SwapRecords = append(t.SwapRecords, &SwapRecordV2{
