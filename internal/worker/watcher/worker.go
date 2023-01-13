@@ -12,6 +12,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	event "git.cplus.link/crema/backend/chain/event/parser"
+	"git.cplus.link/crema/backend/internal/etcd"
 )
 
 const defaultBaseSpec = "0 * * * * *"
@@ -65,7 +66,7 @@ func Init(viperConf *config.Config) error {
 		return errors.Wrap(err)
 	}
 	job.CronConf.WithLogger(xlog.Config{}.Build())
-
+	job.CronConf.Config = etcd.ConfigV3()
 	job.Cron = job.CronConf.Build()
 
 	redisClient, err = initRedis(conf)
@@ -83,10 +84,11 @@ func Init(viperConf *config.Config) error {
 	job.JobList["SyncTransaction"] = syncTransactionJob
 	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
 
-	err = migrate()
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	// 迁移完了可以注释
+	//err = migrate()
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
 	logger.Info("migrate done")
 	// 同步vol(24h)
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)

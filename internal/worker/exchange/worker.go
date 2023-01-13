@@ -10,6 +10,7 @@ import (
 	"git.cplus.link/go/akit/pkg/xlog"
 	"github.com/robfig/cron/v3"
 
+	"git.cplus.link/crema/backend/internal/etcd"
 	"git.cplus.link/crema/backend/internal/exchanger"
 )
 
@@ -54,14 +55,17 @@ type JobInterface interface {
 func Init(viperConf *config.Config, exchangerC *exchanger.Exchanger) error {
 	job = NewJob()
 	conf = viperConf
-
+	// etcd初始化
+	if err := etcd.InitV3(conf); err != nil {
+		panic(err)
+	}
 	err := conf.UnmarshalKey("cron_job_conf", &job.CronConf)
 
 	if err != nil {
 		return errors.Wrap(err)
 	}
 	job.CronConf.WithLogger(xlog.Config{}.Build())
-
+	job.CronConf.Config = etcd.ConfigV3()
 	job.Cron = job.CronConf.Build()
 
 	// 同步价格

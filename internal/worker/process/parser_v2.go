@@ -148,7 +148,7 @@ func (s *parserV2) ParserSwapInstruction() error {
 		if len(tx.SwapRecords) == 0 {
 			continue
 		}
-
+		//fmt.Println(tx.SwapRecords[0].SwapAccount, tx.SwapRecords[0].AmountIn, tx.SwapRecords[0].AmountOut, tx.SwapRecords[0].FeeAmount, tx.SwapRecords[0].EventName, "方向：", tx.SwapRecords[0].Direction, "价格", tx.SwapRecords[0].Price)
 		swapRecordIface := make([]parse.SwapRecordIface, len(tx.SwapRecords), len(tx.SwapRecords))
 		for i := range tx.SwapRecords {
 			if tx.SwapRecords[i].Price.IsZero() {

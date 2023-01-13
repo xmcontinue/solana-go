@@ -15,6 +15,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	event "git.cplus.link/crema/backend/chain/event/parser"
+	"git.cplus.link/crema/backend/internal/etcd"
 )
 
 var (
@@ -78,10 +79,11 @@ func Init(viperConf *config.Config) error {
 	}
 	logger.Info("migrate begin")
 	//先做数据迁移，做完后才能获取新数据
-	err = migrate()
-	if err != nil {
-		return errors.Wrap(err)
-	}
+	// 迁移完了 可以注释
+	//err = migrate()
+	//if err != nil {
+	//	return errors.Wrap(err)
+	//}
 
 	logger.Info("migrate done")
 
@@ -91,7 +93,7 @@ func Init(viperConf *config.Config) error {
 	}
 
 	job.CronConf.WithLogger(xlog.Config{}.Build())
-
+	job.CronConf.Config = etcd.ConfigV3()
 	job.Cron = job.CronConf.Build()
 	redisClient, err = initRedis(conf)
 	if err != nil {
@@ -114,7 +116,7 @@ func Init(viperConf *config.Config) error {
 	if err != nil {
 		panic(err)
 	}
-	// todo 要打开注释
+
 	_, err = job.Cron.AddFunc(getSpec("sync_gallery"), SyncGalleryJob)
 	if err != nil {
 		panic(err)
