@@ -20,12 +20,12 @@ type SwapConfig struct {
 	SwapAccount   string `json:"swap_account" mapstructure:"swap_account"`
 	PoolAddress   string `json:"pool_address" mapstructure:"pool_address"`
 	SwapPublicKey solana.PublicKey
-	TokenA        Token           `json:"token_a" mapstructure:"token_a"`
-	TokenB        Token           `json:"token_b" mapstructure:"token_b"`
-	PriceInterval *PriceInterval  `json:"price_interval" mapstructure:"price_interval"`
-	Version       string          `json:"-"    mapstructure:"version"`
-	IsPause       bool            `json:"isPause"   mapstructure:"-"`
-	RewarderUsd   decimal.Decimal `json:"-"   mapstructure:"-"`
+	TokenA        Token             `json:"token_a" mapstructure:"token_a"`
+	TokenB        Token             `json:"token_b" mapstructure:"token_b"`
+	PriceInterval *PriceInterval    `json:"price_interval" mapstructure:"price_interval"`
+	Version       string            `json:"-"    mapstructure:"version"`
+	IsPause       bool              `json:"isPause"   mapstructure:"-"`
+	RewarderUsd   []decimal.Decimal `json:"-"   mapstructure:"-"`
 }
 
 type TokenConfig struct {

@@ -397,7 +397,6 @@ func watchBalance() {
 				panic(err)
 			}
 			rewarders := swapV2.RewarderInfos.list()
-			rewarderUsd := decimal.Decimal{}
 
 			getTokenInfo := func(key solana.PublicKey) *domain.TokenInfo {
 				for _, r := range TokenList {
@@ -408,36 +407,29 @@ func watchBalance() {
 				return nil
 			}
 
+			rewarderUsd := make([]decimal.Decimal, 0, 3)
 			for _, f := range rewarders {
-				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, "01", f)
-					fmt.Println(v.SwapAccount, "01", f.Mint)
-				}
 
 				if f.Mint.IsZero() {
+					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
-				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, "02", tokenInfo)
-				}
+
 				if tokenInfo == nil {
+					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
-				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, tokenPrice, "03", err)
-				}
+
 				if err != nil {
+					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
-				rewarderUsd = rewarderUsd.Add(emissionsPerSecond.Mul(tokenPrice))
-				if v.SwapAccount == "BsgTBhUa9Nrs8GNjBoPDxgk4MzjUWVjtaRXAGZkFwxWa" {
-					fmt.Println(v.SwapAccount, emissionsPerSecond, "04", emissionsPerSecond.Mul(tokenPrice))
-				}
+				rewarderUsd = append(rewarderUsd, emissionsPerSecond.Mul(tokenPrice))
 			}
 
 			v.RewarderUsd = rewarderUsd
