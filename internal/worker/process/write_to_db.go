@@ -216,7 +216,6 @@ func getPriceInfo(ctx context.Context, date *time.Time, dateType domain.DateType
 			model.OrderFilter("date asc"),
 		)
 		if err != nil {
-			fmt.Println("symbol:", symbol)
 			return decimal.Zero, errors.Wrap(err)
 		}
 	}

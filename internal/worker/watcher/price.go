@@ -105,6 +105,7 @@ func SyncSwapPrice() error {
 		"tUSDC": {decimal.NewFromInt(1)},
 		"aUSDC": {decimal.NewFromInt(1)},
 		"xUSDC": {decimal.NewFromInt(1)},
+		"ausdc": {decimal.NewFromInt(1)},
 	}
 
 	pairPriceToTokenPrice(swapPairPrices, tokenPrices)
