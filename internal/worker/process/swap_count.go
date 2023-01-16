@@ -149,14 +149,12 @@ func SwapTotalCount() error {
 		// 计算apr
 		apr := "0%"
 		Apr7day := "0%"
-		//rewarderApr := []string{"0%", "0%", "0%"}
-		rewarderApr := "0%"
+		rewarderApr := []string{"0%", "0%", "0%"}
 		if !tvlInUsd.IsZero() {
-			//for i, rewarderUsd := range v.RewarderUsd {
-			//	rewarderApr[i] = parse.BankToString(rewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"
-			//
-			//}
-			rewarderApr = parse.BankToString(v.RewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"
+			for i, rewarderUsd := range v.RewarderUsd {
+				rewarderApr[i] = parse.BankToString(rewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"
+
+			}
 		}
 
 		var tokenAVol7d, tokenBVol7d, volInUsd7d decimal.Decimal
