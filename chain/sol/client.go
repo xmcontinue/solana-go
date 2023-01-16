@@ -407,18 +407,19 @@ func watchBalance() {
 				return nil
 			}
 
-			rewarderUsd := make([]decimal.Decimal, 0, 3)
+			//rewarderUsd := make([]decimal.Decimal, 0, 3)
+			rewarderUsd := decimal.Zero
 			for _, f := range rewarders {
 
 				if f.Mint.IsZero() {
-					rewarderUsd = append(rewarderUsd, decimal.Zero)
+					//rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
 
 				if tokenInfo == nil {
-					rewarderUsd = append(rewarderUsd, decimal.Zero)
+					//rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
@@ -426,10 +427,11 @@ func watchBalance() {
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
 
 				if err != nil {
-					rewarderUsd = append(rewarderUsd, decimal.Zero)
+					//rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
-				rewarderUsd = append(rewarderUsd, emissionsPerSecond.Mul(tokenPrice))
+				//rewarderUsd = append(rewarderUsd, emissionsPerSecond.Mul(tokenPrice))
+				rewarderUsd = rewarderUsd.Add(emissionsPerSecond.Mul(tokenPrice))
 			}
 
 			v.RewarderUsd = rewarderUsd
