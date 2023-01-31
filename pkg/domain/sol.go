@@ -15,17 +15,18 @@ type ChainNet struct {
 }
 
 type SwapConfig struct {
-	Name          string `json:"name" mapstructure:"name"`
-	Fee           string `json:"fee" mapstructure:"fee"`
-	SwapAccount   string `json:"swap_account" mapstructure:"swap_account"`
-	PoolAddress   string `json:"pool_address" mapstructure:"pool_address"`
-	SwapPublicKey solana.PublicKey
-	TokenA        Token             `json:"token_a" mapstructure:"token_a"`
-	TokenB        Token             `json:"token_b" mapstructure:"token_b"`
-	PriceInterval *PriceInterval    `json:"price_interval" mapstructure:"price_interval"`
-	Version       string            `json:"-"    mapstructure:"version"`
-	IsPause       bool              `json:"isPause"   mapstructure:"-"`
-	RewarderUsd   []decimal.Decimal `json:"-"   mapstructure:"-"`
+	Name              string `json:"name" mapstructure:"name"`
+	Fee               string `json:"fee" mapstructure:"fee"`
+	SwapAccount       string `json:"swap_account" mapstructure:"swap_account"`
+	PoolAddress       string `json:"pool_address" mapstructure:"pool_address"`
+	SwapPublicKey     solana.PublicKey
+	TokenA            Token             `json:"token_a" mapstructure:"token_a"`
+	TokenB            Token             `json:"token_b" mapstructure:"token_b"`
+	PriceInterval     *PriceInterval    `json:"price_interval" mapstructure:"price_interval"`
+	Version           string            `json:"-"    mapstructure:"version"`
+	IsPause           bool              `json:"isPause"   mapstructure:"-"`
+	RewarderUsd       []decimal.Decimal `json:"-"   mapstructure:"-"`
+	ISDisplayRewarder bool              `json:"is_display_rewarder" mapStructure:"is_display_rewarder"`
 }
 
 type TokenConfig struct {
@@ -55,13 +56,14 @@ type TokenInfo struct {
 }
 
 type SwapConfigView struct {
-	Name          string         `json:"name" mapstructure:"name"`
-	Fee           string         `json:"fee" mapstructure:"fee"`
-	SwapAccount   string         `json:"swap_account" mapstructure:"swap_account"`
-	TokenA        TokenView      `json:"token_a" mapstructure:"token_a"`
-	TokenB        TokenView      `json:"token_b" mapstructure:"token_b"`
-	PriceInterval *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
-	IsPause       bool           `json:"isPause"   mapstructure:"-"`
+	Name              string         `json:"name" mapstructure:"name"`
+	Fee               string         `json:"fee" mapstructure:"fee"`
+	SwapAccount       string         `json:"swap_account" mapstructure:"swap_account"`
+	TokenA            TokenView      `json:"token_a" mapstructure:"token_a"`
+	TokenB            TokenView      `json:"token_b" mapstructure:"token_b"`
+	PriceInterval     *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
+	IsPause           bool           `json:"isPause"   mapstructure:"-"`
+	ISDisplayRewarder bool           `json:"is_display_rewarder" mapStructure:"is_display_rewarder"`
 }
 
 type TokenView struct {
