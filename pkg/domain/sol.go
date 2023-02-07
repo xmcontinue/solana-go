@@ -64,6 +64,7 @@ type SwapConfigView struct {
 	PriceInterval     *PriceInterval `json:"price_interval" mapstructure:"price_interval"`
 	IsPause           bool           `json:"isPause"   mapstructure:"-"`
 	ISDisplayRewarder bool           `json:"is_display_rewarder" mapStructure:"is_display_rewarder"`
+	Displays          []bool         `json:"displays" mapstructure:"displays"`
 }
 
 type TokenView struct {
