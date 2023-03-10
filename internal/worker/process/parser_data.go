@@ -242,7 +242,7 @@ func CreateSyncKLine() error {
 
 	err := job.WatchJobForMap("SyncSwapCountKline", &m, func(value interface{}) JobInterface {
 		return &swapKline{
-			name:       "sync_kline",
+			name:       "sync_kline" + value.(*domain.SwapConfig).SwapAccount,
 			spec:       getSpec("sync_kline"),
 			swapConfig: value.(*domain.SwapConfig),
 		}

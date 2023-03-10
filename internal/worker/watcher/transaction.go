@@ -54,7 +54,7 @@ func CreateSyncTransaction() error {
 
 	err := job.WatchJobForMap("SyncTransaction", &m, func(value interface{}) JobInterface {
 		return &SyncTransaction{
-			name:       "sync_transaction",
+			name:       "sync_transaction" + value.(*domain.SwapConfig).SwapAccount,
 			spec:       getSpec("sync_transaction"),
 			swapConfig: value.(*domain.SwapConfig),
 		}
@@ -214,7 +214,7 @@ func (s *SyncTransaction) getSignatures(before *solana.Signature, until *solana.
 		}
 
 		// signatures = append(signatures, afterSignatures...)
-		//signatures = afterSignatures
+		// signatures = afterSignatures
 		if len(afterSignatures) != 0 {
 			signatures = afterSignatures
 		}
