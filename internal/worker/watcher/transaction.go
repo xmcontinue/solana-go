@@ -54,7 +54,7 @@ func CreateSyncTransaction() error {
 
 	err := job.WatchJobForMap("SyncTransaction", &m, func(value interface{}) JobInterface {
 		return &SyncTransaction{
-			name:       "sync_transaction" + value.(*domain.SwapConfig).SwapAccount,
+			name:       "sync_transaction-" + value.(*domain.SwapConfig).SwapAccount,
 			spec:       getSpec("sync_transaction"),
 			swapConfig: value.(*domain.SwapConfig),
 		}
