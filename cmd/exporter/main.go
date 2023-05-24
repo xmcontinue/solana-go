@@ -5,6 +5,7 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/transport/rpcx"
 
+	"git.cplus.link/crema/backend/internal/market/coingecko"
 	handler "git.cplus.link/crema/backend/internal/services/exporter"
 	"git.cplus.link/crema/backend/pkg/domain"
 	"git.cplus.link/crema/backend/pkg/iface"
@@ -15,6 +16,7 @@ func main() {
 
 	domain.SetPublicPrefix(configer.Get("namespace").(string))
 	domain.SetApiHost(configer.Get("api_host").(string))
+	coingecko.ApiKey = configer.Get("coingecko_token").(string)
 
 	serviceConf, err := configer.Service(iface.ExporterServiceName)
 	if err != nil {

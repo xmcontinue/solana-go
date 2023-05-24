@@ -13,12 +13,14 @@ import (
 )
 
 const (
-	url              = "https://api.coingecko.com/api/v3"
+	url              = "https://pro-api.coingecko.com/api/v3"
 	simplePriceUrl   = url + "/simple/price"
 	contractPriceUrl = url + "/simple/token_price/solana"
 	CoinsListUrl     = url + "/coins/list"
 	BusinessName     = "coingecko"
 )
+
+var ApiKey = ""
 
 type CoinGecko struct {
 	client       *resty.Client
@@ -54,8 +56,9 @@ func (cg *CoinGecko) GetName() string {
 func (cg *CoinGecko) GetPrices() (map[string][]*domain.Price, error) {
 	resp, err := cg.client.R().
 		SetQueryParams(map[string]string{
-			"ids":           cg.getIdsToString(),
-			"vs_currencies": cg.getQuoteSymbolsToString(),
+			"ids":              cg.getIdsToString(),
+			"vs_currencies":    cg.getQuoteSymbolsToString(),
+			"x_cg_pro_api_key": ApiKey,
 		}).
 		Get(simplePriceUrl)
 	if err != nil {
@@ -97,6 +100,7 @@ func (cg *CoinGecko) GetPriceForContract(contractAddresses string) (decimal.Deci
 		SetQueryParams(map[string]string{
 			"contract_addresses": contractAddresses,
 			"vs_currencies":      "usd",
+			"x_cg_pro_api_key":   ApiKey,
 		}).
 		Get(contractPriceUrl)
 	if err != nil {
@@ -146,7 +150,7 @@ func (cg *CoinGecko) setSymbolToIds(baseSymbols []string) error {
 
 func (cg *CoinGecko) getIds() (map[string]*id, error) {
 	resp, err := cg.client.R().
-		SetQueryParams(map[string]string{}).
+		SetQueryParams(map[string]string{"x_cg_pro_api_key": ApiKey}).
 		Get(CoinsListUrl)
 	if err != nil {
 		return nil, errors.Wrap(err)
