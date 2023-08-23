@@ -151,6 +151,7 @@ func SwapTotalCount() error {
 		apr := "0%"
 		Apr7day := "0%"
 		rewarderApr := []string{"0%", "0%", "0%"}
+		fmt.Println("swap count ", v.SwapAccount)
 		if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 			fmt.Println("swap count 4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG reawrderusd", v.RewarderUsd)
 		}
