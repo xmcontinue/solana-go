@@ -3,6 +3,7 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -150,6 +151,9 @@ func SwapTotalCount() error {
 		apr := "0%"
 		Apr7day := "0%"
 		rewarderApr := []string{"0%", "0%", "0%"}
+		if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+			fmt.Println("swap count 4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG reawrderusd", v.RewarderUsd)
+		}
 		if !tvlInUsd.IsZero() {
 			for i, rewarderUsd := range v.RewarderUsd {
 				rewarderApr[i] = parse.BankToString(rewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"

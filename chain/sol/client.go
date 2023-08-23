@@ -444,6 +444,9 @@ func watchBalance() {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder reawrderusd", emissionsPerSecond.Mul(tokenPrice))
+				}
 				rewarderUsd = append(rewarderUsd, emissionsPerSecond.Mul(tokenPrice))
 
 			}
