@@ -54,9 +54,11 @@ func SwapTotalCount() error {
 
 	for _, v := range sol.SwapConfigList() {
 		// 获取token价格
+		fmt.Println("swap count ", v.SwapAccount)
 		newTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol)
 		newTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol)
 		if err != nil || newTokenAPrice.IsZero() || newTokenBPrice.IsZero() {
+			fmt.Println("swap count continue", v.SwapAccount)
 			continue
 		}
 
@@ -151,7 +153,7 @@ func SwapTotalCount() error {
 		apr := "0%"
 		Apr7day := "0%"
 		rewarderApr := []string{"0%", "0%", "0%"}
-		fmt.Println("swap count ", v.SwapAccount)
+
 		if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 			fmt.Println("swap count 4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG reawrderusd", v.RewarderUsd)
 		}
