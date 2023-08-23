@@ -409,14 +409,18 @@ func watchBalance() {
 
 			rewarderUsd := make([]decimal.Decimal, 0, 3)
 			for _, f := range rewarders {
-
+				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder mint", f.Mint.String())
+				}
 				if f.Mint.IsZero() {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
-
+				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder tokenInfo", tokenInfo)
+				}
 				if tokenInfo == nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
@@ -424,7 +428,12 @@ func watchBalance() {
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
-
+				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder tokenPrice", err)
+				}
+				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder EmissionsPerSecond", f.EmissionsPerSecond.Val())
+				}
 				if err != nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
