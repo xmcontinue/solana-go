@@ -406,7 +406,9 @@ func watchBalance() {
 				}
 				return nil
 			}
-
+			if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				fmt.Println("rewarder rewarders", rewarders)
+			}
 			rewarderUsd := make([]decimal.Decimal, 0, 3)
 			for _, f := range rewarders {
 				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
