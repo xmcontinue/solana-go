@@ -60,13 +60,13 @@ func Init(conf *config.Config) error {
 
 	var err error
 	once.Do(func() {
-
+		fmt.Println("test:0")
 		// 获取programID
 		err = conf.UnmarshalKey("program_address_crema_v2", &ProgramIDV2)
 		if err != nil {
 			panic(err.Error())
 		}
-
+		fmt.Println("test:1")
 		swapConfigMap = make(map[string]*domain.SwapConfig)
 		tokenConfigMap = make(map[string]*domain.Token)
 
@@ -76,7 +76,7 @@ func Init(conf *config.Config) error {
 		}
 
 		wsClient = newWSConnect()
-
+		fmt.Println("test:2")
 		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
 		stopChan := make(chan struct{})
@@ -86,7 +86,7 @@ func Init(conf *config.Config) error {
 		}
 
 		activityEventParser = event.NewActivityEventParser()
-
+		fmt.Println("test:3")
 		wg.Add(1)
 		go watchSwapPairsConfig(resChan, &swapConfigList, "")
 		wg.Wait()
@@ -98,11 +98,11 @@ func Init(conf *config.Config) error {
 		if err != nil {
 			return
 		}
-
+		fmt.Println("test:4")
 		wg.Add(1)
 		go watchSwapPairsConfig(resChanV2, &swapConfigListV2, "v2")
 		wg.Wait()
-
+		fmt.Println("test:5")
 		etcdTokenListKey = "/" + domain.GetPublicPrefix() + etcdTokenListKey
 
 		stopTokenListChanV2 := make(chan struct{})
@@ -110,11 +110,11 @@ func Init(conf *config.Config) error {
 		if err != nil {
 			return
 		}
-
+		fmt.Println("test:6")
 		wg.Add(1)
 		go watchTokenListConfig(resTokenListChanV2)
 		wg.Wait()
-
+		fmt.Println("test:7")
 		// 加载网络配置
 		err = initNet(conf)
 		if err != nil {
@@ -125,7 +125,7 @@ func Init(conf *config.Config) error {
 		wg.Add(1)
 		go watchBalance()
 		wg.Wait()
-
+		fmt.Println("test:8")
 		// watchNet 监测网络
 		go watchNet()
 
@@ -340,7 +340,7 @@ func watchBlockHeight() {
 func watchBalance() {
 	for {
 		configLock.Lock()
-
+		fmt.Println("watch balance:start")
 		for _, v := range tokenConfigMap {
 			resp, err := GetRpcClient().GetAccountInfo(
 				context.TODO(),
@@ -371,13 +371,14 @@ func watchBalance() {
 				v.RefundBalance = decimal.Decimal{}
 			}
 		}
-
+		fmt.Println("watch balance: swap config list")
 		for _, v := range SwapConfigList() {
 			v.TokenA.Balance = GetTokenForTokenAccount(v.TokenA.SwapTokenAccount).Balance
 			v.TokenB.Balance = GetTokenForTokenAccount(v.TokenB.SwapTokenAccount).Balance
 			if v.Version != "v2" {
 				continue
 			}
+			fmt.Println("watch balance: swap config list", v.SwapAccount)
 			resp, err := GetRpcClient().GetAccountInfo(
 				context.TODO(),
 				v.SwapPublicKey,
@@ -406,12 +407,12 @@ func watchBalance() {
 				}
 				return nil
 			}
-			if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+			if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 				fmt.Println("rewarder rewarders", rewarders)
 			}
 			rewarderUsd := make([]decimal.Decimal, 0, 3)
 			for _, f := range rewarders {
-				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 					fmt.Println("rewarder mint", f.Mint.String())
 				}
 				if f.Mint.IsZero() {
@@ -420,7 +421,7 @@ func watchBalance() {
 				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
-				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 					fmt.Println("rewarder tokenInfo", tokenInfo)
 				}
 				if tokenInfo == nil {
@@ -430,10 +431,10 @@ func watchBalance() {
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
-				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 					fmt.Println("rewarder tokenPrice", err)
 				}
-				if v.PoolAddress == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
 					fmt.Println("rewarder EmissionsPerSecond", f.EmissionsPerSecond.Val())
 				}
 				if err != nil {
