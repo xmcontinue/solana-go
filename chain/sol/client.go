@@ -428,6 +428,9 @@ func watchBalance() {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
+				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+					fmt.Println("rewarder EmissionsPerSecond val", f.EmissionsPerSecond.Val().String(), int(tokenInfo.Decimal))
+				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
@@ -435,7 +438,7 @@ func watchBalance() {
 					fmt.Println("rewarder tokenPrice", err)
 				}
 				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
-					fmt.Println("rewarder EmissionsPerSecond", f.EmissionsPerSecond.Val())
+					fmt.Println("rewarder EmissionsPerSecond", emissionsPerSecond.String(), tokenPrice.String())
 				}
 				if err != nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
