@@ -52,6 +52,7 @@ func SwapTotalCount() error {
 	// 获取swap pair 24h 内交易统计,因为时间戳的原因，这里全部改成utc时间
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
+	fmt.Println("test", sol.SwapConfigList())
 	for _, v := range sol.SwapConfigList() {
 		// 获取token价格
 		fmt.Println("swap count ", v.SwapAccount)
