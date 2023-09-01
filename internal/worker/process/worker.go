@@ -10,7 +10,6 @@ import (
 	"git.cplus.link/go/akit/pkg/worker/xcron"
 	"git.cplus.link/go/akit/pkg/xlog"
 	akHttp "git.cplus.link/go/akit/transport/http"
-	ag_solanago "github.com/gagliardetto/solana-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
 
@@ -153,11 +152,11 @@ func Init(viperConf *config.Config) error {
 
 	job.Cron.Start()
 
-	subMetadata := &SubMetadata{
-		account:        ag_solanago.TokenMetadataProgramID.String(),
-		collectionMint: collectionMint,
-	}
-	go subMetadata.Sub()
+	//subMetadata := &SubMetadata{
+	//	account:        ag_solanago.TokenMetadataProgramID.String(),
+	//	collectionMint: collectionMint,
+	//}
+	//go subMetadata.Sub()
 
 	return nil
 }

@@ -75,7 +75,7 @@ func Init(conf *config.Config) error {
 			panic(err.Error())
 		}
 
-		wsClient = newWSConnect()
+		//wsClient = newWSConnect()
 		fmt.Println("test:2")
 		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
