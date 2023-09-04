@@ -33,6 +33,7 @@ const (
 )
 
 var (
+	number             = 0
 	etcdSwapPairsKey   = "/swap-pairs"
 	etcdTokenListKey   = "/token-list"
 	etcdSwapPairsKeyV2 = "/v2-swap-pairs"
@@ -475,6 +476,8 @@ func GetBlockSlotForClient(rpcClient *rpc.Client) (uint64, error) {
 }
 
 func GetRpcClient() *rpc.Client {
+	number++
+	fmt.Println("lyl0904 number:", number)
 	return chainNet.Client
 }
 
