@@ -83,6 +83,42 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 	return errors.Wrap(returnFunc(returnGalleries, args, reply))
 }
 
+func (t *MarketService) GetGalleryByMint(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
+	defer rpcx.Recover(ctx)
+	if err := validate(args); err != nil {
+		return errors.Wrapf(errors.ParameterError, "validate:%v", err)
+	}
+
+	gallery, err := t.getGalleryV2(ctx, args)
+	//gallery, err := t.getGallery(ctx, args)
+	if err != nil {
+		return errors.Wrap(err)
+	}
+
+	if gallery == nil {
+		return nil
+	}
+
+	if len(args.Mints) == 0 {
+		return errors.Wrap(returnFunc(gallery, args, reply))
+	}
+
+	mintsMap := make(map[string]struct{}, len(args.Mints))
+	for _, v := range args.Mints {
+		mintsMap[v] = struct{}{}
+	}
+
+	returnGalleries := make([]*sol.Gallery, 0, len(gallery))
+
+	for _, v := range gallery {
+		if _, ok := mintsMap[v.Mint]; ok {
+			returnGalleries = append(returnGalleries, v)
+		}
+	}
+
+	return errors.Wrap(returnFunc(returnGalleries, args, reply))
+}
+
 func returnFunc(gallery []*sol.Gallery, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
 	if len(gallery) == 0 {
 		reply.List = nil
