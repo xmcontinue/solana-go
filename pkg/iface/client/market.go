@@ -60,6 +60,10 @@ func (c *CremaMarketClient) GetGallery(ctx context.Context, args *iface.GetGalle
 	return c.Call(ctx, "GetGallery", args, reply)
 }
 
+func (c *CremaMarketClient) GetGalleryByMint(ctx context.Context, args *iface.GetGalleryReq, reply *iface.GetGalleryResp) error {
+	return c.Call(ctx, "GetGalleryByMint", args, reply)
+}
+
 func (c *CremaMarketClient) QueryPriceForSymbol(ctx context.Context, args *iface.QueryPriceForSymbolReq, reply *iface.QueryPriceForSymbolResp) error {
 	return c.Call(ctx, "QueryPriceForSymbol", args, reply)
 }
