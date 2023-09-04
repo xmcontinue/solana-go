@@ -82,13 +82,13 @@ func Init(viperConf *config.Config) error {
 	// create sync transaction cron job
 	syncTransactionJob := NewJobInfo("SyncTvl")
 	job.JobList["SyncTransaction"] = syncTransactionJob
-	_, err = job.Cron.AddFunc(defaultBaseSpec, CreateSyncTransaction)
+	_, err = job.Cron.AddFunc("0 */10 * * * *", CreateSyncTransaction)
 
 	// 迁移完了可以注释
-	//err = migrate()
-	//if err != nil {
+	// err = migrate()
+	// if err != nil {
 	//	return errors.Wrap(err)
-	//}
+	// }
 	logger.Info("migrate done")
 	// 同步vol(24h)
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncVol24H)
@@ -97,7 +97,7 @@ func Init(viperConf *config.Config) error {
 	_, err = job.Cron.AddFunc(getSpec("sum_tvl"), SyncTotalVol)
 
 	// 同步价格至kline
-	_, err = job.Cron.AddFunc(getSpec("sync_kline"), SyncSwapPrice)
+	_, err = job.Cron.AddFunc("0 */10 * * * *", SyncSwapPrice)
 
 	// 同步swap status
 	_, err = job.Cron.AddFunc(getSpec("tvl_cache"), syncSwapStatus)
@@ -106,10 +106,10 @@ func Init(viperConf *config.Config) error {
 	// _, err = job.Cron.AddFunc(getSpec("activity_history"), SyncActivityTransaction)
 
 	// 解析已经同步的数据，这些数据在第一次同步时没有解析类型和user_address
-	//_, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
+	// _, err = job.Cron.AddFunc(getSpec("sync_user_address_and_history"), SyncTypeAndUserAddressHistory)
 
 	// 清除旧数据,最后才上
-	//_, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)
+	// _, err = job.Cron.AddFunc(getSpec("clear_old_data"), ClearOldData)
 
 	job.Cron.Start()
 

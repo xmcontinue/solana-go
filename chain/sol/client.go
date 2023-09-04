@@ -462,7 +462,7 @@ func watchBalance() {
 		}
 
 		configLock.Unlock()
-		time.Sleep(time.Minute)
+		time.Sleep(time.Minute * 10)
 	}
 }
 
