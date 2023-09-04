@@ -2,21 +2,18 @@ package sol
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
-	"sync"
 	"time"
 
-	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
+	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
-
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 
-	"git.cplus.link/crema/backend/internal/etcd"
+	"git.cplus.link/crema/backend/chain/sol/parse"
 	model "git.cplus.link/crema/backend/internal/model/market"
 
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -29,87 +26,20 @@ type TVL struct {
 	signatureList    []*rpc.TransactionSignature
 	tokenAVolume     uint64
 	tokenBVolume     uint64
-	client           *rpc.Client
 	tokenABalance    uint64
 	tokenBBalance    uint64
+	txNum            uint64
 	util             *solana.Signature
-	*SwapConfig
+	*domain.SwapConfig
 }
 
-type PublicKey struct {
-	TokenAPoolAddress solana.PublicKey
-	TokenBPoolAddress solana.PublicKey
-	TokenSwapAddress  solana.PublicKey
-}
-
-type SwapConfig struct {
-	Name          string `json:"name" mapstructure:"name"`
-	Fee           string `json:"fee" mapstructure:"fee"`
-	SwapAccount   string `json:"swap_account" mapstructure:"swap_account"`
-	SwapPublicKey solana.PublicKey
-	TokenA        Token `json:"token_a" mapstructure:"token_a"`
-	TokenB        Token `json:"token_b" mapstructure:"token_b"`
-}
-
-type Token struct {
-	Symbol             string `json:"symbol" mapstructure:"symbol"`
-	TokenMint          string `json:"token_mint" mapstructure:"token_mint"`
-	SwapTokenAccount   string `json:"swap_token_account" mapstructure:"swap_token_account"`
-	SwapTokenPublicKey solana.PublicKey
-	Decimal            uint8 `json:"decimal" mapstructure:"decimal"`
-}
-
-var (
-	once           sync.Once
-	chainNetRpc    string
-	swapConfigList []*SwapConfig
-)
-
-func Init(config *config.Config) error {
-	var rErr error
-	once.Do(func() {
-		confVal, err := etcd.Client().GetKeyValue(context.TODO(), "/crema/swap-pairs")
-		if err != nil || confVal == nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-		err = json.Unmarshal(confVal.Value, &swapConfigList)
-		if err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
-		err = config.UnmarshalKey("chain_net_rpc", &chainNetRpc)
-		if err != nil {
-			rErr = errors.Wrap(err)
-			return
-		}
-
-		// 加载配置
-		for _, v := range swapConfigList {
-			v.SwapPublicKey = solana.MustPublicKeyFromBase58(v.SwapAccount)
-			v.TokenA.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenA.SwapTokenAccount)
-			v.TokenB.SwapTokenPublicKey = solana.MustPublicKeyFromBase58(v.TokenB.SwapTokenAccount)
-		}
-	})
-	return rErr
-}
-
-func NewTVL(swapConfig *SwapConfig) *TVL {
-	// TODO 若重启时是否由数据库中读取last transaction至 tvl中
-	// net := rpc.MainNetBeta_RPC
-	// if chainNet == "dev" {
-	//	//net = rpc.DevNet_RPC
-	// }
-
-	// chainNetRpc := "https://connect.runnode.com/?apikey=PMkQIG6CxY0ybWmaHRHJ"
+func NewTVL(swapConfig *domain.SwapConfig) *TVL {
 
 	return &TVL{
 		transactionCache: make(map[string]*rpc.TransactionWithMeta),
 		signatureList:    make([]*rpc.TransactionSignature, 0),
 		tokenAVolume:     0,
 		tokenBVolume:     0,
-		client:           rpc.New(chainNetRpc),
 		SwapConfig:       swapConfig,
 	}
 }
@@ -120,7 +50,7 @@ func (tvl *TVL) work() error {
 	} else {
 		tvl.util = nil
 	}
-	
+
 	logger.Info("tvl sync: pullLastSignature", logger.String("swap_address:", tvl.SwapAccount))
 	tvl.pullLastSignature()
 
@@ -139,9 +69,11 @@ func (tvl *TVL) work() error {
 
 	return nil
 }
+
 func (tvl *TVL) Start() error {
 	logger.Info("tvl syncing ......", logger.String("swap_address:", tvl.SwapAccount))
-
+	tvl.tokenAVolume = 0
+	tvl.tokenBVolume = 0
 	err := tvl.work()
 
 	if err != nil {
@@ -149,20 +81,20 @@ func (tvl *TVL) Start() error {
 		return errors.Wrap(err)
 	}
 
-	// 存入数据库
-	transactionsByte, _ := json.Marshal(tvl.transactionCache)
-	signaturesByte, _ := json.Marshal(tvl.signatureList)
+	tokenAVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenAVolume, 10))
+	tokenBVolume, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBVolume, 10))
+	tokenABalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenABalance, 10))
+	tokenBBalance, _ := decimal.NewFromString(strconv.FormatUint(tvl.tokenBBalance, 10))
 
-	swapPairCount := &domain.SwapPairCount{
-		TokenAVolume:      tvl.tokenAVolume,
-		TokenBVolume:      tvl.tokenBVolume,
-		TokenABalance:     tvl.tokenABalance,
-		TokenBBalance:     tvl.tokenBBalance,
+	swapPairCount := &domain.SwapPairCountSharding{
+		TokenAVolume:      parse.PrecisionConversion(tokenAVolume, int(tvl.TokenA.Decimal)),
+		TokenBVolume:      parse.PrecisionConversion(tokenBVolume, int(tvl.TokenB.Decimal)),
+		TokenABalance:     parse.PrecisionConversion(tokenABalance, int(tvl.TokenA.Decimal)),
+		TokenBBalance:     parse.PrecisionConversion(tokenBBalance, int(tvl.TokenB.Decimal)),
 		TokenAPoolAddress: tvl.TokenA.SwapTokenAccount,
 		TokenBPoolAddress: tvl.TokenB.SwapTokenAccount,
 		TokenSwapAddress:  tvl.SwapAccount,
-		LastTransaction:   string(transactionsByte),
-		Signature:         string(signaturesByte),
+		TxNum:             tvl.txNum,
 		PairName:          tvl.Name,
 		TokenASymbol:      tvl.TokenA.Symbol,
 		TokenBSymbol:      tvl.TokenB.Symbol,
@@ -181,7 +113,7 @@ func (tvl *TVL) Start() error {
 }
 
 func (tvl *TVL) pullLastSignature() {
-	limit := 10
+	limit := 1000
 	var before *solana.Signature = nil
 	var opts *rpc.GetSignaturesForAddressOpts
 	pullResult := make([]*rpc.TransactionSignature, 0)
@@ -211,7 +143,7 @@ func (tvl *TVL) pullLastSignature() {
 				Commitment: rpc.CommitmentFinalized,
 			}
 		}
-		out, err := tvl.client.GetSignaturesForAddressWithOpts(
+		out, err := GetRpcClient().GetSignaturesForAddressWithOpts(
 			context.TODO(),
 			tvl.SwapPublicKey,
 			opts,
@@ -241,11 +173,23 @@ func (tvl *TVL) pullLastSignature() {
 			before = &(out[size-1].Signature)
 			pullResult = append(pullResult, out[0:(size)]...)
 		}
-		time.Sleep(time.Second * 1)
+
 	}
+	totalSize := len(pullResult)
+	validPullResult := make([]*rpc.TransactionSignature, 0)
+
+	for _, v := range pullResult {
+		if v.Err == nil {
+			validPullResult = append(validPullResult, v)
+		}
+	}
+	logger.Info("tvl sync: signature size", logger.Int("total size:", totalSize), logger.Int("valid size:", len(validPullResult)), logger.String("swap_address:", tvl.SwapAccount))
 	finalResult := make([]*rpc.TransactionSignature, 0)
-	for _, value := range pullResult {
-		out, err := tvl.client.GetConfirmedTransaction(
+	for k, value := range validPullResult {
+		if k%100 == 0 && k > 0 {
+			logger.Info("tvl sync: transaction num", logger.Int("now size:", k), logger.Int("valid size:", len(validPullResult)), logger.String("swap_address:", tvl.SwapAccount))
+		}
+		out, err := GetRpcClient().GetConfirmedTransaction(
 			context.TODO(),
 			value.Signature,
 		)
@@ -253,9 +197,12 @@ func (tvl *TVL) pullLastSignature() {
 			continue
 		}
 		key := value.Signature.String()
-		if len(out.Transaction.Message.Instructions[0].Data) != 17 {
+
+		instructionLen := getInstructionLen(out.MustGetTransaction().Message.Instructions)
+		if instructionLen == 9 || instructionLen == 41 || instructionLen == 50 || instructionLen == 52 {
 			continue
 		}
+
 		tvl.transactionCache[key] = out
 		finalResult = append(finalResult, value)
 	}
@@ -279,14 +226,25 @@ func (tvl *TVL) removeOldSignature() {
 }
 
 func (tvl *TVL) calculate() {
+	tvl.tokenAVolume = 0
+	tvl.tokenBVolume = 0
+	tvl.txNum = 0
+
 	for _, meta := range tvl.transactionCache {
 		tokenAVolumeTmp, tokenBVolumeTmp := tvl.getSwapVolume(meta, tvl.TokenA.SwapTokenPublicKey, tvl.TokenB.SwapTokenPublicKey)
-		tvl.tokenAVolume = tvl.tokenAVolume + uint64(tokenAVolumeTmp)
-		tvl.tokenBVolume = tvl.tokenBVolume + uint64(tokenBVolumeTmp)
+		if tokenAVolumeTmp < 0 || tokenBVolumeTmp < 0 {
+			tvl.txNum += 1
+		}
+		if tokenAVolumeTmp < 0 {
+			tvl.tokenAVolume = tvl.tokenAVolume + uint64(abs(tokenAVolumeTmp))
+		}
+		if tokenBVolumeTmp < 0 {
+			tvl.tokenBVolume = tvl.tokenBVolume + uint64(abs(tokenBVolumeTmp))
+		}
 	}
 }
 
-func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int, int) {
+func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress solana.PublicKey, tokenBPoolAddress solana.PublicKey) (int64, int64) {
 	var tokenAPreBalanceStr string
 	var tokenBPreBalanceStr string
 	var tokenAPostBalanceStr string
@@ -294,7 +252,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 
 	for _, tokenBalance := range meta.Meta.PreTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.Message.AccountKeys[keyIndex]
+		key := meta.MustGetTransaction().Message.AccountKeys[keyIndex]
 		if key.Equals(tokenAPoolAddress) {
 			tokenAPreBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
@@ -307,7 +265,7 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 
 	for _, tokenBalance := range meta.Meta.PostTokenBalances {
 		keyIndex := tokenBalance.AccountIndex
-		key := meta.Transaction.Message.AccountKeys[keyIndex]
+		key := meta.MustGetTransaction().Message.AccountKeys[keyIndex]
 		if key.Equals(tokenAPoolAddress) {
 			tokenAPostBalanceStr = tokenBalance.UiTokenAmount.Amount
 			continue
@@ -318,17 +276,17 @@ func (tvl TVL) getSwapVolume(meta *rpc.TransactionWithMeta, tokenAPoolAddress so
 		}
 	}
 
-	tokenAPreBalance, _ := strconv.Atoi(tokenAPreBalanceStr)
-	tokenAPostBalance, _ := strconv.Atoi(tokenAPostBalanceStr)
-	tokenBPreBalance, _ := strconv.Atoi(tokenBPreBalanceStr)
-	tokenBPostBalance, _ := strconv.Atoi(tokenBPostBalanceStr)
+	tokenAPreBalance, _ := strconv.ParseInt(tokenAPreBalanceStr, 10, 64)
+	tokenAPostBalance, _ := strconv.ParseInt(tokenAPostBalanceStr, 10, 64)
+	tokenBPreBalance, _ := strconv.ParseInt(tokenBPreBalanceStr, 10, 64)
+	tokenBPostBalance, _ := strconv.ParseInt(tokenBPostBalanceStr, 10, 64)
 	tokenADeltaVolume := tokenAPostBalance - tokenAPreBalance
 	tokenBDeltaVolume := tokenBPostBalance - tokenBPreBalance
 	return tokenADeltaVolume, tokenBDeltaVolume
 }
 
 func (tvl *TVL) getTvl() error {
-	resp, err := tvl.client.GetAccountInfo(
+	resp, err := GetRpcClient().GetAccountInfo(
 		context.TODO(),
 		tvl.TokenA.SwapTokenPublicKey,
 	)
@@ -343,7 +301,7 @@ func (tvl *TVL) getTvl() error {
 		return errors.Wrap(err)
 	}
 	tvl.tokenABalance = tokenA.Amount
-	resp, err = tvl.client.GetAccountInfo(
+	resp, err = GetRpcClient().GetAccountInfo(
 		context.TODO(),
 		tvl.TokenB.SwapTokenPublicKey,
 	)
@@ -362,6 +320,29 @@ func (tvl *TVL) getTvl() error {
 	return nil
 }
 
-func SwapConfigList() []*SwapConfig {
+func SwapConfigList() []*domain.SwapConfig {
+	return append(SwapConfigListV1(), SwapConfigListV2()...)
+}
+
+func SwapConfigListV1() []*domain.SwapConfig {
 	return swapConfigList
+}
+
+// SwapConfigListV2 给每个v2 版本赋值，以区分版本
+func SwapConfigListV2() []*domain.SwapConfig {
+	for i := range swapConfigListV2 {
+		swapConfigListV2[i].Version = "v2"
+	}
+	return swapConfigListV2
+}
+
+// getInstructionLen 获取第一个Instruction data长度
+func getInstructionLen(instructions []solana.CompiledInstruction) uint64 {
+	for _, v := range instructions {
+		dataLen := len(v.Data)
+		if dataLen > 0 {
+			return uint64(dataLen)
+		}
+	}
+	return 0
 }

@@ -9,6 +9,7 @@ import (
 
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/domain"
 
 	"git.cplus.link/crema/backend/internal/worker/watcher"
 
@@ -18,8 +19,14 @@ import (
 func main() {
 	configer := config.NewConfiger()
 
+	domain.SetPublicPrefix(configer.Get("namespace").(string))
+	domain.SetApiHost(configer.Get("api_host").(string))
+
 	// etcd初始化
 	if err := etcd.Init(configer); err != nil {
+		panic(err)
+	}
+	if err := etcd.InitV3(configer); err != nil {
 		panic(err)
 	}
 
@@ -28,10 +35,13 @@ func main() {
 		panic(err)
 	}
 
-	// sol 初始化
-	if err := sol.Init(configer); err != nil {
+	// sol初始化
+	if err := sol.Init(configer, false); err != nil {
 		panic(err)
 	}
+
+	// coinGecko初始化
+	// coingecko.Init()
 
 	// cron初始化
 	if err := watcher.Init(configer); err != nil {

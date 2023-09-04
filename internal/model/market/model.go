@@ -52,8 +52,24 @@ func initDB() error {
 // 初始化/同步数据库表结构
 func autoMigrate() error {
 	if err := dbWPool.NewConn().AutoMigrate(
-		&domain.SwapPairCount{},
+		&domain.SwapPairCountSharding{},
 		&domain.Tvl{},
+		&domain.SwapTransaction{},
+		&domain.SwapTransactionV2{},
+		&domain.NetRecode{},
+		&domain.SwapCount{},
+		&domain.SwapCountMigrate{},
+		&domain.SwapCountKLine{},
+		&domain.UserCountKLine{},
+		&domain.SwapUserCount{},
+		&domain.TransActionUserCount{},
+		&domain.SwapPairBase{},
+		&domain.SwapPairPriceKLine{},
+		&domain.SwapTokenPriceKLine{},
+		&domain.ActivityHistory{},
+		&domain.PositionCountSnapshot{},
+		&domain.PositionV2Snapshot{},
+		&domain.MetadataJsonDate{},
 	); err != nil {
 		return errors.Wrap(err)
 	}
@@ -126,11 +142,25 @@ func IDFilter(id int64) Filter {
 	return NewFilter("id = ?", id)
 }
 
+// SwapAddressFilter swapAddress查询条件生成
+func SwapAddressFilter(swapAddress string) Filter {
+	return NewFilter("swap_address = ?", swapAddress)
+}
+
+func DateTypeFilter(dateType domain.DateType) Filter {
+	return NewFilter("date_type = ?", dateType)
+}
+
 // OrderFilter order查询条件生成
 func OrderFilter(by string) Filter {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Order(by)
 	}
+}
+
+// SwapTransferFilter 从transactions中查询swap操作( TODO 延续初版判断swap方法，后续更改算法，instruction_len为((8,26,17,12)代表swap交易，9,41,50,52为其他操作)
+func SwapTransferFilter() Filter {
+	return NewFilter("instruction_len not in ?", []uint64{9, 41, 50, 52})
 }
 
 // GQueryOrderFilter gQuery order查询条件生成
@@ -146,5 +176,12 @@ func GQueryOrderFilter(args interface{}, by *gquery.GOrderBy) Filter {
 		}
 		tag := order.Tag.Get("gquery")
 		return by.SetOrderBy(tag, db)
+	}
+}
+
+// IDDESCFilter ID降序序过滤
+func IDDESCFilter() func(*gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Order("id desc")
 	}
 }

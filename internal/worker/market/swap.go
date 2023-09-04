@@ -11,14 +11,14 @@ import (
 )
 
 var (
-	swapPairCountCache map[string]*domain.SwapPairCount
+	swapPairCountCache map[string]*domain.SwapPairCountSharding
 )
 
 // SwapCountCacheJob ...
 func SwapCountCacheJob() error {
 	logger.Info("swap count cache setting ......")
 
-	swapPairCountMap := make(map[string]*domain.SwapPairCount)
+	swapPairCountMap := make(map[string]*domain.SwapPairCountSharding)
 
 	for _, v := range swapConfigList {
 
@@ -38,7 +38,12 @@ func SwapCountCacheJob() error {
 	return nil
 }
 
+// GetTotalCountCache ...
+func GetTotalCountCache() error {
+	return nil
+}
+
 // GetSwapCountCache ...
-func GetSwapCountCache(tokenSwapAddress string) *domain.SwapPairCount {
+func GetSwapCountCache(tokenSwapAddress string) *domain.SwapPairCountSharding {
 	return swapPairCountCache[tokenSwapAddress]
 }

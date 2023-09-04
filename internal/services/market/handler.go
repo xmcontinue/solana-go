@@ -3,12 +3,15 @@ package handler
 import (
 	"sync"
 
+	redisV8 "git.cplus.link/go/akit/client/redis/v8"
 	"git.cplus.link/go/akit/config"
 	"git.cplus.link/go/akit/errors"
+	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/types"
 	"git.cplus.link/go/akit/util/decimal"
 	"github.com/go-playground/validator/v10"
 
+	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
 	"git.cplus.link/crema/backend/internal/worker/market"
@@ -17,13 +20,15 @@ import (
 )
 
 type MarketService struct {
-	conf *config.Config
+	conf        *config.Config
+	redisClient *redisV8.Client
 }
 
 var (
 	instance         *MarketService
 	once             sync.Once
 	defaultValidator *validator.Validate
+	galleryType      *iface.GalleryType
 )
 
 const (
@@ -32,6 +37,12 @@ const (
 
 	// DefaultLimit  列表查询默认Limit
 	DefaultLimit = 10
+
+	// 柱状图默认返回300
+	histogramDefaultLen = 300
+
+	// 最大值
+	histogramMaxLen = 500
 )
 
 func NewMarketService(conf *config.Config) (iface.MarketService, error) {
@@ -41,15 +52,41 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 			conf: conf,
 		}
 
+		galleryType = &iface.GalleryType{
+			CoffeeMembership: make([]string, 0, 8),
+			Body:             make([]string, 0, 8),
+			FacialFeatures:   make([]string, 0, 8),
+			Head:             make([]string, 0, 8),
+			FacialAccessory:  make([]string, 0, 8),
+			Clothes:          make([]string, 0, 8),
+			Accessory:        make([]string, 0, 8),
+			Shell:            make([]string, 0, 8),
+			Cup:              make([]string, 0, 8),
+			Background:       make([]string, 0, 8),
+		}
+		if rErr = conf.UnmarshalKey("gallery_type", galleryType); rErr != nil {
+			logger.Error("", logger.Errorv(rErr))
+			return
+		}
+
 		// etcd初始化
-		if err := etcd.Init(conf); err != nil {
-			panic(err)
+		if rErr = etcd.Init(conf); rErr != nil {
+			return
 		}
 
 		// 数据库初始化
-		if err := model.Init(conf); err != nil {
-			rErr = errors.Wrap(err)
+		if rErr = model.Init(conf); rErr != nil {
 			return
+		}
+
+		// 添加支持分表
+		configs := sol.SwapConfigList()
+		shardingValues := make([]string, 0, len(configs))
+		for _, v := range configs {
+			shardingValues = append(shardingValues, v.SwapAccount)
+		}
+		if err := model.InitWithSharding(shardingValues); err != nil {
+			panic(err)
 		}
 
 		// 验证器初始化
@@ -58,8 +95,13 @@ func NewMarketService(conf *config.Config) (iface.MarketService, error) {
 		defaultValidator.RegisterCustomTypeFunc(types.ValidateDecimalFunc, decimal.Decimal{})
 
 		// cron初始化
-		if err := market.Init(conf); err != nil {
-			panic(err)
+		if rErr = market.Init(conf); rErr != nil {
+			return
+		}
+
+		instance.redisClient, rErr = initRedis(conf)
+		if rErr != nil {
+			return
 		}
 
 	})
@@ -81,4 +123,24 @@ func limit(limit int) int {
 		return MaxLimit
 	}
 	return limit
+}
+
+// initRedis 初始化redis
+func initRedis(conf *config.Config) (*redisV8.Client, error) {
+	c := redisV8.DefaultRedisConfig()
+	err := conf.UnmarshalKey("redis", c)
+	if err != nil {
+		return nil, errors.Wrap(err)
+	}
+	return redisV8.NewClient(c)
+}
+
+func histogramLimit(histogramLimit int) int {
+	if histogramLimit == 0 {
+		return histogramDefaultLen
+	}
+	if histogramLimit >= histogramMaxLen {
+		return histogramMaxLen
+	}
+	return histogramLimit
 }
