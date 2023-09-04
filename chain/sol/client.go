@@ -56,7 +56,7 @@ var (
 	activityEventParser event.EventParser
 )
 
-func Init(conf *config.Config) error {
+func Init(conf *config.Config, isWatcherBalance bool) error {
 
 	var err error
 	once.Do(func() {
@@ -75,7 +75,7 @@ func Init(conf *config.Config) error {
 			panic(err.Error())
 		}
 
-		//wsClient = newWSConnect()
+		// wsClient = newWSConnect()
 		fmt.Println("test:2")
 		etcdSwapPairsKey = "/" + domain.GetPublicPrefix() + etcdSwapPairsKey
 		// 加载swap pairs配置
@@ -121,10 +121,13 @@ func Init(conf *config.Config) error {
 			return
 		}
 
-		// Watch Balance
-		wg.Add(1)
-		go watchBalance()
-		wg.Wait()
+		if isWatcherBalance {
+			// Watch Balance
+			wg.Add(1)
+			go watchBalance()
+			wg.Wait()
+		}
+
 		fmt.Println("test:8")
 		// watchNet 监测网络
 		go watchNet()
@@ -292,7 +295,7 @@ func watchNet() {
 
 		logger.Info(fmt.Sprintf("chain net block height is %d", chainNet.Height))
 
-		time.Sleep(time.Second * 5)
+		time.Sleep(time.Minute)
 	}
 }
 
@@ -459,7 +462,7 @@ func watchBalance() {
 		}
 
 		configLock.Unlock()
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Minute)
 	}
 }
 

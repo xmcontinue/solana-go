@@ -51,7 +51,7 @@ func NewExporterService(conf *config.Config) (iface.ExporterService, error) {
 		}
 
 		// sol 初始化
-		if err := sol.Init(conf); err != nil {
+		if err := sol.Init(conf, true); err != nil {
 			panic(err)
 		}
 

@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// sol初始化
-	if err := sol.Init(configer); err != nil {
+	if err := sol.Init(configer, true); err != nil {
 		panic(err)
 	}
 
