@@ -62,7 +62,7 @@ func SwapTotalCount() error {
 			fmt.Println("swap count continue", v.SwapAccount)
 			continue
 		}
-
+		fmt.Println("swap count ", v.SwapAccount, time.Now().String())
 		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
@@ -72,22 +72,22 @@ func SwapTotalCount() error {
 		if err != nil || newTokenBPrice.IsZero() {
 			beforeTokenBPrice = newTokenBPrice
 		}
-
+		fmt.Println("swap count coin price", v.SwapAccount, time.Now().String())
 		// 获取最开始的日期，为了统计apr
 		swapCountInfo, _ := model.QuerySwapCountKLine(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"), model.OrderFilter("date asc"))
-
+		fmt.Println("swap count count info", v.SwapAccount, time.Now().String())
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
-
+		fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String())
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-
+		fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String())
 		// 获取过去30天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount30d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before30dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-
+		fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String())
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-
+		fmt.Println("swap count count total", v.SwapAccount, time.Now().String())
 		var tvlInUsd, volInUsd decimal.Decimal
 
 		// 计算pairs vol,tvl 计算单边
@@ -130,7 +130,7 @@ func SwapTotalCount() error {
 		} else {
 			volInUsd = tokenAVol.Add(tokenBVol)
 		}
-
+		fmt.Println("swap count sync price", v.SwapAccount, time.Now().String())
 		// -------------1day 计算--------------
 		Apr24h := "0%"
 		var tokenAVol24h, tokenBVol24h, volInUsd24h, tokenA24hVol, tokenB24hVol decimal.Decimal
@@ -155,9 +155,6 @@ func SwapTotalCount() error {
 		Apr7day := "0%"
 		rewarderApr := []string{"0%", "0%", "0%"}
 
-		if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
-			fmt.Println("swap count 4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG reawrderusd", v.RewarderUsd)
-		}
 		if !tvlInUsd.IsZero() {
 			for i, rewarderUsd := range v.RewarderUsd {
 				rewarderApr[i] = parse.BankToString(rewarderUsd.Div(decimal.NewFromInt(2).Pow(decimal.NewFromInt(64))).Mul(decimal.NewFromInt(3600*24*365)).Div(tvlInUsd).Mul(decimal.NewFromInt(100)), 2) + "%"
@@ -217,12 +214,12 @@ func SwapTotalCount() error {
 			logger.Error("SwapTotalCount", logger.Errorv(err))
 			continue
 		}
-
+		fmt.Println("swap count contract price", v.SwapAccount, time.Now().String())
 		beforeContractPrice, err := model.QuerySwapPairPriceKLine(ctx, model.NewFilter("date_type = ?", "1min"), model.NewFilter("date < ?", newContractPrice.Date.Add(-24*time.Hour)), model.SwapAddressFilter(v.SwapAccount), model.OrderFilter("id desc"))
 		if err != nil {
 			beforeContractPrice = newContractPrice
 		}
-
+		fmt.Println("swap count before contract price", v.SwapAccount, time.Now().String())
 		// 汇总处理
 		totalVolInUsd = totalVolInUsd.Add(volInUsd)
 		totalTvlInUsd = totalTvlInUsd.Add(tvlInUsd)
@@ -303,7 +300,7 @@ func SwapTotalCount() error {
 			},
 		)
 	}
-
+	fmt.Println("swap count over", time.Now().String())
 	// token数量
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
