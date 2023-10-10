@@ -63,12 +63,12 @@ func SwapTotalCount() error {
 			continue
 		}
 		fmt.Println("swap count ", v.SwapAccount, time.Now().String())
-		beforeTokenAPrice, err := model.GetPriceForSymbol(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
+		beforeTokenAPrice, err := model.GetPriceForMin(ctx, v.TokenA.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenAPrice.IsZero() {
 			beforeTokenAPrice = newTokenAPrice
 		}
 
-		beforeTokenBPrice, err := model.GetPriceForSymbol(ctx, v.TokenB.Symbol, model.NewFilter("date < ?", before24hDate))
+		beforeTokenBPrice, err := model.GetPriceForMin(ctx, v.TokenB.Symbol, model.NewFilter("date < ?", before24hDate))
 		if err != nil || newTokenBPrice.IsZero() {
 			beforeTokenBPrice = newTokenBPrice
 		}

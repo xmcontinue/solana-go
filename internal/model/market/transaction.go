@@ -106,3 +106,22 @@ func GetPriceForSymbol(ctx context.Context, symbol string, filter ...Filter) (de
 
 	return info.Settle, nil
 }
+
+func GetPriceForMin(ctx context.Context, symbol string, filter ...Filter) (decimal.Decimal, error) {
+	var (
+		info  *domain.SwapTokenPriceKLine
+		price = decimal.NewFromInt(0)
+	)
+	newFilters := make([]Filter, 0, len(filter)+3)
+	newFilters = append(newFilters, NewFilter("date_type = ?", "1min"))
+	newFilters = append(newFilters, NewFilter("symbol = ?", symbol))
+	if len(filter) != 0 {
+		newFilters = append(newFilters, filter...)
+	}
+	newFilters = append(newFilters, OrderFilter("date desc"))
+	if err := wDB(ctx).Model(&domain.SwapTokenPriceKLine{}).Scopes(newFilters...).Take(&info).Error; err != nil {
+		return price, errors.Wrap(err)
+	}
+
+	return info.Settle, nil
+}
