@@ -78,16 +78,27 @@ func SwapTotalCount() error {
 		fmt.Println("swap count count info", v.SwapAccount, time.Now().String())
 		// 获取24h交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount24h, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before24hDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "1min"))
-		fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String())
+		if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String(), swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount)
+		}
+
 		// 获取过去7天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount7d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before7dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String())
+		if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String(), swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount)
+		}
+
 		// 获取过去30天交易额，交易笔数 不做错误处理，有可能无交易
 		swapCount30d, _ := model.SumSwapCountVolForKLines(ctx, model.NewFilter("date > ?", before30dDate), model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String())
+		if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String(), swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount)
+		}
+
 		// 获取总交易额，交易笔数 不做错误处理，有可能无交易
 		swapCountTotal, _ := model.SumSwapCountVolForKLines(ctx, model.SwapAddressFilter(v.SwapAccount), model.NewFilter("date_type = ?", "day"))
-		fmt.Println("swap count count total", v.SwapAccount, time.Now().String())
+		if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
+		}
 		var tvlInUsd, volInUsd decimal.Decimal
 
 		// 计算pairs vol,tvl 计算单边
@@ -103,12 +114,18 @@ func SwapTotalCount() error {
 				if err != nil {
 					return errors.Wrap(err)
 				}
+				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+					fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String(), swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount)
+				}
 			}
 
 			if swapCount7d.TxNum != 0 {
 				swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount, err = syncPrice(v.SwapAccount, before7dDate)
 				if err != nil {
 					return errors.Wrap(err)
+				}
+				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+					fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String(), swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount)
 				}
 			}
 
@@ -117,12 +134,18 @@ func SwapTotalCount() error {
 				if err != nil {
 					return errors.Wrap(err)
 				}
+				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+					fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String(), swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount)
+				}
 			}
 
 			if swapCountTotal.TxNum != 0 {
 				swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
 				if err != nil {
 					return errors.Wrap(err)
+				}
+				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+					fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
 				}
 			}
 
