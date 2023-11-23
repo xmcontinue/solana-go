@@ -48,7 +48,7 @@ func SwapTotalCount() error {
 	}
 
 	ctx := context.Background()
-
+	beginTime := time.Now()
 	// 获取swap pair 24h 内交易统计,因为时间戳的原因，这里全部改成utc时间
 	totalVolInUsd24h, totalVolInUsd, totalTvlInUsd, totalTxNum24h, totalTxNum, before24hDate, before7dDate, before30dDate := decimal.Decimal{}, decimal.Decimal{}, decimal.Decimal{}, uint64(0), uint64(0), time.Now().Add(-24*time.Hour), time.Now().Add(-24*7*time.Hour), time.Now().Add(-24*30*time.Hour)
 
@@ -140,13 +140,13 @@ func SwapTotalCount() error {
 			}
 
 			if swapCountTotal.TxNum != 0 {
-				swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
-					fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
-				}
+				//swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
+				//if err != nil {
+				//	return errors.Wrap(err)
+				//}
+				//if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+				//	fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
+				//}
 			}
 
 			volInUsd = swapCountTotal.VolInUsdForContract
@@ -323,7 +323,7 @@ func SwapTotalCount() error {
 			},
 		)
 	}
-	fmt.Println("swap count over", time.Now().String())
+	fmt.Println("swap count over", time.Since(beginTime))
 	// token数量
 	swapCountToApi.TokenNum = len(swapCountToApi.Tokens)
 
