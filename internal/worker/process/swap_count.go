@@ -109,45 +109,45 @@ func SwapTotalCount() error {
 		tokenAVol, tokenBVol := swapCountTotal.TokenAVolumeForUsd.Round(countDecimal), swapCountTotal.TokenBVolumeForUsd.Round(countDecimal)
 		if v.Version == "v2" {
 
-			if swapCount24h.TxNum != 0 {
-				swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount, err = syncPrice(v.SwapAccount, before24hDate)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
-					fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String(), swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount)
-				}
-			}
-
-			if swapCount7d.TxNum != 0 {
-				swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount, err = syncPrice(v.SwapAccount, before7dDate)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
-					fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String(), swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount)
-				}
-			}
-
-			if swapCount30d.TxNum != 0 {
-				swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount, err = syncPrice(v.SwapAccount, before30dDate)
-				if err != nil {
-					return errors.Wrap(err)
-				}
-				if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
-					fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String(), swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount)
-				}
-			}
-
-			if swapCountTotal.TxNum != 0 {
-				//swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
-				//if err != nil {
-				//	return errors.Wrap(err)
-				//}
-				//if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
-				//	fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
-				//}
-			}
+			//if swapCount24h.TxNum != 0 {
+			//	swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount, err = syncPrice(v.SwapAccount, before24hDate)
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//	if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			//		fmt.Println("swap count count 24h", v.SwapAccount, time.Now().String(), swapCount24h.VolInUsdForContract, swapCount24h.TokenAVolumeForUsd, swapCount24h.TokenBVolumeForUsd, swapCount24h.FeeAmount)
+			//	}
+			//}
+			//
+			//if swapCount7d.TxNum != 0 {
+			//	swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount, err = syncPrice(v.SwapAccount, before7dDate)
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//	if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			//		fmt.Println("swap count count 7d", v.SwapAccount, time.Now().String(), swapCount7d.VolInUsdForContract, swapCount7d.TokenAVolumeForUsd, swapCount7d.TokenBVolumeForUsd, swapCount7d.FeeAmount)
+			//	}
+			//}
+			//
+			//if swapCount30d.TxNum != 0 {
+			//	swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount, err = syncPrice(v.SwapAccount, before30dDate)
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//	if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			//		fmt.Println("swap count count 30d", v.SwapAccount, time.Now().String(), swapCount30d.VolInUsdForContract, swapCount30d.TokenAVolumeForUsd, swapCount30d.TokenBVolumeForUsd, swapCount30d.FeeAmount)
+			//	}
+			//}
+			//
+			//if swapCountTotal.TxNum != 0 {
+			//	swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount, err = syncPrice(v.SwapAccount, time.Now().Add(-24*time.Hour*365))
+			//	if err != nil {
+			//		return errors.Wrap(err)
+			//	}
+			//	if v.SwapAccount == "2LCn3rW2YbvXMUaVahBuKJVJHARDYyLxJyhmSgq8mLJL" {
+			//		fmt.Println("swap count count total", v.SwapAccount, time.Now().String(), swapCountTotal.VolInUsdForContract, swapCountTotal.TokenAVolumeForUsd, swapCountTotal.TokenBVolumeForUsd, swapCountTotal.FeeAmount)
+			//	}
+			//}
 
 			volInUsd = swapCountTotal.VolInUsdForContract
 		} else {
