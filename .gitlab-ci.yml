@@ -59,7 +59,6 @@ deploy:
     - .global-vars
   stage: deploy
   only:
-    - /v[0-9].*.[0-9].*.[1-9].*$/ # qa版本
     - dev                       # 开发版本
   script:
     - cd /data/ci/backend/crema/$CI_COMMIT_REF_NAME

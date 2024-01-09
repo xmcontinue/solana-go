@@ -31,7 +31,11 @@ function Compile() {
 # build镜像(build要求一定传入版本号)
 function Build() {
     echo "Build $2:$VERSION"
-    IMAGE="harbor.cplus.link/backend/$GROUP/$2"
+    if [[ $(expr match "$VERSION"  'v[0-9].*.[0-9].*.[0-9].*$') == 0 ]];then
+        IMAGE="harbor.cplus.link/backend/$GROUP/$2"
+    else
+        IMAGE="harbor.cplus.link/backend-main/$GROUP/$2"
+    fi
     /kaniko/executor --context ./$1/ --dockerfile ./$1/Dockerfile --destination $IMAGE:$VERSION --cleanup
     rm -fr $1/$2
     echo "Build $2:$VERSION OK"
