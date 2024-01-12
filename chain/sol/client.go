@@ -14,7 +14,6 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
@@ -410,12 +409,12 @@ func watchBalance() {
 				}
 				return nil
 			}
-			if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+			if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 				fmt.Println("rewarder rewarders", rewarders)
 			}
 			rewarderUsd := make([]decimal.Decimal, 0, 3)
 			for _, f := range rewarders {
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder mint", f.Mint.String())
 				}
 				if f.Mint.IsZero() {
@@ -424,30 +423,30 @@ func watchBalance() {
 				}
 				// v.Mint
 				tokenInfo := getTokenInfo(f.Mint)
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder tokenInfo", tokenInfo)
 				}
 				if tokenInfo == nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder EmissionsPerSecond val", f.EmissionsPerSecond.Val().String(), int(tokenInfo.Decimal))
 				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
 				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol)
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder tokenPrice", err)
 				}
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder EmissionsPerSecond", emissionsPerSecond.String(), tokenPrice.String())
 				}
 				if err != nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
 				}
-				if v.SwapAccount == "4yg7Q7nRdbeeNfbed8wpXkgY9vqJqhgYYiDdJpZ6rYkG" {
+				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder reawrderusd", emissionsPerSecond.Mul(tokenPrice))
 				}
 				rewarderUsd = append(rewarderUsd, emissionsPerSecond.Mul(tokenPrice))
