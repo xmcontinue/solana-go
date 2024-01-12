@@ -25,6 +25,7 @@ import (
 	"git.cplus.link/crema/backend/chain/sol/parse"
 	"git.cplus.link/crema/backend/internal/etcd"
 	model "git.cplus.link/crema/backend/internal/model/market"
+	"git.cplus.link/crema/backend/pkg/crema"
 	"git.cplus.link/crema/backend/pkg/domain"
 )
 
@@ -436,7 +437,7 @@ func watchBalance() {
 				}
 				emissionsPerSecond := parse.PrecisionConversion(f.EmissionsPerSecond.Val(), int(tokenInfo.Decimal))
 				// 同步 token price
-				tokenPrice, err := model.GetPriceForSymbol(context.Background(), tokenInfo.Symbol) // crema.GetPriceForBaseSymbol(tokenInfo.Symbol) // model.GetPriceForSymbol(context.Background(), v.TokenA.Symbol)
+				tokenPrice, err := crema.GetPriceForBaseSymbol(tokenInfo.Symbol) // // model.GetPriceForSymbol(context.Background(), v.TokenA.Symbol)
 				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder tokenPrice", err)
 				}
@@ -446,6 +447,13 @@ func watchBalance() {
 				if err != nil {
 					rewarderUsd = append(rewarderUsd, decimal.Zero)
 					continue
+				}
+				if tokenPrice.IsZero() {
+					tokenPrice, err = model.GetPriceForSymbol(context.Background(), tokenInfo.Symbol)
+					if err != nil {
+						rewarderUsd = append(rewarderUsd, decimal.Zero)
+						continue
+					}
 				}
 				if v.SwapAccount == "2u4wzyWDg7M72a4a2UL6tL5BifpyEgNXL15wWgwAMd8W" {
 					fmt.Println("rewarder reawrderusd", emissionsPerSecond.Mul(tokenPrice))
