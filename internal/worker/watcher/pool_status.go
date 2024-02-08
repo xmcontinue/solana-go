@@ -3,6 +3,7 @@ package watcher
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
@@ -19,6 +20,7 @@ func syncSwapStatus() error {
 	swapStatus := make(map[string]bool)
 	// 同步swap pair price
 	for _, config := range configs {
+		fmt.Println("config.SwapPublicKe:", config.SwapPublicKey, config.SwapPublicKey.String())
 		res, err := sol.GetRpcClient().GetAccountInfo(context.Background(), config.SwapPublicKey)
 		if err != nil {
 			logger.Error("get swap status err", logger.Errorv(err))
