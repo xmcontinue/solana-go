@@ -2,6 +2,7 @@ package watcher
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"git.cplus.link/go/akit/errors"
@@ -37,6 +38,7 @@ func SyncSwapPrice() error {
 	for _, config := range configs {
 		res, err := sol.GetRpcClient().GetAccountInfo(context.Background(), config.SwapPublicKey)
 		if err != nil {
+			fmt.Println("config swap public key : ", config.SwapPublicKey)
 			return errors.Wrap(err)
 		}
 
