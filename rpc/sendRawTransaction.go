@@ -19,6 +19,8 @@ package rpc
 import (
 	"context"
 	"encoding/base64"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // SendRawTransaction submits a signed transaction to the cluster for processing.

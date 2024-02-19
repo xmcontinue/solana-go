@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type RequestQueue struct {

@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc"
 )
 

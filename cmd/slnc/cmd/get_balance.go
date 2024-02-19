@@ -21,6 +21,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 var getBalanceCmd = &cobra.Command{

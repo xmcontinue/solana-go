@@ -16,6 +16,8 @@ package rpc
 
 import (
 	"context"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type GetSignaturesForAddressOpts struct {

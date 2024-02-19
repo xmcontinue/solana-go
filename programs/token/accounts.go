@@ -18,6 +18,8 @@ import (
 	"encoding/binary"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type Mint struct {

@@ -23,6 +23,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 var getAccountCmd = &cobra.Command{

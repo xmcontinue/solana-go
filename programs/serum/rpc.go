@@ -24,9 +24,11 @@ import (
 
 	rice "github.com/GeertJohan/go.rice"
 	bin "github.com/gagliardetto/binary"
+	"go.uber.org/zap"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc"
 	"github.com/xmcontinue/solana-go/rpc/ws"
-	"go.uber.org/zap"
 )
 
 //go:generate rice embed-go

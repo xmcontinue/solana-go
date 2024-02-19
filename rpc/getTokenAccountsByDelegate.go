@@ -17,6 +17,8 @@ package rpc
 import (
 	"context"
 	"errors"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type GetTokenAccountsConfig struct {

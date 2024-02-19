@@ -22,6 +22,8 @@ import (
 	bin "github.com/gagliardetto/binary"
 	ag_gofuzz "github.com/gagliardetto/gofuzz"
 	ag_require "github.com/stretchr/testify/require"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 func TestEncodeDecode_CreateAccountWithSeed(t *testing.T) {

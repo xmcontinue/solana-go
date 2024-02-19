@@ -23,6 +23,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/cli"
 	"github.com/xmcontinue/solana-go/vault"
 )

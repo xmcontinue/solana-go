@@ -19,6 +19,8 @@ package tokenregistry
 
 import (
 	"os"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 var mainnetProgramID = solana.MustPublicKeyFromBase58("CmPVzy88JSB4S223yCvFmBxTLobLya27KgEDeNPnqEub")

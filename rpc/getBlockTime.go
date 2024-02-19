@@ -16,6 +16,8 @@ package rpc
 
 import (
 	"context"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // GetBlockTime returns the estimated production time of a block.

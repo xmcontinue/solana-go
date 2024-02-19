@@ -18,6 +18,8 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/text"
 )
 

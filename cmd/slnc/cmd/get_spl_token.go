@@ -24,6 +24,8 @@ import (
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/spf13/cobra"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/programs/token"
 	"github.com/xmcontinue/solana-go/rpc"
 	"github.com/xmcontinue/solana-go/text"

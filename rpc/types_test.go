@@ -18,6 +18,8 @@ import (
 	stdjson "encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/xmcontinue/solana-go"
 )
 

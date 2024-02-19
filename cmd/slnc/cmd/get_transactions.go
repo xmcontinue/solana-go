@@ -23,6 +23,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/xmcontinue/solana-go"
 	_ "github.com/xmcontinue/solana-go/programs/serum"
 	_ "github.com/xmcontinue/solana-go/programs/system"
 	_ "github.com/xmcontinue/solana-go/programs/token"

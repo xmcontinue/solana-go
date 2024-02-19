@@ -16,6 +16,8 @@ package rpc
 
 import (
 	"context"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // GetGenesisHash returns the genesis hash.

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type GetParsedTransactionOpts struct {

@@ -14,6 +14,10 @@
 
 package vote
 
+import (
+	"github.com/xmcontinue/solana-go"
+)
+
 type Authorize struct {
 	// TODO
 

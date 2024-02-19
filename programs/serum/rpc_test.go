@@ -23,6 +23,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc/ws"
 
 	"github.com/xmcontinue/solana-go/rpc"

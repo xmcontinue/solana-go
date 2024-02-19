@@ -20,6 +20,8 @@ import (
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 func TestDecode(t *testing.T) {

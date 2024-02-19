@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/text"
 
 	"github.com/spf13/cobra"

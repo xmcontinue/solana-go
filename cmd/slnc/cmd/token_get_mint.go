@@ -22,6 +22,8 @@ import (
 
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/programs/token"
 )
 

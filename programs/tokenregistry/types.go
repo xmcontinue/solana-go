@@ -20,6 +20,8 @@ import (
 	"fmt"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 const TOKEN_META_SIZE = 229

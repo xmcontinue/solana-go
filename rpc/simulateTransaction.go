@@ -20,6 +20,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type SimulateTransactionResponse struct {

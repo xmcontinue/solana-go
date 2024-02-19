@@ -6,6 +6,8 @@ import (
 	"math"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc"
 )
 

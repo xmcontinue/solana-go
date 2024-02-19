@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/programs/system"
 	"github.com/xmcontinue/solana-go/rpc"
 )

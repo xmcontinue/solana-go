@@ -28,6 +28,8 @@ import (
 	bin "github.com/gagliardetto/binary"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 func TestAccountFlag_Decoder(t *testing.T) {

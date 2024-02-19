@@ -21,6 +21,8 @@ import (
 	"errors"
 
 	bin "github.com/gagliardetto/binary"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // GetAccountInfo returns all information associated with the account of provided publicKey.

@@ -18,6 +18,8 @@ package rpc
 
 import (
 	"context"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // Returns the latest blockhash.

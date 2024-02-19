@@ -8,6 +8,8 @@ import (
 
 	bin "github.com/gagliardetto/binary"
 	"github.com/stretchr/testify/require"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 func TestDecodeTable(t *testing.T) {

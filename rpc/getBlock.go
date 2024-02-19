@@ -17,6 +17,8 @@ package rpc
 import (
 	"context"
 	"fmt"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type TransactionDetailsType string

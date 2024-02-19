@@ -17,6 +17,8 @@ package vault
 import (
 	"fmt"
 	"os"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 // Vault represents a `solana-go` wallet.  It contains the encrypted

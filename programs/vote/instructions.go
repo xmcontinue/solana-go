@@ -22,6 +22,8 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/treeout"
+
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/text"
 )
 

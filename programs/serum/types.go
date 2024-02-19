@@ -24,6 +24,8 @@ import (
 
 	bin "github.com/gagliardetto/binary"
 	"go.uber.org/zap"
+
+	"github.com/xmcontinue/solana-go"
 )
 
 type AccountFlag uint64

@@ -21,11 +21,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc"
 
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cobra"
+
 	"github.com/xmcontinue/solana-go/programs/system"
 	"github.com/xmcontinue/solana-go/programs/tokenregistry"
 )
