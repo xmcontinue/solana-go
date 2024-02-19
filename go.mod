@@ -1,4 +1,4 @@
-module github.com/gagliardetto/solana-go
+module github.com/xmcontinue/solana-go
 
 go 1.16
 

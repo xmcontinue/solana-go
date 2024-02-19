@@ -17,8 +17,6 @@ package rpc
 import (
 	"context"
 	"errors"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 type GetMultipleAccountsResult struct {

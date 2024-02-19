@@ -16,8 +16,6 @@ package rpc
 
 import (
 	"context"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 // GetSlotLeaders returns the slot leaders for a given slot range.

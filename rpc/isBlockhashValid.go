@@ -2,8 +2,6 @@ package rpc
 
 import (
 	"context"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 // Returns whether a blockhash is still valid or not

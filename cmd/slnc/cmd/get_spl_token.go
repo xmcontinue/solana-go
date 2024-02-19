@@ -23,11 +23,10 @@ import (
 	"os"
 
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/token"
-	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/gagliardetto/solana-go/text"
 	"github.com/spf13/cobra"
+	"github.com/xmcontinue/solana-go/programs/token"
+	"github.com/xmcontinue/solana-go/rpc"
+	"github.com/xmcontinue/solana-go/text"
 )
 
 var getSPLTokenCmd = &cobra.Command{
@@ -59,7 +58,7 @@ var getSPLTokenCmd = &cobra.Command{
 
 		for _, keyedAcct := range resp {
 			acct := keyedAcct.Account
-			//fmt.Println("Data len:", len(acct.Data), keyedAcct.Pubkey)
+			// fmt.Println("Data len:", len(acct.Data), keyedAcct.Pubkey)
 			var mint *token.Mint
 			if err := bin.NewBinDecoder(acct.Data.GetBinary()).Decode(&mint); err != nil {
 				log.Fatalln("failed unpack", err)

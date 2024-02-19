@@ -14,8 +14,6 @@
 
 package ws
 
-import "github.com/gagliardetto/solana-go"
-
 type SlotsUpdatesResult struct {
 	// The parent slot.
 	Parent uint64 `json:"parent"`

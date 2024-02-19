@@ -18,8 +18,6 @@ package rpc
 
 import (
 	"context"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 // GetAccountInfoWithRpcContext is similar to GetAccountInfoWithOpts but will return rpcContext and nil account if account is not found

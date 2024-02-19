@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
 )
 
 type RequestQueue struct {
@@ -158,7 +157,7 @@ type Request struct {
 	FeeTier              uint8
 	SelfTradeBehavior    uint8
 	Padding              [4]byte    `json:"-"`
-	MaxCoinQtyOrCancelId bin.Uint64 //the max amount you wish to buy or sell
+	MaxCoinQtyOrCancelId bin.Uint64 // the max amount you wish to buy or sell
 	NativePCQtyLocked    bin.Uint64
 	OrderID              bin.Uint128
 	OpenOrders           [4]bin.Uint64 // this is the openOrder address
@@ -166,7 +165,7 @@ type Request struct {
 }
 
 func (r *Request) Equal(other *Request) bool {
-	//return (r.OrderID.Hi == other.OrderID.Hi && r.OrderID.Lo == other.OrderID.Lo) &&
+	// return (r.OrderID.Hi == other.OrderID.Hi && r.OrderID.Lo == other.OrderID.Lo) &&
 	//	(r.MaxCoinQtyOrCancelId == other.MaxCoinQtyOrCancelId) &&
 	//	(r.NativePCQtyLocked == other.NativePCQtyLocked)
 	return (r.OrderID.Hi == other.OrderID.Hi && r.OrderID.Lo == other.OrderID.Lo) &&

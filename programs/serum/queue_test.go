@@ -26,15 +26,14 @@ import (
 	"time"
 
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/diff"
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xmcontinue/solana-go/diff"
+	"github.com/xmcontinue/solana-go/rpc"
 )
 
 func TestDecoder_EventQueue_Diff(t *testing.T) {
-	//t.Skip("diff event queue test")
+	// t.Skip("diff event queue test")
 
 	oldDataFile := "testdata/serum-event-queue-old.bin.zst"
 	newDataFile := "testdata/serum-event-queue-new.bin.zst"

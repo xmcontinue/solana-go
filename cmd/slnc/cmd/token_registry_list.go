@@ -23,9 +23,9 @@ import (
 
 	"github.com/ryanuber/columnize"
 
-	"github.com/gagliardetto/solana-go/programs/tokenregistry"
-	_ "github.com/gagliardetto/solana-go/programs/tokenregistry"
 	"github.com/spf13/cobra"
+	"github.com/xmcontinue/solana-go/programs/tokenregistry"
+	_ "github.com/xmcontinue/solana-go/programs/tokenregistry"
 )
 
 var tokenRegistryListCmd = &cobra.Command{

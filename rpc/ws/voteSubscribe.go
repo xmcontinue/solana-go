@@ -14,10 +14,6 @@
 
 package ws
 
-import (
-	"github.com/gagliardetto/solana-go"
-)
-
 type VoteResult struct {
 	// The vote hash.
 	Hash solana.Hash `json:"hash"`

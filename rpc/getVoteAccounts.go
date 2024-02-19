@@ -16,8 +16,6 @@ package rpc
 
 import (
 	"context"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 type GetVoteAccountsOpts struct {

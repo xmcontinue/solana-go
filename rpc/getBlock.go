@@ -17,8 +17,6 @@ package rpc
 import (
 	"context"
 	"fmt"
-
-	"github.com/gagliardetto/solana-go"
 )
 
 type TransactionDetailsType string
