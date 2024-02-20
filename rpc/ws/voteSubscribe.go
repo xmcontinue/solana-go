@@ -14,6 +14,10 @@
 
 package ws
 
+import (
+	"github.com/xmcontinue/solana-go"
+)
+
 type VoteResult struct {
 	// The vote hash.
 	Hash solana.Hash `json:"hash"`

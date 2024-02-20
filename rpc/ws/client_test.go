@@ -27,8 +27,10 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/xmcontinue/solana-go/text"
 	"go.uber.org/zap"
+
+	"github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/text"
 )
 
 func Test_AccountSubscribe(t *testing.T) {

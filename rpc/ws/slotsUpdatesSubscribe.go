@@ -14,6 +14,10 @@
 
 package ws
 
+import (
+	"github.com/xmcontinue/solana-go"
+)
+
 type SlotsUpdatesResult struct {
 	// The parent slot.
 	Parent uint64 `json:"parent"`

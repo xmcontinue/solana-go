@@ -15,6 +15,7 @@
 package ws
 
 import (
+	"github.com/xmcontinue/solana-go"
 	"github.com/xmcontinue/solana-go/rpc"
 )
 

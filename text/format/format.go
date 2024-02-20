@@ -24,16 +24,16 @@ import (
 )
 
 func Program(name string, programID solana.PublicKey) string {
-	return IndigoBG("Program") + ": " + Bold(name) + " " + text.ColorizeBG(programID.String())
+	return text.IndigoBG("Program") + ": " + text.Bold(name) + " " + text.ColorizeBG(programID.String())
 }
 
 func Instruction(name string) string {
-	return Purple(Bold("Instruction")) + ": " + Bold(name)
+	return text.Purple(text.Bold("Instruction")) + ": " + text.Bold(name)
 }
 
 func Param(name string, value interface{}) string {
-	return Sf(
-		Shakespeare(name)+": %s",
+	return text.Sf(
+		text.Shakespeare(name)+": %s",
 		strings.TrimSpace(
 			prefixEachLineExceptFirst(
 				strings.Repeat(" ", len(name)+2),
@@ -44,7 +44,7 @@ func Param(name string, value interface{}) string {
 }
 
 func Account(name string, pubKey solana.PublicKey) string {
-	return Shakespeare(name) + ": " + text.ColorizeBG(pubKey.String())
+	return text.Shakespeare(name) + ": " + text.ColorizeBG(pubKey.String())
 }
 
 func MetaIfSetByIndex(name string, metaSlice solana.AccountMetaSlice, index int) string {
@@ -59,9 +59,9 @@ func MetaIfSetByIndex(name string, metaSlice solana.AccountMetaSlice, index int)
 
 func Meta(name string, meta *solana.AccountMeta) string {
 	if meta == nil {
-		return Shakespeare(name) + ": " + "<nil>"
+		return text.Shakespeare(name) + ": " + "<nil>"
 	}
-	out := Shakespeare(name) + ": " + text.ColorizeBG(meta.PublicKey.String())
+	out := text.Shakespeare(name) + ": " + text.ColorizeBG(meta.PublicKey.String())
 	out += " ["
 	if meta.IsWritable {
 		out += "WRITE"
@@ -80,9 +80,9 @@ func prefixEachLineExceptFirst(prefix string, s string) string {
 	return foreachLine(s,
 		func(i int, line string) string {
 			if i == 0 {
-				return Lime(line) + "\n"
+				return text.Lime(line) + "\n"
 			}
-			return prefix + Lime(line) + "\n"
+			return prefix + text.Lime(line) + "\n"
 		})
 }
 
