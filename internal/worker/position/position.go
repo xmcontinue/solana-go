@@ -9,9 +9,9 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/mr-tron/base58"
+	"github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/rand"
 
@@ -204,7 +204,7 @@ func syncPositionV2() error {
 	logger.Info("sync position V2 start")
 
 	var err error
-	//err = randTime()
+	// err = randTime()
 	logger.Info("rand sync time", logger.String("rand time：", before.String()))
 	if err != nil {
 		logger.Info("rand sync time", logger.Errorv(err))
@@ -258,12 +258,12 @@ func positionV2ToModel(positionV2s []*sol.PositionV2) []*domain.PositionV2Snapsh
 			FeeOwedA:         positionV2s[i].FeeOwedA,
 			FeeGrowthInsideB: positionV2s[i].FeeGrowthInsideB.Val(),
 			FeeOwedB:         positionV2s[i].FeeOwedB,
-			//GrowthInside1:    positionV2s[i].RewardInfos[0].GrowthInside.Val(),
-			//AmountOwed1:      positionV2s[i].RewardInfos[0].AmountOwed,
-			//GrowthInside2:    positionV2s[i].RewardInfos[1].GrowthInside.Val(),
-			//AmountOwed2:      positionV2s[i].RewardInfos[1].AmountOwed,
-			//GrowthInside3:    positionV2s[i].RewardInfos[2].GrowthInside.Val(),
-			//AmountOwed3:      positionV2s[i].RewardInfos[2].AmountOwed,
+			// GrowthInside1:    positionV2s[i].RewardInfos[0].GrowthInside.Val(),
+			// AmountOwed1:      positionV2s[i].RewardInfos[0].AmountOwed,
+			// GrowthInside2:    positionV2s[i].RewardInfos[1].GrowthInside.Val(),
+			// AmountOwed2:      positionV2s[i].RewardInfos[1].AmountOwed,
+			// GrowthInside3:    positionV2s[i].RewardInfos[2].GrowthInside.Val(),
+			// AmountOwed3:      positionV2s[i].RewardInfos[2].AmountOwed,
 		})
 	}
 

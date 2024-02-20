@@ -5,9 +5,9 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	ag_binary "github.com/gagliardetto/binary"
-	ag_solanago "github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/token"
-	"github.com/gagliardetto/solana-go/rpc"
+	ag_solanago "github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/programs/token"
+	"github.com/xmcontinue/solana-go/rpc"
 )
 
 func GetMintsByTokenOwner(ctx context.Context, wallet string) ([]string, error) {

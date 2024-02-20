@@ -3,7 +3,7 @@ package sol
 import (
 	"git.cplus.link/go/akit/errors"
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
+	"github.com/xmcontinue/solana-go"
 )
 
 type TickAccount struct {

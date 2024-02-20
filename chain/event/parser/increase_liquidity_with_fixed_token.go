@@ -2,7 +2,7 @@ package event
 
 import (
 	Uint "github.com/davidminor/uint128"
-	ag_solanago "github.com/gagliardetto/solana-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
 )
 
 var IncreaseLiquidityWithFixedTokenEventName = "IncreaseLiquidityWithFixedTokenEvent"

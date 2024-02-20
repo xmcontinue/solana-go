@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"git.cplus.link/go/akit/util/decimal"
-	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/xmcontinue/solana-go/rpc"
 )
 
 type SwapTransaction struct {
@@ -59,8 +59,8 @@ func (*SwapTransactionV2) TableName() string {
 }
 
 type Event struct {
-	Name string `json:"name"` //事件名称
-	Data string `json:"data"` //事件数据
+	Name string `json:"name"` // 事件名称
+	Data string `json:"data"` // 事件数据
 }
 
 type SwapPairBase struct {

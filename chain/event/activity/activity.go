@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 
-	ag_solanago "github.com/gagliardetto/solana-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
 )
 
 var (

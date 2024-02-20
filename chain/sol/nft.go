@@ -5,13 +5,12 @@ import (
 	"fmt"
 
 	"git.cplus.link/go/akit/errors"
-	ag_solanago "github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/near/borsh-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 )
 
 var ActivityProgramId = ag_solanago.MustPublicKeyFromBase58("ACTj4dCtGJqDsy7TJ5C3TDbjbeA3nzoaLW9LW571MzeU")
-
 
 func GetMetadata(mintAddress string) (*Metadata, error) {
 	mintKey := ag_solanago.MustPublicKeyFromBase58(mintAddress)

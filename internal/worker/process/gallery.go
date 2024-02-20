@@ -9,9 +9,8 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
-	ag_solanago "github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/go-redis/redis/v8"
+	ag_solanago "github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	model "git.cplus.link/crema/backend/internal/model/market"

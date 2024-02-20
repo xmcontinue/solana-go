@@ -3,7 +3,7 @@ package iface
 import (
 	"time"
 
-	ag_solanago "github.com/gagliardetto/solana-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
 )
 
 type GetActivityNftMetadataReq struct {
@@ -32,11 +32,11 @@ type Attribute struct {
 }
 
 type GetActivityNftMetadataResp struct {
-	Name                 string      `json:"name"`
-	Symbol               string      `json:"symbol"`
-	Image                string      `json:"image"`
-	SellerFeeBasisPoints uint16      `json:"seller_fee_basis_points"`
-	Properties           *Properties `json:"properties"`
+	Name                 string       `json:"name"`
+	Symbol               string       `json:"symbol"`
+	Image                string       `json:"image"`
+	SellerFeeBasisPoints uint16       `json:"seller_fee_basis_points"`
+	Properties           *Properties  `json:"properties"`
 	Attributes           *[]Attribute `json:"attributes"`
 }
 

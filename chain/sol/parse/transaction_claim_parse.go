@@ -3,8 +3,8 @@ package parse
 import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/util/decimal"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )

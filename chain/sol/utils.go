@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	ag_solanago "github.com/gagliardetto/solana-go"
 	"github.com/near/borsh-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
 )
 
 type Key borsh.Enum

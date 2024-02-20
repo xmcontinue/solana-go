@@ -8,13 +8,13 @@ require (
 	github.com/gagliardetto/binary v0.7.7
 	github.com/gagliardetto/gofuzz v1.2.2
 	github.com/gagliardetto/metaplex-go v0.2.1
-	github.com/gagliardetto/solana-go v1.8.4
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/palletone/go-palletone v1.0.9
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rpcxio/libkv v0.5.0
 	github.com/stretchr/testify v1.7.0
+	github.com/xmcontinue/solana-go v1.8.9
 	go.etcd.io/etcd/client/v2 v2.305.0
 	gorm.io/gorm v1.23.5
 )
@@ -29,6 +29,7 @@ require (
 	github.com/aliyun/alibaba-cloud-sdk-go v1.61.18
 	github.com/davecgh/go-spew v1.1.1
 	github.com/davidminor/uint128 v0.0.0-20141227063632-5745f1bf8041
+	github.com/gagliardetto/solana-go v1.4.0
 	github.com/gagliardetto/treeout v0.1.4
 	github.com/go-redis/redis/v8 v8.8.2
 	github.com/go-resty/resty/v2 v2.6.0

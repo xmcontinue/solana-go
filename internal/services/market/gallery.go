@@ -9,8 +9,7 @@ import (
 
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/transport/rpcx"
-	ag_solanago "github.com/gagliardetto/solana-go"
-	"github.com/go-redis/redis/v8"
+	ag_solanago "github.com/xmcontinue/solana-go"
 
 	"git.cplus.link/crema/backend/chain/sol"
 	"git.cplus.link/crema/backend/pkg/domain"
@@ -26,7 +25,7 @@ func (t *MarketService) GetGallery(ctx context.Context, args *iface.GetGalleryRe
 	}
 
 	gallery, err := t.getGalleryV2(ctx, args)
-	//gallery, err := t.getGallery(ctx, args)
+	// gallery, err := t.getGallery(ctx, args)
 	if err != nil {
 		return errors.Wrap(err)
 	}
@@ -90,7 +89,7 @@ func (t *MarketService) GetGalleryByMint(ctx context.Context, args *iface.GetGal
 	}
 
 	gallery, err := t.getGalleryV2(ctx, args)
-	//gallery, err := t.getGallery(ctx, args)
+	// gallery, err := t.getGallery(ctx, args)
 	if err != nil {
 		return errors.Wrap(err)
 	}

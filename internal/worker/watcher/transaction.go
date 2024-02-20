@@ -12,8 +12,8 @@ import (
 	"git.cplus.link/go/akit/logger"
 	"git.cplus.link/go/akit/util/decimal"
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 	"gorm.io/gorm"
 
 	"git.cplus.link/crema/backend/chain/sol"

@@ -8,12 +8,12 @@ import (
 	"git.cplus.link/go/akit/errors"
 	"git.cplus.link/go/akit/logger"
 	sDecimal "github.com/shopspring/decimal"
+	"github.com/xmcontinue/solana-go"
 
 	"git.cplus.link/go/akit/util/decimal"
 
 	bin "github.com/gagliardetto/binary"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/xmcontinue/solana-go/rpc"
 
 	"git.cplus.link/crema/backend/pkg/domain"
 )

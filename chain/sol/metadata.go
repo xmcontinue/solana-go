@@ -7,8 +7,8 @@ import (
 	"git.cplus.link/go/akit/errors"
 	ag_binary "github.com/gagliardetto/binary"
 	token_metadata "github.com/gagliardetto/metaplex-go/clients/token-metadata"
-	ag_solanago "github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
+	ag_solanago "github.com/xmcontinue/solana-go"
+	"github.com/xmcontinue/solana-go/rpc"
 )
 
 func getProgramAccountsResultAccount(dataSize uint64, programIDPub ag_solanago.PublicKey, memCmpAccount string, memCmpAccountOffset uint64) ([]ag_solanago.PublicKey, error) {

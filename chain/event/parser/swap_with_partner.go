@@ -1,7 +1,7 @@
 package event
 
 import (
-	ag_solanago "github.com/gagliardetto/solana-go"
+	ag_solanago "github.com/xmcontinue/solana-go"
 )
 
 var SwapWithPartnerEventName = "SwapWithPartnerEvent"
